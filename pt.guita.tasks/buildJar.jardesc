@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<jardesc>
+    <jar path="C:/Documents and Settings/alssl.IUL/Desktop/guita.jar"/>
+    <options buildIfNeeded="true" compress="true" descriptionLocation="/pt.guita.tasks/buildJar.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="false" overwrite="false" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
+    <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
+    <selectedProjects/>
+    <manifest generateManifest="true" manifestLocation="" manifestVersion="1.0" reuseManifest="false" saveManifest="false" usesManifest="true">
+        <sealing sealJar="false">
+            <packagesToSeal/>
+            <packagesToUnSeal/>
+        </sealing>
+    </manifest>
+    <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
+        <file path="/pt.guide.core/.classpath"/>
+        <file path="/pt.guide.core/.project"/>
+        <file path="/pt.guide.traceview/delete.gif"/>
+        <file path="/pt.guide.traceview/build.properties"/>
+        <file path="/pt.guita.tasks/.classpath"/>
+        <javaElement handleIdentifier="=pt.guide.traceview/src"/>
+        <file path="/pt.guide.lib/build.properties"/>
+        <file path="/pt.guide.traceview/icon.gif"/>
+        <javaElement handleIdentifier="=pt.guide.lib/src"/>
+        <file path="/pt.guide.traceview/.project"/>
+        <file path="/pt.guita.tasks/plugin.xml"/>
+        <file path="/pt.guide.traceview/.classpath"/>
+        <file path="/pt.guide.traceview/plugin.xml"/>
+        <javaElement handleIdentifier="=pt.guita.tasks/src"/>
+        <file path="/pt.guita.tasks/build.properties"/>
+        <file path="/pt.guide.core/build.properties"/>
+        <file path="/pt.guita.tasks/.project"/>
+        <javaElement handleIdentifier="=pt.guide.core/src"/>
+        <file path="/pt.guide.lib/.project"/>
+        <file path="/pt.guide.lib/.classpath"/>
+    </selectedElements>
+</jardesc>
