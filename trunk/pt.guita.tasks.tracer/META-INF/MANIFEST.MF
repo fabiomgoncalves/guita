@@ -4,5 +4,5 @@ Bundle-Name: Tracer
 Bundle-SymbolicName: pt.guita.tasks.tracer
 Bundle-Version: 1.0.0.qualifier
 Export-Package: pt.guita.tasks.tracer
-Require-Bundle: pt.guita.tasks.common;bundle-version="1.0.0",
+Require-Bundle: pt.guita.tasks.common;bundle-version="1.0.0";visibility:=reexport,
  org.aspectj.runtime;bundle-version="1.6.0";visibility:=reexport

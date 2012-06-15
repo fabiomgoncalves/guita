@@ -12,11 +12,11 @@ public class NextAction implements IViewActionDelegate {
 	
 	@Override
 	public void run(IAction action) {
-		Activator activator = Activator.getInstance();
-		activator.next();		
-		IMethod method = (IMethod) activator.getFirstElement();
+		Recorder recorder = Activator.getInstance().getRecorder();
+		recorder.next();		
+		IMethod method = (IMethod) recorder.getFirstElement();
 		if(method != null) {			
-			Common.openMethod(method, activator.getElementLine());
+			Common.openMethod(method, recorder.getElementLine());
 //			view.getSite().getSelectionProvider().setSelection(activator);
 		}
 	}
@@ -25,7 +25,7 @@ public class NextAction implements IViewActionDelegate {
 	public void selectionChanged(IAction action, ISelection selection) {
 		if(selection instanceof IStructuredSelection) {
 			Object obj = ((IStructuredSelection) selection).getFirstElement();
-			Activator.getInstance().updateSelection(obj);
+			Activator.getInstance().getRecorder().updateSelection(obj);
 		}
 	}
 

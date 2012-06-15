@@ -35,7 +35,7 @@ public aspect Tracer {
 	protected pointcut scope() : !within(Tracer);
 
 	public Tracer() {
-//		System.out.println("HI from TRACER!");	
+		System.out.println("HI from TRACER!");	
 		try {
 			serverSocket = new ServerSocket(PORT_IN);
 		} catch (IOException e) {
