@@ -11,11 +11,11 @@ public class FirstAction implements IViewActionDelegate {
 
 	@Override
 	public void run(IAction action) {
-		final Activator activator = Activator.getInstance();
-		activator.goToFirst();
-		IMethod method = (IMethod) activator.getFirstElement();
+		Recorder recorder = Activator.getInstance().getRecorder();
+		recorder.goToFirst();
+		IMethod method = (IMethod) recorder.getFirstElement();
 		if(method != null) {
-			Common.openMethod(method, activator.getElementLine());
+			Common.openMethod(method, recorder.getElementLine());
 //			view.getSite().getSelectionProvider().setSelection(activator);
 		}
 	}
