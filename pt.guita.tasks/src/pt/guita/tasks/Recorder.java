@@ -33,6 +33,7 @@ import pt.guita.tasks.common.AnonymousClassMethodAccess;
 import pt.guita.tasks.common.FieldAccess;
 import pt.guita.tasks.common.MemberAccess;
 import pt.guita.tasks.common.MethodAccess;
+import pt.guita.tasks.common.TraceRequest;
 import pt.guita.tasks.tracer.Tracer;
 
 
@@ -86,15 +87,15 @@ public class Recorder implements IStructuredSelection {
 			clientSocket = new Socket("localhost", Tracer.PORT_IN);	
 			OutputStream os = clientSocket.getOutputStream();  
 			ObjectOutputStream oos = new ObjectOutputStream(os);  
-			oos.writeObject(new Boolean(true));
-			oos.writeObject(new Integer(6767));
+			
+			oos.writeObject(new TraceRequest(6767, false, true, null));
+			
 			oos.close();
 			os.close();
 			clientSocket.close();
 		}
 		catch(Exception e) {
-			e.printStackTrace();
-			//TODO: error message
+			System.err.println("Could not connect to tracer");
 		}
 	}
 
@@ -106,15 +107,14 @@ public class Recorder implements IStructuredSelection {
 		try {
 			clientSocket = new Socket("localhost", Tracer.PORT_IN);	
 			OutputStream os = clientSocket.getOutputStream();  
-			ObjectOutputStream oos = new ObjectOutputStream(os);  
-			oos.writeObject(new Boolean(false));
-			oos.writeObject(new Integer(6767));
+			ObjectOutputStream oos = new ObjectOutputStream(os); 
+			oos.writeObject(new TraceRequest());
 			oos.close();
 			os.close();
 			clientSocket.close();
 		}
 		catch(Exception e) {
-			e.printStackTrace();
+			System.err.println("Could not disconnect from tracer");
 		}
 	}
 	

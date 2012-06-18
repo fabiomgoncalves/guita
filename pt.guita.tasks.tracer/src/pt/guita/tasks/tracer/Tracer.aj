@@ -20,15 +20,16 @@ import pt.guita.tasks.common.FieldAccess;
 import pt.guita.tasks.common.MemberAccess;
 import pt.guita.tasks.common.MethodAccess;
 import pt.guita.tasks.common.FieldAccess.Type;
+import pt.guita.tasks.common.TraceRequest;
 
 
 public aspect Tracer {
 	public static final int PORT_IN = 5656;
 
 	private ServerSocket serverSocket;
-	private int portOut;
 
-	private static boolean rec;
+	private static TraceRequest currentRequest;
+
 	private int serialNumber;
 	private HashSet<MemberAccess> sent;
 
@@ -42,8 +43,8 @@ public aspect Tracer {
 			e.printStackTrace();
 			System.exit(1);
 		}
-		rec = false;
 		sent = new HashSet<MemberAccess>();
+		currentRequest = new TraceRequest();
 		new RequestHandler().start();
 	}
 
@@ -58,31 +59,34 @@ public aspect Tracer {
 					InputStream is = sock.getInputStream();  
 					ObjectInputStream ois = new ObjectInputStream(is);  
 
-					Boolean activate = (Boolean) ois.readObject();  
-					Integer port = (Integer) ois.readObject();					
+					TraceRequest request = (TraceRequest) ois.readObject();
+					
+//					Boolean activate = (Boolean) ois.readObject();  
+//					Integer port = (Integer) ois.readObject();
+					
 					ois.close();
 					is.close();
 					sock.close();
 
-					if(rec && activate)  {
+					if(currentRequest.activate() && request.activate())  {
 						System.err.println("Cannot start new recording");
 					}
-					else if(!rec && !activate) {
+					else if(!currentRequest.activate() && !request.activate()) {
 						System.err.println("Not recording");
 					}
 					else {
-						rec = activate.booleanValue();
-						portOut = port;
-
+						currentRequest = request;
 //						System.out.println("REQUEST: " + activate + "  " + port);
-						if(rec) {
+						if(currentRequest.activate()) {
 							serialNumber = 1;
 							sent.clear();
 						}
 					}
 				}
 				catch(Exception e) {
+					System.err.println("prob");
 					e.printStackTrace();
+					
 				}			
 			}
 		}
@@ -90,21 +94,21 @@ public aspect Tracer {
 
 
 	after() :
-		if(rec) && get(* *) && scope() {
+		if(currentRequest.activate() && currentRequest.traceFieldReads) && get(* *) && scope() {
 			Field field = ((FieldSignature) thisJoinPoint.getSignature()).getField();
 			SourceLocation loc = thisJoinPointStaticPart.getSourceLocation();		
 			send(new FieldAccess(field, Type.READ, loc.getLine()));
 		}
 
 	after() :
-		if(rec) && set(* *) && scope() {
+		if(currentRequest.activate() && currentRequest.traceFieldWrites) && set(* *) && scope() {
 			Field field = ((FieldSignature) thisJoinPoint.getSignature()).getField();
 			SourceLocation loc = thisJoinPointStaticPart.getSourceLocation();		
 			send(new FieldAccess(field, Type.WRITE, loc.getLine()));
 		}
 
 	before() :
-		if(rec) && execution(* * (..)) && scope() {
+		if(currentRequest.activate()) && execution(* * (..)) && scope() {
 
 			MethodSignature sig = (MethodSignature) thisJoinPoint.getSignature();
 			Method method = sig.getMethod();
@@ -129,7 +133,7 @@ public aspect Tracer {
 //			System.out.println("SEND: " + access);
 			Socket clientSocket = null;
 			try {
-				clientSocket = new Socket("localhost", portOut);	
+				clientSocket = new Socket("localhost", currentRequest.port);	
 				OutputStream os = clientSocket.getOutputStream();  
 				ObjectOutputStream oos = new ObjectOutputStream(os);  
 				oos.writeObject(access);
@@ -138,7 +142,7 @@ public aspect Tracer {
 				clientSocket.close();
 			} 
 			catch (IOException ex) {
-				System.err.println("Accept failed: " + portOut);
+				System.err.println("Accept failed: " + currentRequest.port);
 			}
 			sent.add(access);
 			serialNumber++;
