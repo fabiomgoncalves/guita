@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.ui.views">
+      <view
+            category="org.eclipselabs.guita.guitracer.view"
+            class="org.eclipselabs.guita.uitracer.view.TraceView"
+            icon="icons/icon.gif"
+            id="org.eclipselabs.guita.guitracer.view"
+            name="GUI Trace"
+            restorable="true">
+      </view>
+      <category
+            id="org.eclipselabs.guita.guitracer.view"
+            name="GUITA">
+      </category>
+   </extension>
+   <extension
+         point="org.eclipse.ui.viewActions">
+      <viewContribution
+            id="pt.guide.traceview.deleteTabs"
+            targetID="org.eclipselabs.guita.guitracer.view">
+         <action
+               class="org.eclipselabs.guita.uitracer.view.RemoveActionDelegate"
+               icon="icons/delete.gif"
+               id="pt.guide.traceview.action1"
+               label="Clear"
+               style="push"
+               toolbarPath="additions">
+         </action>
+      </viewContribution>
+   </extension>
+
+</plugin>
