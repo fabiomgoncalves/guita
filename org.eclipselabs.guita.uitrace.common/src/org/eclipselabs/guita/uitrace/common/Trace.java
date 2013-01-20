@@ -3,22 +3,25 @@ package org.eclipselabs.guita.uitrace.common;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.aspectj.lang.reflect.SourceLocation;
 
-public class Trace implements Serializable {
+public class Trace implements Serializable, Iterable<Location> {
 	private static final long serialVersionUID = 1L;
 
 	private final String widgetType;
 	private final boolean disposed;
 	private final List<Location> trace;
+	private final boolean parentAvailable;
 	
-	public Trace(String widgetType, boolean disposed, SourceLocation createLocation, int id) {
+	public Trace(String widgetType, boolean disposed, SourceLocation createLocation, int id, boolean parentAvailable) {
 		this.widgetType = widgetType;
 		this.disposed = disposed;
 		trace = new ArrayList<Location>();
 		trace.add(new Location(createLocation, id));
+		this.parentAvailable = parentAvailable;
 	}
 
 	
@@ -33,6 +36,10 @@ public class Trace implements Serializable {
 	
 	public boolean isWidgetDisposed() {
 		return disposed;
+	}
+	
+	public boolean isParentAvailable() {
+		return parentAvailable;
 	}
 	
 	public int size() {
@@ -61,6 +68,12 @@ public class Trace implements Serializable {
 	
 	public boolean sameAs(Trace trace) {
 		return first().sameAs(trace.first());
+	}
+
+
+	@Override
+	public Iterator<Location> iterator() {
+		return trace.iterator();
 	}
 	
 	
