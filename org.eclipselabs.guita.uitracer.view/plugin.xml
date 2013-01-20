@@ -7,7 +7,7 @@
             category="org.eclipselabs.guita.guitracer.view"
             class="org.eclipselabs.guita.uitracer.view.TraceView"
             icon="icons/icon.gif"
-            id="org.eclipselabs.guita.guitracer.view"
+            id="org.eclipselabs.guita.uitracer.view"
             name="GUI Trace"
             restorable="true">
       </view>
