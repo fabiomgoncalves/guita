@@ -4,7 +4,7 @@
    <extension
          point="org.eclipse.ui.views">
       <view
-            category="org.eclipselabs.guita.guitracer.view"
+            category="org.eclipselabs.guita.category"
             class="org.eclipselabs.guita.uitracer.view.TraceView"
             icon="icons/icon.gif"
             id="org.eclipselabs.guita.uitracer.view"
@@ -12,7 +12,7 @@
             restorable="true">
       </view>
       <category
-            id="org.eclipselabs.guita.guitracer.view"
+            id="org.eclipselabs.guita.category"
             name="GUITA">
       </category>
    </extension>
