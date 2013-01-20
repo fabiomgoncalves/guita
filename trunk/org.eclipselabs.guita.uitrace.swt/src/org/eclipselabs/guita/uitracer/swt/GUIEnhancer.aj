@@ -9,6 +9,7 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.WeakHashMap;
 
 import org.aspectj.lang.reflect.SourceLocation;
@@ -30,6 +31,7 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.ImageLoader;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
@@ -68,17 +70,16 @@ public privileged aspect GUIEnhancer {
 
 	private boolean altOn;
 	private boolean shiftOn;
-	
+
 	private ServerSocket serverSocket = null;
 
 	protected pointcut scope() : !within(GUIEnhancer);
 
 	public GUIEnhancer() {
-//		this(Defaults.APPLICATION_PORT, Defaults.ECLIPSE_PORT);
-//		System.out.println("hi from GUI enhancer");
+		System.out.println("hi from GUI enhancer");
 		this.portIn = Defaults.APPLICATION_PORT;
 		this.portOut = Defaults.ECLIPSE_PORT;
-		
+
 		traceTable = new WeakHashMap<Widget, Trace>();
 		underTrace = new WeakHashMap<Widget, Widget>();
 		idTable = HashBiMap.create();
@@ -101,7 +102,6 @@ public privileged aspect GUIEnhancer {
 		public void run() {
 			Socket sock;
 			while(true) {
-				Widget item = null;
 				try {
 					sock = serverSocket.accept();
 
@@ -109,8 +109,13 @@ public privileged aspect GUIEnhancer {
 					ObjectInputStream ois = new ObjectInputStream(is);  
 
 					Location loc = (Location) ois.readObject();  
-					System.out.println("REC: " + loc);
-					item = callees.get(loc.id());
+
+					for(Entry<Widget,Trace> entry : traceTable.entrySet()) {
+						if(entry.getValue().first().sameAs(loc)) {
+							Widget w = entry.getKey();
+							triggerNavigation(w, true);
+						}
+					}
 					ois.close();
 					is.close();
 					sock.close();					
@@ -118,10 +123,6 @@ public privileged aspect GUIEnhancer {
 				catch(Exception e) {
 					e.printStackTrace();
 				}
-				if(item != null)
-					triggerNavigation(item);
-				else
-					System.err.println("not found");
 			}
 		}
 	}
@@ -148,14 +149,14 @@ public privileged aspect GUIEnhancer {
 			@Override
 			public void handleEvent(Event event) {				
 				if(altOn) {
-//					System.out.println("selected - " + item);
-					triggerNavigation(item);
+					//					System.out.println("selected - " + item);
+					triggerNavigation(item, false);
 				}
 			}		
 		});				
 	}		
-	
-//	private final Cursor cursor = new Cursor(Display.getDefault(), SWT.CURSOR_HAND);
+
+	//	private final Cursor cursor = new Cursor(Display.getDefault(), SWT.CURSOR_HAND);
 
 	after(Widget control) : 
 		call(* *(..)) && target(control) && scope() {
@@ -163,18 +164,18 @@ public privileged aspect GUIEnhancer {
 		if(traceTable.containsKey(control)) {
 			SourceLocation loc = thisJoinPointStaticPart.getSourceLocation();
 
-//			int size = traceTable.get(control).size();
+			//			int size = traceTable.get(control).size();
 			int id = idTable.get(control);
 			Location traceLoc = traceTable.get(control).addLocation(loc, id);
 
-//			if(traceTable.get(control).size() > size && underTrace.containsKey(control))
-//				triggerNavigation(control);
+			//			if(traceTable.get(control).size() > size && underTrace.containsKey(control))
+			//				triggerNavigation(control);
 
-//			Object thisObj = thisJoinPoint.getThis();
-//			if(thisObj instanceof Widget) {
-//				callees.put(traceLoc.id, (Widget) thisObj);
-//				System.out.println(traceLoc.id + " -> " + thisObj);
-//			}
+			Object thisObj = thisJoinPoint.getThis();
+			if(thisObj instanceof Widget) {
+				callees.put(traceLoc.id(), (Widget) thisObj);
+				System.out.println(traceLoc.id() + " -> " + thisObj);
+			}
 		}
 	}
 
@@ -183,56 +184,60 @@ public privileged aspect GUIEnhancer {
 
 		if(firstTime)
 			addAltListener(control);
-		
+
 		handleWidget(control, thisJoinPointStaticPart.getSourceLocation());
 	}
-	
+
 	after() returning(final TableViewer viewer) :
 		call(TableViewer+.new(..)) && scope() {
-		
+
 		handleWidget(viewer.getTable(), thisJoinPointStaticPart.getSourceLocation());
 	}
-	
+
 	after() returning(final TableViewerColumn col) :
 		call(TableViewerColumn+.new(..)) && scope() {
-		
+
 		handleWidget(col.getColumn(), thisJoinPointStaticPart.getSourceLocation());
 	}
-	
+
 
 	private void handleWidget(final Widget widget, final SourceLocation loc) {
 		int id = nextId;
 
 		idTable.put(widget, id);
 
-		traceTable.put(widget, new Trace(widget.getClass().getSimpleName(), false, loc, id));
+		boolean parentAvailable = 
+				widget instanceof Control &&
+				traceTable.containsKey(((Control) widget).getParent());
+		
+		traceTable.put(widget, new Trace(widget.getClass().getSimpleName(), false, loc, id, parentAvailable));
 
 		nextId++;
-		
+
 		if(widget instanceof Shell) {			
 			((Shell) widget).addListener(SWT.MouseDown, new Listener() {
-				
+
 				@Override
 				public void handleEvent(Event event) {
 					if(altOn)
-						triggerNavigation(widget);
+						triggerNavigation(widget, false);
 				}
 			});
-			
-				
+
+
 		}
 		else if(widget instanceof TableColumn) {
 			((TableColumn) widget).addSelectionListener(new SelectionListener() {
-				
+
 				@Override
 				public void widgetSelected(SelectionEvent e) {
 					if(altOn)
-						triggerNavigation(widget);
+						triggerNavigation(widget, false);
 				}
-				
+
 				@Override
 				public void widgetDefaultSelected(SelectionEvent e) {
-					
+
 				}
 			});
 		}
@@ -242,15 +247,15 @@ public privileged aspect GUIEnhancer {
 				@Override
 				public void handleEvent(Event event) {
 					if(altOn)
-						triggerNavigation(widget);
+						triggerNavigation(widget, false);
 				}
 			});
 		}
 	}
-	
-	
-	
-	
+
+
+
+
 
 	private void addAltListener(final Widget control) {
 		final Display display = control.getDisplay();
@@ -280,24 +285,38 @@ public privileged aspect GUIEnhancer {
 		firstTime = false;
 	}
 
-	private void triggerNavigation(Widget widget) {
+	private static class GetParentRunnable implements Runnable {
+		Control control;
+		Composite parent;
+		
+		GetParentRunnable(Control control) {
+			this.control = control;
+		}
+		public void run() {
+			parent = control.getParent();
+		}
+	}
+	
+	private void triggerNavigation(Widget widget, boolean parent) {
 		if(widget instanceof TabFolder) {
 			TabFolder folder = (TabFolder) widget;
 			TabItem[] items = folder.getSelection();
 			if(items.length > 0)
 				widget = items[0];
 		}
-		
-		if(widget instanceof Control && shiftOn) {
-			widget = ((Control) widget).getParent(); 
+
+		if(parent || widget instanceof Control && shiftOn) {
+			GetParentRunnable runnable = new GetParentRunnable((Control) widget);
+			Display.getDefault().syncExec(runnable);
+			widget = runnable.parent; 
 		}
-		
+
 		Trace trace = traceTable.get(widget);
 		if(trace == null) {
 			System.err.println("Control not found");
 			return;
 		}
-		
+
 		Socket clientSocket = null;
 		try {
 			clientSocket = new Socket("localhost", portOut);	
@@ -337,20 +356,20 @@ public privileged aspect GUIEnhancer {
 
 	private static boolean equal(SourceLocation a, SourceLocation b) {
 		return 
-		a.getWithinType().equals(a.getWithinType()) && 
-		a.getLine() == b.getLine();
+				a.getWithinType().equals(a.getWithinType()) && 
+				a.getLine() == b.getLine();
 	}
 
 
-
-
-
-	private Image makeScreenshot(Widget widget) {
-		Image image = null;
-
-		if(widget instanceof Control) {
-			Control control = (Control) widget;
-
+	private static class MakeShotRunnable implements Runnable {
+		Control control;
+		Image image;
+		
+		MakeShotRunnable(Control control) {
+			this.control = control;
+		}
+		
+		public void run() {
 			if(!control.isDisposed()) {
 				GC gc = new GC((Control) control);
 				int width = ((Control) control).getBounds().width;
@@ -360,13 +379,26 @@ public privileged aspect GUIEnhancer {
 				gc.dispose();
 			}
 		}
+		
+	}
+
+
+	private Image makeScreenshot(Widget widget) {
+		Image image = null;
+
+		if(widget instanceof Control) {
+			Control control = (Control) widget;
+			MakeShotRunnable runnable = new MakeShotRunnable(control);
+			Display.getDefault().syncExec(runnable);
+			image = runnable.image;
+		}
 		else if(widget instanceof MenuItem) {
 			return shot;
 		}
 		else if(widget instanceof Item) {
 			image = shotSurrounding();
 		}
-		
+
 		if(image == null) {
 			image = new Image(Display.getDefault(), SHOT_WIDTH, SHOT_HEIGHT);
 		}
@@ -374,7 +406,7 @@ public privileged aspect GUIEnhancer {
 		return image;
 	}
 
-	
+
 	private static final int SHOT_WIDTH = 225;
 	private static final int SHOT_HEIGHT = 75;
 
