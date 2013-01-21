@@ -38,7 +38,7 @@ import org.osgi.framework.BundleContext;
 
 public class Activator implements BundleActivator {
 	private static Activator instance;
-	private ServerSocket serverSocket = null;
+	private ServerSocket serverSocket;
 	private IWorkbenchPage page;
 	private BundleContext context;
 	
