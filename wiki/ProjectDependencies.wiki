@@ -1,0 +1,9 @@
+#summary Required Eclipse plugins for compiling GUITA
+
+= Google Guava =
+
+http://guava-osgi.googlecode.com/svn/trunk/repository/
+
+= Aspect/J AJDT =
+
+http://download.eclipse.org/tools/ajdt/42/update
