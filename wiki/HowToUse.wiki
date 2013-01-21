@@ -1,0 +1,16 @@
+#summary Necessary steps for using GUITA to trace GUI code.
+
+= Blundle dependency =
+
+The OSGi blundles which one wants to trace GUI code should have a dependency to:
+{{{
+org.eclipselabs.guita.uitrace.swt
+}}}
+
+
+= Launch configuration =
+
+The launch configuration should include the following bundles:
+⁄{{{
+
+}}}
