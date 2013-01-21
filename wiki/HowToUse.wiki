@@ -6,11 +6,11 @@ The OSGi blundles which one wants to trace GUI code should have a dependency to:
 {{{
 org.eclipselabs.guita.uitrace.swt
 }}}
-
+This will cause the bundle to be instrumented, and it is the only thing that has to be included/excluded in the projects' source.
 
 = Launch configuration =
 
 The launch configuration should include the following bundles:
-⁄{{{
+{{{
 
 }}}
