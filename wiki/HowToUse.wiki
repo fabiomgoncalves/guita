@@ -8,6 +8,7 @@ org.eclipselabs.guita.uitrace.swt
 }}}
 This will cause the bundle to be instrumented, and it is the only thing that has to be included/excluded in the projects' source.
 
+
 = Launch configuration =
 
 The launch configuration should include the following bundles:
@@ -17,3 +18,8 @@ org.aspectj.weaver
 org.eclipse.equinox.weaving.aspectj
 }}}
 The last bundle should have {{{Auto-Start = true}}}.
+
+Finally, the following VM argument should be included:
+{{{
+-Dosgi.framework.extensions=org.eclipse.equinox.weaving.hook
+}}}
