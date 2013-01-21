@@ -12,5 +12,8 @@ This will cause the bundle to be instrumented, and it is the only thing that has
 
 The launch configuration should include the following bundles:
 {{{
-
+org.aspectj.runtime
+org.aspectj.weaver
+org.eclipse.equinox.weaving.aspectj
 }}}
+The last bundle should have {{{Auto-Start = true}}}.
