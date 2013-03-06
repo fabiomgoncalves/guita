@@ -47,9 +47,8 @@ public aspect Aspecto {
 					final String request = (String)ois.readObject();
 
 					if(list.containsKey(request)){
-						if(!previousWidget.equals(null)){
+						if(!previousWidget.equals(null))
 							removePainting();
-						}
 						for(Widget g: list.get(request)){
 							previousWidget.add(g);
 							final Widget actualWidget = g;
