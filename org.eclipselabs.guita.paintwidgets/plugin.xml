@@ -16,10 +16,19 @@
    <extension
          point="org.eclipse.ui.commands">
       <command
-            defaultHandler="org.eclipselabs.guita.examplepopup.PaintCommand"
+            defaultHandler="org.eclipselabs.guita.paintwidgets.PaintCommand"
             id="org.eclipselabs.guita.paint"
             name="Paint">
       </command>
+   </extension>
+   <extension
+         point="org.eclipse.ui.views">
+      <view
+            class="org.eclipselabs.guita.paintwidgets.ViewTable"
+            id="org.eclipselabs.guita.paintwidgets.ViewTable"
+            name="ViewTable"
+            restorable="true">
+      </view>
    </extension>
 
 </plugin>
