@@ -1,4 +1,4 @@
-package org.eclipselabs.guita.examplepopup;
+package org.eclipselabs.guita.paintwidgets;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -10,7 +10,7 @@ import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.text.TextSelection;
-import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
@@ -20,7 +20,7 @@ import org.eclipse.ui.part.FileEditorInput;
 import org.eclipselabs.variableanalyzer.service.VariableResolver;
 
 
-public class PaintCommand extends AbstractHandler {
+public class PaintCommand extends AbstractHandler{
 
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
