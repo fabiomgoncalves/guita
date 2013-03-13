@@ -1,6 +1,6 @@
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -18,11 +18,8 @@ public aspect Aspecto {
 	private ServerSocket serverSocket;
 
 	private Map<String , ArrayList<Widget>> list = new HashMap<String, ArrayList<Widget>>();
-	private ArrayList<Widget> previousWidget = new ArrayList<Widget>();
 
-	private final Painter p = new Painter();
-
-	protected pointcut scope() : !within(Aspecto) && !within(Painter);
+	protected pointcut scope() : !within(Aspecto);
 
 
 	public Aspecto(){
@@ -38,50 +35,44 @@ public aspect Aspecto {
 	public class RequestHandler extends Thread {
 		@Override
 		public void run() {
-			Socket sock;
+			Socket socket = null;
+			ObjectInputStream ois = null;
+			ObjectOutputStream oos = null;
 			while(true) {
 				try {
-					sock = serverSocket.accept();
-					InputStream is = sock.getInputStream();  
-					ObjectInputStream ois = new ObjectInputStream(is);
-					final String request = (String)ois.readObject();
+					socket = serverSocket.accept();
+					ois = new ObjectInputStream(socket.getInputStream());
+					String request = (String)ois.readObject();
 
 					if(list.containsKey(request)){	
-						if(!previousWidget.equals(null))
-							removePainting();
-						for(Widget g: list.get(request)){
-							previousWidget.add(g);
-							final Widget actualWidget = g;
-							actualWidget.getDisplay().syncExec(new Runnable() {
-
-								@Override
-								public void run() {
-									p.paint(actualWidget);
-								}
-							});
-						}
+						oos = new ObjectOutputStream(socket.getOutputStream());
+						oos.writeObject(list.get(request));
 					}
-
-					ois.close();
-					is.close();
 				}
 				catch(Exception e) {
-					System.err.println("problem");
 					e.printStackTrace();
+				} finally {
+					if(oos != null){
+						try {
+							oos.close();
+						} catch(IOException e){
+						}
+					}
+					if(ois != null){
+						try {
+							ois.close();
+						} catch(IOException e){
+						}
+					}
+					if(socket != null){
+						try {
+							socket.close();
+						} catch(IOException e){
+						}
+					}
 				}
 			}
 		}
-	}
-
-	public void removePainting(){
-		for(final Widget aux: previousWidget)
-			aux.getDisplay().syncExec(new Runnable() {
-
-				@Override
-				public void run() {
-					p.dispaint(aux);
-				}
-			});
 	}
 
 	after() returning (Widget g): call(Widget+.new(..)) && scope() {
