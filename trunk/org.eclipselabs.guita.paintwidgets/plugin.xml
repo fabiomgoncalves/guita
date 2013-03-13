@@ -24,7 +24,7 @@
    <extension
          point="org.eclipse.ui.views">
       <view
-            class="org.eclipselabs.guita.paintwidgets.ViewTable"
+            class="org.eclipselabs.guita.paintwidgets.view.ViewTable"
             id="org.eclipselabs.guita.paintwidgets.ViewTable"
             name="ViewTable"
             restorable="true">
