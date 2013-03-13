@@ -1,6 +1,7 @@
 package org.eclipselabs.guita.paintwidgets;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -27,12 +28,18 @@ import org.eclipselabs.variableanalyzer.service.VariableResolver;
 public class PaintCommand extends AbstractHandler{
 
 	public static final int PORT_IN = 8081;
-	
+
 	private ArrayList<Widget> listWidget = new ArrayList<Widget>();
+	private ArrayList<Widget> paintList = new ArrayList<Widget>();
 	private Color oldState;
 
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
+
+		Socket socket = null;
+		ObjectOutputStream oos = null;
+		ObjectInputStream ois = null;
+
 		ISelection selection =  PlatformUI.getWorkbench().getActiveWorkbenchWindow().getSelectionService().getSelection();
 		if(selection instanceof TextSelection) {
 			TextSelection s = (TextSelection) selection;
@@ -57,18 +64,40 @@ public class PaintCommand extends AbstractHandler{
 
 					if(type.indexOf("org.eclipse.swt.widgets.") > -1) {
 						try {
-							Socket socket = new Socket("localhost", PORT_IN);
-							ObjectOutputStream stream = new ObjectOutputStream(socket.getOutputStream());
-							stream.writeObject(loc);
+							socket = new Socket("localhost", PORT_IN);
+							oos = new ObjectOutputStream(socket.getOutputStream());
+							oos.writeObject(loc);
 
-							stream.reset();
-							stream.close();
-							socket.close();
+							ois = new ObjectInputStream(socket.getInputStream());
+							paintList = (ArrayList<Widget>) ois.readObject();
 
+							paintWidget(paintList);
+							
 						} catch (UnknownHostException e) {
 							e.printStackTrace();
 						} catch (IOException e) {
 							e.printStackTrace();
+						} catch (ClassNotFoundException e) {
+							e.printStackTrace();
+						} finally {
+							if(ois != null){
+								try {
+									ois.close();
+								} catch(IOException e){
+								}
+							}
+							if(oos != null){
+								try {
+									oos.close();
+								} catch(IOException e){
+								}
+							}
+							if(socket != null){
+								try {
+									socket.close();
+								} catch(IOException e){
+								}
+							}
 						}
 					}
 				}
@@ -77,20 +106,21 @@ public class PaintCommand extends AbstractHandler{
 				}
 			}
 		}
-		
 		return null;
 	}
-	
 
-	public void paintWidget(ArrayList<Widget> listWidget){
-		for(Widget g: listWidget){
+
+	public void paintWidget(ArrayList<Widget> paintList){
+		for(Widget g: paintList){
+			listWidget.add(g);
+			
 			Control c = (Control)g;
 			oldState = c.getBackground();
 			c.setBackground(new Color(null, 0, 0, 0));
 		}
 	}
-	
-	
+
+
 	@Override
 	public boolean isEnabled() {
 		ISelection selection =  PlatformUI.getWorkbench().getActiveWorkbenchWindow().getSelectionService().getSelection();
