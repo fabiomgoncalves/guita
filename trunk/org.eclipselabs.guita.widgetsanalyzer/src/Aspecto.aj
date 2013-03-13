@@ -14,7 +14,7 @@ import org.eclipse.swt.widgets.Widget;
 
 public aspect Aspecto {
 
-	public static final int PORT_IN = 5658;
+	public static final int PORT_IN = 8080;
 	private ServerSocket serverSocket;
 
 	private Map<String , ArrayList<Widget>> list = new HashMap<String, ArrayList<Widget>>();
@@ -46,7 +46,7 @@ public aspect Aspecto {
 					ObjectInputStream ois = new ObjectInputStream(is);
 					final String request = (String)ois.readObject();
 
-					if(list.containsKey(request)){
+					if(list.containsKey(request)){	
 						if(!previousWidget.equals(null))
 							removePainting();
 						for(Widget g: list.get(request)){
