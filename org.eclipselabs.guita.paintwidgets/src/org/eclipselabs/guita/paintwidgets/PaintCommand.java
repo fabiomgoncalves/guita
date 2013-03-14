@@ -1,11 +1,9 @@
 package org.eclipselabs.guita.paintwidgets;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
@@ -14,9 +12,6 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.text.TextSelection;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Widget;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IPersistable;
@@ -29,16 +24,11 @@ public class PaintCommand extends AbstractHandler{
 
 	public static final int PORT_IN = 8081;
 
-	private ArrayList<Widget> listWidget = new ArrayList<Widget>();
-	private ArrayList<Widget> paintList = new ArrayList<Widget>();
-	private Color oldState;
-
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 
 		Socket socket = null;
 		ObjectOutputStream oos = null;
-		ObjectInputStream ois = null;
 
 		ISelection selection =  PlatformUI.getWorkbench().getActiveWorkbenchWindow().getSelectionService().getSelection();
 		if(selection instanceof TextSelection) {
@@ -67,25 +57,12 @@ public class PaintCommand extends AbstractHandler{
 							socket = new Socket("localhost", PORT_IN);
 							oos = new ObjectOutputStream(socket.getOutputStream());
 							oos.writeObject(loc);
-
-							ois = new ObjectInputStream(socket.getInputStream());
-							paintList = (ArrayList<Widget>) ois.readObject();
-
-							paintWidget(paintList);
 							
 						} catch (UnknownHostException e) {
 							e.printStackTrace();
 						} catch (IOException e) {
 							e.printStackTrace();
-						} catch (ClassNotFoundException e) {
-							e.printStackTrace();
 						} finally {
-							if(ois != null){
-								try {
-									ois.close();
-								} catch(IOException e){
-								}
-							}
 							if(oos != null){
 								try {
 									oos.close();
@@ -107,17 +84,6 @@ public class PaintCommand extends AbstractHandler{
 			}
 		}
 		return null;
-	}
-
-
-	public void paintWidget(ArrayList<Widget> paintList){
-		for(Widget g: paintList){
-			listWidget.add(g);
-			
-			Control c = (Control)g;
-			oldState = c.getBackground();
-			c.setBackground(new Color(null, 0, 0, 0));
-		}
 	}
 
 
