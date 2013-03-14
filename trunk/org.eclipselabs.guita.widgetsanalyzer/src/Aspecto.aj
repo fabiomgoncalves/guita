@@ -1,6 +1,5 @@
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -8,13 +7,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.aspectj.lang.reflect.SourceLocation;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Widget;
 
 
 public aspect Aspecto {
 
-	public static final int PORT_IN = 8080;
+	public static final int PORT_IN = 8081;
 	private ServerSocket serverSocket;
 
 	private Map<String , ArrayList<Widget>> list = new HashMap<String, ArrayList<Widget>>();
@@ -37,7 +38,6 @@ public aspect Aspecto {
 		public void run() {
 			Socket socket = null;
 			ObjectInputStream ois = null;
-			ObjectOutputStream oos = null;
 			while(true) {
 				try {
 					socket = serverSocket.accept();
@@ -45,19 +45,21 @@ public aspect Aspecto {
 					String request = (String)ois.readObject();
 
 					if(list.containsKey(request)){	
-						oos = new ObjectOutputStream(socket.getOutputStream());
-						oos.writeObject(list.get(request));
+						for(Widget g: list.get(request)){
+							final Widget actualWidget = g;
+							actualWidget.getDisplay().syncExec(new Runnable() {
+
+								@Override
+								public void run() {
+									paint(actualWidget);
+								}
+							});
+						}
 					}
 				}
 				catch(Exception e) {
 					e.printStackTrace();
 				} finally {
-					if(oos != null){
-						try {
-							oos.close();
-						} catch(IOException e){
-						}
-					}
 					if(ois != null){
 						try {
 							ois.close();
@@ -73,6 +75,11 @@ public aspect Aspecto {
 				}
 			}
 		}
+	}
+
+	public void paint(Widget g){
+		Control c = (Control)g;
+		c.setBackground(new Color(null, 0, 0, 0));
 	}
 
 	after() returning (Widget g): call(Widget+.new(..)) && scope() {
