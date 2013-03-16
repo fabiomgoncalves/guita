@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
@@ -17,12 +19,15 @@ import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IPersistable;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.FileEditorInput;
+import org.eclipselabs.guita.paintwidgets.view.WidgetReference;
 import org.eclipselabs.variableanalyzer.service.VariableResolver;
 
 
 public class PaintCommand extends AbstractHandler{
 
-	public static final int PORT_IN = 8081;
+	public static final int PORT_IN = 8082;
+	
+	public List<WidgetReference> widgets = new ArrayList<WidgetReference>();
 
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
@@ -57,6 +62,8 @@ public class PaintCommand extends AbstractHandler{
 							socket = new Socket("localhost", PORT_IN);
 							oos = new ObjectOutputStream(socket.getOutputStream());
 							oos.writeObject(loc);
+							
+							widgets.add(new WidgetReference(text, type, loc));
 							
 						} catch (UnknownHostException e) {
 							e.printStackTrace();
