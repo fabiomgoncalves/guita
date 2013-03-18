@@ -2,10 +2,12 @@ package org.eclipselabs.guita.paintwidgets.view;
 
 
 import org.eclipse.jface.viewers.ColumnLabelProvider;
+import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TableViewerColumn;
+import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
@@ -19,6 +21,16 @@ public class ViewTable extends ViewPart{
 	private TableViewer viewer;
 	private Table table;
 
+	
+//	private static class ContentProvider implements IStructuredContentProvider {
+//		public Object[] getElements(Object inputElement) {
+//			
+//		}
+//		public void dispose() {
+//		}
+//		public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
+//		}
+//	}
 
 	private class TableLabelProvider extends LabelProvider implements ITableLabelProvider {
 		public Image getColumnImage(Object element, int columnIndex) {
@@ -43,7 +55,6 @@ public class ViewTable extends ViewPart{
 			return result;
 		}
 	}
-
 
 	@Override
 	public void createPartControl(Composite parent) {
