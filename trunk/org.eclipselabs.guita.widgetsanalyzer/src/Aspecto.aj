@@ -2,14 +2,14 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.aspectj.lang.reflect.SourceLocation;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Widget;
 
 
@@ -17,8 +17,10 @@ public aspect Aspecto {
 
 	public static final int PORT_IN = 8081;
 	private ServerSocket serverSocket;
+	Socket socket = null;
+	ObjectInputStream ois = null;
 
-	private Map<String , ArrayList<Widget>> list = new HashMap<String, ArrayList<Widget>>();
+	private Map<String , Set<Widget>> list = new HashMap<String, Set<Widget>>();
 
 	protected pointcut scope() : !within(Aspecto);
 
@@ -35,9 +37,7 @@ public aspect Aspecto {
 
 	public class RequestHandler extends Thread {
 		@Override
-		public void run() {
-			Socket socket = null;
-			ObjectInputStream ois = null;
+		public void run() {	
 			while(true) {
 				try {
 					socket = serverSocket.accept();
@@ -79,35 +79,50 @@ public aspect Aspecto {
 
 	public void paint(Widget g){
 		Control c = (Control)g;
-		c.setBackground(new Color(null, 0, 0, 0));
+		String color = "";
+		
+		try {
+			color = (String)ois.readObject();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		if(color.equals("Red")){
+			c.setBackground(new Color(null, 255, 0, 0));
+		} else if(color.equals("Blue")){
+			c.setBackground(new Color(null, 0, 0, 255));
+		} else if(color.equals("Green")){
+			c.setBackground(new Color(null, 0, 255, 0));
+		} else if(color.equals("Yellow")){
+			c.setBackground(new Color(null, 255, 255, 0));
+		} else {
+			c.setBackground(new Color(null, 255, 0, 255));
+		}	
 	}
 
 	after() returning (Widget g): call(Widget+.new(..)) && scope() {
-		if(!g.getClass().equals(Shell.class)){
-			SourceLocation loc = thisJoinPoint.getSourceLocation();
-			String aux = loc.getFileName() + ":" + loc.getLine();
-			if(list.containsKey(aux))
-				list.get(aux).add(g);
-			else{
-				ArrayList<Widget> auxList = new ArrayList<Widget>();
-				auxList.add(g);
-				list.put(aux, auxList);
-			}
+		SourceLocation loc = thisJoinPoint.getSourceLocation();
+		String aux = loc.getFileName() + ":" + loc.getLine();
+		if(list.containsKey(aux))
+			list.get(aux).add(g);
+		else{
+			Set<Widget> auxList = new HashSet<Widget>();
+			auxList.add(g);
+			list.put(aux, auxList);
 		}
 	}
 
 	after(Widget g): call(* Widget+.*(..)) && target(g)  && scope() {
-		if(!g.getClass().equals(Shell.class)){
-			SourceLocation loc = thisJoinPoint.getSourceLocation();
-			String aux = loc.getFileName() + ":" + loc.getLine();
-			if(list.containsKey(aux))
-				list.get(aux).add(g);
-			else{
-				ArrayList<Widget> auxList = new ArrayList<Widget>();
-				auxList.add(g);
-				list.put(aux, auxList);
-			}
-
+		SourceLocation loc = thisJoinPoint.getSourceLocation();
+		String aux = loc.getFileName() + ":" + loc.getLine();
+		if(list.containsKey(aux)) {
+			if(list.get(aux).add(g))
+				System.out.println(list.toString());
+		}
+		else{
+			Set<Widget> auxList = new HashSet<Widget>();
+			auxList.add(g);
+			list.put(aux, auxList);
 			System.out.println(list.toString());
 		}
 	}
