@@ -2,8 +2,10 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -15,12 +17,15 @@ import org.eclipse.swt.widgets.Widget;
 
 public aspect Aspecto {
 
-	public static final int PORT_IN = 8081;
+	public static final int PORT_IN = 8082;
 	private ServerSocket serverSocket;
 	Socket socket = null;
 	ObjectInputStream ois = null;
 
-	private Map<String , Set<Widget>> list = new HashMap<String, Set<Widget>>();
+	private Map<String , Set<Widget>> widgetsList = new HashMap<String, Set<Widget>>();
+	private List<Widget> paintedWidgets = new ArrayList<Widget>();
+
+	private Color normalBackground = new Color(null, 240, 240, 240);
 
 	protected pointcut scope() : !within(Aspecto);
 
@@ -44,14 +49,18 @@ public aspect Aspecto {
 					ois = new ObjectInputStream(socket.getInputStream());
 					String request = (String)ois.readObject();
 
-					if(list.containsKey(request)){	
-						for(Widget g: list.get(request)){
+					if(widgetsList.containsKey(request)){	
+						for(Widget g: widgetsList.get(request)){
 							final Widget actualWidget = g;
 							actualWidget.getDisplay().syncExec(new Runnable() {
 
 								@Override
 								public void run() {
-									paint(actualWidget);
+									if(paintedWidgets.contains(actualWidget)){
+										removePaint(actualWidget);
+									} else {
+										paint(actualWidget);
+									}
 								}
 							});
 						}
@@ -80,13 +89,13 @@ public aspect Aspecto {
 	public void paint(Widget g){
 		Control c = (Control)g;
 		String color = "";
-		
+
 		try {
 			color = (String)ois.readObject();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+
 		if(color.equals("Red")){
 			c.setBackground(new Color(null, 255, 0, 0));
 		} else if(color.equals("Blue")){
@@ -97,33 +106,40 @@ public aspect Aspecto {
 			c.setBackground(new Color(null, 255, 255, 0));
 		} else {
 			c.setBackground(new Color(null, 255, 0, 255));
-		}	
+		}
+
+		if(!paintedWidgets.contains(g))
+			paintedWidgets.add(g);
+	}
+
+	public void removePaint(Widget g){
+		Control c = (Control)g;
+		c.setBackground(normalBackground);
+
+		paintedWidgets.remove(g);
 	}
 
 	after() returning (Widget g): call(Widget+.new(..)) && scope() {
 		SourceLocation loc = thisJoinPoint.getSourceLocation();
 		String aux = loc.getFileName() + ":" + loc.getLine();
-		if(list.containsKey(aux))
-			list.get(aux).add(g);
+		if(widgetsList.containsKey(aux))
+			widgetsList.get(aux).add(g);
 		else{
 			Set<Widget> auxList = new HashSet<Widget>();
 			auxList.add(g);
-			list.put(aux, auxList);
+			widgetsList.put(aux, auxList);
 		}
 	}
 
 	after(Widget g): call(* Widget+.*(..)) && target(g)  && scope() {
 		SourceLocation loc = thisJoinPoint.getSourceLocation();
 		String aux = loc.getFileName() + ":" + loc.getLine();
-		if(list.containsKey(aux)) {
-			if(list.get(aux).add(g))
-				System.out.println(list.toString());
-		}
+		if(widgetsList.containsKey(aux))
+			widgetsList.get(aux).add(g);
 		else{
 			Set<Widget> auxList = new HashSet<Widget>();
 			auxList.add(g);
-			list.put(aux, auxList);
-			System.out.println(list.toString());
+			widgetsList.put(aux, auxList);
 		}
 	}
 
