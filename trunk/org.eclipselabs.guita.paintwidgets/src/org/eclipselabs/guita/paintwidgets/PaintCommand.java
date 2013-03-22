@@ -24,7 +24,7 @@ import org.eclipselabs.variableanalyzer.service.VariableResolver;
 
 public class PaintCommand extends AbstractHandler{
 
-	public static final int PORT_IN = 8082;
+	public static final int PORT_IN = 8083;
 
 
 	@Override
@@ -65,8 +65,8 @@ public class PaintCommand extends AbstractHandler{
 							oos = new ObjectOutputStream(socket.getOutputStream());
 							oos.writeObject(loc);
 							oos.writeObject(color);
-
-							ViewTable.getInstance().addWidget(text, type, loc);
+							
+							ViewTable.getInstance().addWidget(text, type, loc, color);
 
 						} catch (UnknownHostException e) {
 							e.printStackTrace();

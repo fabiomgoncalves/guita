@@ -1,6 +1,5 @@
 package org.eclipselabs.guita.paintwidgets.view;
 
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,6 +24,13 @@ public class ViewTable extends ViewPart{
 	private TableViewer viewer;
 	private List<WidgetReference> widgets = new ArrayList<WidgetReference>();
 
+	private static final Image redImage = Activator.getImageDescriptor("Icons/Red.png").createImage();
+	private static final Image blueImage = Activator.getImageDescriptor("Icons/Blue.png").createImage();
+	private static final Image greenImage = Activator.getImageDescriptor("Icons/Green.png").createImage();
+	private static final Image yellowImage = Activator.getImageDescriptor("Icons/Yellow.jpg").createImage();
+	private static final Image pinkImage = Activator.getImageDescriptor("Icons/Pink.jpg").createImage();
+
+
 	public ViewTable(){
 		instance = this;
 	}
@@ -33,34 +39,62 @@ public class ViewTable extends ViewPart{
 		return instance;
 	}
 
-	public void addWidget(String name, String type, String localization){
-		widgets.add(new WidgetReference(name, type, localization));
+	public void addWidget(String name, String type, String localization, String color){
+		widgets.add(new WidgetReference(name, type, localization, color));
 		viewer.refresh();
 	}
-	
+
 	public List<WidgetReference> getWidgetsList(){
 		return widgets;
 	}
-	
+
 	public void refresh(){
 		viewer.refresh();
 	}
 
 
 	private class TableLabelProvider extends LabelProvider implements ITableLabelProvider {
-		public Image getColumnImage(Object element, int columnIndex) {
-			return null;
+		public String getColumnText(Object element, int columnIndex) {
+			WidgetReference w = (WidgetReference) element;
+			String result = "";
+			switch(columnIndex){
+			case 0:
+				result = w.getName();
+				break;
+			case 1:
+				result = w.getType();
+				break;
+			case 2:
+				result = w.getLocalization();
+				break;
+			case 3:
+				break;
+			default:
+				result = "";
+			}
+			return result;
 		}
 
-		public String getColumnText(Object element, int columnIndex) {
-			WidgetReference p = (WidgetReference) element;
-
-			if(columnIndex == 0)
-				return p.getName();
-			else if(columnIndex == 1)
-				return p.getType();
-			else
-				return p.getLocalization();
+		public Image getColumnImage(Object element, int columnIndex) {
+			if(columnIndex == 3){
+				WidgetReference w = (WidgetReference) element;
+				if(w.getColor().equals("Red")){
+					return redImage;
+				}
+				if(w.getColor().equals("Blue")){
+					return blueImage;
+				}
+				if(w.getColor().equals("Green")){
+					return greenImage;
+				}
+				if(w.getColor().equals("Yellow")){
+					return yellowImage;
+				}
+				if(w.getColor().equals("Pink")){
+					return pinkImage;
+				}
+			}
+			return null;
 		}
 	}
 
@@ -79,8 +113,8 @@ public class ViewTable extends ViewPart{
 	}
 
 	private void createColumns(final Composite parent, final TableViewer viewer) {
-		String[] titles = { "Name", "Type", "Localization"};
-		int[] bounds = { 100, 100, 100};
+		String[] titles = { "Name", "Type", "Localization", "Color"};
+		int[] bounds = { 100, 100, 100, 100};
 
 		for(int i = 0; i != titles.length; i++){
 			createTableViewerColumn(titles[i], bounds[i]);

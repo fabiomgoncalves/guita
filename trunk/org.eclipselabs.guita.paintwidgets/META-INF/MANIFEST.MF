@@ -14,3 +14,4 @@ Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Import-Package: org.eclipse.jface.text,
  org.eclipse.ui.part
+Bundle-Activator: org.eclipselabs.guita.paintwidgets.view.Activator
