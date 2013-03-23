@@ -5,7 +5,6 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Iterator;
-import java.util.List;
 
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
@@ -33,7 +32,6 @@ public class RemoveCommand extends AbstractHandler{
 		ISelection selection = view.getSite().getSelectionProvider().getSelection();
 
 		if (selection != null && selection instanceof IStructuredSelection) {
-			List<WidgetReference> widgets = view.getWidgetsList();
 			IStructuredSelection sel = (IStructuredSelection) selection;
 
 			Iterator<WidgetReference> iterator = sel.iterator();
@@ -44,6 +42,8 @@ public class RemoveCommand extends AbstractHandler{
 					socket = new Socket("localhost", PORT_IN);
 					oos = new ObjectOutputStream(socket.getOutputStream());
 					oos.writeObject(w.getLocalization());
+
+					view.removeWidget(w);
 
 				} catch (UnknownHostException e) {
 					e.printStackTrace();
@@ -63,8 +63,6 @@ public class RemoveCommand extends AbstractHandler{
 						}
 					}
 				}
-
-				widgets.remove(w);
 			}
 			view.refresh();
 		}
