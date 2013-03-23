@@ -40,8 +40,24 @@ public class ViewTable extends ViewPart{
 	}
 
 	public void addWidget(String name, String type, String localization, String color){
-		widgets.add(new WidgetReference(name, type, localization, color));
+		WidgetReference aux = new WidgetReference(name, type, localization, color);
+
+		if(widgets.contains(aux)){
+			for(WidgetReference w: widgets){
+				if(w.equals(aux)){
+					if(!w.getColor().equals(color)){
+						w.setColor(color);
+					}
+				}
+			}
+		}else{
+			widgets.add(new WidgetReference(name, type, localization, color));
+		}
 		viewer.refresh();
+	}
+
+	public void removeWidget(WidgetReference w){
+		widgets.remove(w);
 	}
 
 	public List<WidgetReference> getWidgetsList(){
