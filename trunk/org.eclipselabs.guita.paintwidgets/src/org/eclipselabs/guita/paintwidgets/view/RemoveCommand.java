@@ -17,7 +17,7 @@ import org.eclipse.ui.handlers.HandlerUtil;
 
 public class RemoveCommand extends AbstractHandler{
 
-	public static final int PORT_IN = 8082;
+	public static final int PORT_IN = 8080;
 
 	@SuppressWarnings("unchecked")
 	@Override
