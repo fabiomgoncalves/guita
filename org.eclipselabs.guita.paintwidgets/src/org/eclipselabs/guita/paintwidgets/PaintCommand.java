@@ -13,6 +13,7 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.text.TextSelection;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IPersistable;
@@ -24,14 +25,13 @@ import org.eclipselabs.variableanalyzer.service.VariableResolver;
 
 public class PaintCommand extends AbstractHandler{
 
-	public static final int PORT_IN = 8083;
+	public static final int PORT_IN = 8080;
+	Socket socket = null;
+	ObjectOutputStream oos = null;
 
 
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
-
-		Socket socket = null;
-		ObjectOutputStream oos = null;
 		String color = "";
 
 		ISelection selection =  PlatformUI.getWorkbench().getActiveWorkbenchWindow().getSelectionService().getSelection();
@@ -48,52 +48,69 @@ public class PaintCommand extends AbstractHandler{
 			if(pers instanceof FileEditorInput) {
 				FileEditorInput fileInput = (FileEditorInput) pers;
 				String type = VariableResolver.resolve(fileInput.getFile(), text, line);
-
 				String loc = fileInput.getPath().lastSegment() + ":" + line;
+
 				try {
 					color = event.getCommand().getName();
-				} catch (NotDefinedException e1) {
+				} catch (NotDefinedException e) {
+					e.printStackTrace();
 				}
+
 
 				if(type != null) {
 					String message = "\"" + text + "\"" + "\n" + type + "\"" + "\n" + loc;
-					MessageDialog.open(MessageDialog.INFORMATION, editor.getSite().getShell(), "Paint", message, SWT.NONE);
 
 					if(type.indexOf("org.eclipse.swt.widgets.") > -1) {
-						try {
-							socket = new Socket("localhost", PORT_IN);
-							oos = new ObjectOutputStream(socket.getOutputStream());
-							oos.writeObject(loc);
-							oos.writeObject(color);
-							
-							ViewTable.getInstance().addWidget(text, type, loc, color);
-
-						} catch (UnknownHostException e) {
-							e.printStackTrace();
-						} catch (IOException e) {
-							e.printStackTrace();
-						} finally {
-							if(oos != null){
-								try {
-									oos.close();
-								} catch(IOException e){
-								}
+						if(ViewTable.getInstance().paintedWidget(text, type, loc, color)){
+							MessageBox messageDialog = new MessageBox(editor.getSite().getShell(), SWT.ICON_QUESTION | SWT.OK | SWT.CANCEL);
+							messageDialog.setText("Paint");
+							messageDialog.setMessage("This widget is already painted. Do you wish to change its color?");
+							if(messageDialog.open() == SWT.OK){
+								sendRequest(text, type, loc, color);
 							}
-							if(socket != null){
-								try {
-									socket.close();
-								} catch(IOException e){
-								}
-							}
+						}else {
+							sendRequest(text, type, loc, color);
 						}
+					}
+					else {
+						MessageDialog.open(MessageDialog.INFORMATION, editor.getSite().getShell(), "Variable", message, SWT.NONE);
 					}
 				}
 				else {
-					MessageDialog.open(MessageDialog.ERROR, editor.getSite().getShell(), "Variable", "Not found", SWT.NONE);
+					MessageDialog.open(MessageDialog.ERROR, editor.getSite().getShell(), "Variable", "Variable Not found", SWT.NONE);
 				}
 			}
 		}
 		return null;
+	}
+
+	public void sendRequest(String text, String type, String loc, String color){
+		try {
+			socket = new Socket("localhost", PORT_IN);
+			oos = new ObjectOutputStream(socket.getOutputStream());
+			oos.writeObject(loc);
+			oos.writeObject(color);
+
+			ViewTable.getInstance().addWidget(text, type, loc, color);
+
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			if(oos != null){
+				try {
+					oos.close();
+				} catch(IOException e){
+				}
+			}
+			if(socket != null){
+				try {
+					socket.close();
+				} catch(IOException e){
+				}
+			}
+		}
 	}
 
 

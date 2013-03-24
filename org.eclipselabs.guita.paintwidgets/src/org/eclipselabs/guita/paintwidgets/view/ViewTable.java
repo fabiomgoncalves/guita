@@ -41,18 +41,22 @@ public class ViewTable extends ViewPart{
 
 	public void addWidget(String name, String type, String localization, String color){
 		WidgetReference aux = new WidgetReference(name, type, localization, color);
+		boolean found = false;
 
-		if(widgets.contains(aux)){
+		if(!widgets.isEmpty()){
 			for(WidgetReference w: widgets){
-				if(w.equals(aux)){
-					if(!w.getColor().equals(color)){
-						w.setColor(color);
+				if(w.getName().equals(aux.getName())){
+					if(!w.getColor().equals(aux.getColor())){
+						w.setColor(aux.getColor());
+						found = true;
 					}
 				}
 			}
-		}else{
-			widgets.add(new WidgetReference(name, type, localization, color));
 		}
+		if(widgets.isEmpty() || !found){
+			widgets.add(aux);
+		}
+
 		viewer.refresh();
 	}
 
@@ -62,6 +66,19 @@ public class ViewTable extends ViewPart{
 
 	public List<WidgetReference> getWidgetsList(){
 		return widgets;
+	}
+
+	public boolean paintedWidget(String name, String type, String localization, String color){
+		WidgetReference aux = new WidgetReference(name, type, localization, color);
+
+		if(!widgets.isEmpty()){
+			for(WidgetReference w: widgets){
+				if(w.getName().equals(aux.getName())){
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	public void refresh(){
