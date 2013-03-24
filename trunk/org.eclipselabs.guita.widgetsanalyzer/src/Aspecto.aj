@@ -2,10 +2,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -23,7 +21,6 @@ public aspect Aspecto {
 	ObjectInputStream ois = null;
 
 	private Map<String , Set<Widget>> widgetsList = new HashMap<String, Set<Widget>>();
-	private List<Widget> paintedWidgets = new ArrayList<Widget>();
 
 	private Color normalBackground = new Color(null, 240, 240, 240);
 
@@ -56,11 +53,7 @@ public aspect Aspecto {
 
 								@Override
 								public void run() {
-									if(paintedWidgets.contains(actualWidget)){
-										removePaint(actualWidget);
-									} else {
-										paint(actualWidget);
-									}
+									paint(actualWidget);
 								}
 							});
 						}
@@ -107,16 +100,11 @@ public aspect Aspecto {
 		} else {
 			c.setBackground(new Color(null, 255, 0, 255));
 		}
-
-		if(!paintedWidgets.contains(g))
-			paintedWidgets.add(g);
 	}
 
 	public void removePaint(Widget g){
 		Control c = (Control)g;
 		c.setBackground(normalBackground);
-
-		paintedWidgets.remove(g);
 	}
 
 	after() returning (Widget g): call(Widget+.new(..)) && scope() {
