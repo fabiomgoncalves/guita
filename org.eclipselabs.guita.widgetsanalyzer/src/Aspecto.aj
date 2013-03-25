@@ -2,8 +2,10 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -19,10 +21,11 @@ public aspect Aspecto {
 	private ServerSocket serverSocket;
 	Socket socket = null;
 	ObjectInputStream ois = null;
+	
+	private Color normalBackground = new Color(null, 240, 240, 240);
 
 	private Map<String , Set<Widget>> widgetsList = new HashMap<String, Set<Widget>>();
-
-	private Color normalBackground = new Color(null, 240, 240, 240);
+	private List<Widget> paintedWidgets = new ArrayList<Widget>();
 
 	protected pointcut scope() : !within(Aspecto);
 
@@ -45,6 +48,7 @@ public aspect Aspecto {
 					socket = serverSocket.accept();
 					ois = new ObjectInputStream(socket.getInputStream());
 					String request = (String)ois.readObject();
+					final String color = (String)ois.readObject();
 
 					if(widgetsList.containsKey(request)){	
 						for(Widget g: widgetsList.get(request)){
@@ -53,7 +57,11 @@ public aspect Aspecto {
 
 								@Override
 								public void run() {
-									paint(actualWidget);
+									if(paintedWidgets.contains(actualWidget) && color.equals(null)){
+										removePaint(actualWidget);
+									}else{
+										paint(actualWidget, color);
+									}
 								}
 							});
 						}
@@ -79,15 +87,8 @@ public aspect Aspecto {
 		}
 	}
 
-	public void paint(Widget g){
+	public void paint(Widget g, String color){
 		Control c = (Control)g;
-		String color = "";
-
-		try {
-			color = (String)ois.readObject();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
 
 		if(color.equals("Red")){
 			c.setBackground(new Color(null, 255, 0, 0));
