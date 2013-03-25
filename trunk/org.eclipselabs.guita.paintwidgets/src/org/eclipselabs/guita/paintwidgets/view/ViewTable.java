@@ -60,10 +60,6 @@ public class ViewTable extends ViewPart{
 		viewer.refresh();
 	}
 
-	public void removeWidget(WidgetReference w){
-		widgets.remove(w);
-	}
-
 	public List<WidgetReference> getWidgetsList(){
 		return widgets;
 	}
@@ -147,7 +143,7 @@ public class ViewTable extends ViewPart{
 
 	private void createColumns(final Composite parent, final TableViewer viewer) {
 		String[] titles = { "Name", "Type", "Localization", "Color"};
-		int[] bounds = { 100, 100, 100, 100};
+		int[] bounds = { 150, 200, 120, 100};
 
 		for(int i = 0; i != titles.length; i++){
 			createTableViewerColumn(titles[i], bounds[i]);
@@ -157,9 +153,10 @@ public class ViewTable extends ViewPart{
 	private TableViewerColumn createTableViewerColumn(String title, int bound) {
 		final TableViewerColumn viewerColumn = new TableViewerColumn(viewer, SWT.NONE);
 		final TableColumn column = viewerColumn.getColumn();
+		
 		column.setText(title);
 		column.setWidth(bound);
-		column.setResizable(true);
+		column.setResizable(false);
 		column.setMoveable(true);
 		return viewerColumn;
 	}
