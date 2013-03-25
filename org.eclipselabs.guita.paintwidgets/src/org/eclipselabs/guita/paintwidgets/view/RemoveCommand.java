@@ -18,6 +18,8 @@ import org.eclipse.ui.handlers.HandlerUtil;
 public class RemoveCommand extends AbstractHandler{
 
 	public static final int PORT_IN = 8080;
+	
+	private final String color = null;
 
 	@SuppressWarnings("unchecked")
 	@Override
@@ -29,6 +31,7 @@ public class RemoveCommand extends AbstractHandler{
 		IWorkbenchWindow window = HandlerUtil.getActiveWorkbenchWindow(event);
 		IWorkbenchPage page = window.getActivePage();
 		ViewTable view = (ViewTable) page.findView(ViewTable.ID);
+		System.out.println(view.getSite().getSelectionProvider().getSelection());
 		ISelection selection = view.getSite().getSelectionProvider().getSelection();
 
 		if (selection != null && selection instanceof IStructuredSelection) {
@@ -42,8 +45,9 @@ public class RemoveCommand extends AbstractHandler{
 					socket = new Socket("localhost", PORT_IN);
 					oos = new ObjectOutputStream(socket.getOutputStream());
 					oos.writeObject(w.getLocalization());
+					oos.writeObject(color);
 
-					view.removeWidget(w);
+					view.getWidgetsList().remove(w);
 
 				} catch (UnknownHostException e) {
 					e.printStackTrace();
