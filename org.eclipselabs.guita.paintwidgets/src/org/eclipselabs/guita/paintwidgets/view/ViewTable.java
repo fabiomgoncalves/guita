@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.jface.viewers.ArrayContentProvider;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.TableViewer;
@@ -13,6 +14,9 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
 public class ViewTable extends ViewPart{
@@ -35,8 +39,19 @@ public class ViewTable extends ViewPart{
 		instance = this;
 	}
 
-	public static ViewTable getInstance(){
+	public static ViewTable getInstance() {
+		IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
+		try {			
+			page.showView(ID);			
+		} 
+		catch (PartInitException e) {
+			e.printStackTrace();
+		}	
 		return instance;
+	}
+	
+	public IStructuredSelection getSelection() {
+		return (IStructuredSelection) viewer.getSelection();
 	}
 
 	public void addWidget(String name, String type, String localization, String color){
