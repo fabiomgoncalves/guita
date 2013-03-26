@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+   <extension
+         point="org.eclipse.ui.views">
+      <category
+            name="Produtor Fragmentos"
+            id="ProdutorFragmentos">
+      </category>
+      <view
+            allowMultiple="false"
+            category="ProdutorFragmentos"
+            class="pt.iscte.dcti.umlviewer.view.UMLViewer"
+            icon="icons/sample.gif"
+            id="pt.iscte.dcti.umlviewer.viewer"
+            name="UML Viewer">
+      </view>
+   </extension>
+
+</plugin>
