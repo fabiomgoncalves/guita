@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Widgetsanalyzer
+Bundle-SymbolicName: org.eclipselabs.guita.widgetsanalyzer
+Bundle-Version: 1.0.0.qualifier
+Export-Package: .
+Require-Bundle: org.eclipse.swt;bundle-version="0.0.0",
+ com.google.guava;bundle-version="0.0.0",
+ org.aspectj.runtime
