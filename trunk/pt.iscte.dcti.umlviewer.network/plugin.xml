@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.ui.commands">
+      <category
+            id="pt.iscte.dcti.umlviewer.network.commands.category"
+            name="Signal Category">
+      </category>
+      <command
+            categoryId="pt.iscte.dcti.umlviewer.network.commands.category"
+            id="pt.iscte.dcti.umlviewer.network.commands.SignalCommand"
+            name="Signal">
+      </command>
+   </extension>
+   <extension
+         point="org.eclipse.ui.handlers">
+      <handler
+            class="pt.iscte.dcti.umlviewer.network.handlers.SignalRequest"
+            commandId="pt.iscte.dcti.umlviewer.network.commands.SignalCommand">
+      </handler>
+   </extension>
+   <extension
+         point="org.eclipse.ui.bindings">
+      <key
+            commandId="pt.iscte.dcti.umlviewer.network.commands.SignalCommand"
+            contextId="org.eclipse.ui.contexts.window"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="M1+6">
+      </key>
+   </extension>
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            locationURI="menu:org.eclipse.ui.main.menu?after=additions">
+         <menu
+               id="pt.iscte.dcti.umlviewer.network.menus.umlviewermenu"
+               label="UMLViewer"
+               mnemonic="U">
+            <command
+                  commandId="pt.iscte.dcti.umlviewer.network.commands.SignalCommand"
+                  id="pt.iscte.dcti.umlviewer.network.menus.SignalCommand"
+                  mnemonic="S">
+            </command>
+         </menu>
+      </menuContribution>
+   </extension>
+
+</plugin>
