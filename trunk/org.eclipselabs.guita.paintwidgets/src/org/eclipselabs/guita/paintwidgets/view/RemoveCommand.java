@@ -28,15 +28,15 @@ public class RemoveCommand extends AbstractHandler{
 		Socket socket = null;
 		ObjectOutputStream oos = null;
 
-		IWorkbenchWindow window = HandlerUtil.getActiveWorkbenchWindow(event);
-		IWorkbenchPage page = window.getActivePage();
-		ViewTable view = (ViewTable) page.findView(ViewTable.ID);
-		System.out.println(view.getSite().getSelectionProvider().getSelection());
-		ISelection selection = view.getSite().getSelectionProvider().getSelection();
+//		IWorkbenchWindow window = HandlerUtil.getActiveWorkbenchWindow(event);
+//		IWorkbenchPage page = window.getActivePage();
+		ViewTable view = ViewTable.getInstance();
+//		System.out.println(view.getSite().getSelectionProvider().getSelection());
+//		ISelection selection = view.getSite().getSelectionProvider().getSelection();
 
-		if (selection != null && selection instanceof IStructuredSelection) {
-			IStructuredSelection sel = (IStructuredSelection) selection;
-
+		IStructuredSelection sel = view.getSelection();
+		
+		if (sel != null) {
 			Iterator<WidgetReference> iterator = sel.iterator();
 			while (iterator.hasNext()) {
 				WidgetReference w = iterator.next();
@@ -47,6 +47,7 @@ public class RemoveCommand extends AbstractHandler{
 					oos.writeObject(w.getLocalization());
 					oos.writeObject(color);
 
+					// andre: a view nao devia expor a lista
 					view.getWidgetsList().remove(w);
 
 				} catch (UnknownHostException e) {

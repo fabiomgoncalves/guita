@@ -83,6 +83,7 @@
    <extension
          point="org.eclipse.ui.views">
       <view
+            category="org.eclipselabs.guita.category"
             class="org.eclipselabs.guita.paintwidgets.view.ViewTable"
             id="org.eclipselabs.guita.paintwidgets.ViewTable"
             name="ViewTable"
