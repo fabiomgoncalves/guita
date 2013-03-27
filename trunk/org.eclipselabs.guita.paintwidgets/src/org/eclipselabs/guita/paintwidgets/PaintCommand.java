@@ -54,6 +54,8 @@ public class PaintCommand extends AbstractHandler{
 				} catch (NotDefinedException e) {
 					e.printStackTrace();
 				}
+				
+				WidgetRequest request = new WidgetRequest(loc, color);
 
 				if(type != null) {
 					String message = "\"" + text + "\"" + "\n" + type + "\"" + "\n" + loc;
@@ -64,10 +66,10 @@ public class PaintCommand extends AbstractHandler{
 							messageDialog.setText("Paint");
 							messageDialog.setMessage("This widget is already painted. Do you wish to change its color?");
 							if(messageDialog.open() == SWT.OK){
-								sendRequest(text, type, loc, color);
+								sendRequest(text, type, loc, color, request);
 							}
 						}else {
-							sendRequest(text, type, loc, color);
+							sendRequest(text, type, loc, color, request);
 						}
 					}
 					else {
@@ -82,12 +84,11 @@ public class PaintCommand extends AbstractHandler{
 		return null;
 	}
 
-	public void sendRequest(String text, String type, String loc, String color){
+	public void sendRequest(String text, String type, String loc, String color, WidgetRequest request){
 		try {
 			socket = new Socket("localhost", PORT_IN);
 			oos = new ObjectOutputStream(socket.getOutputStream());
-			oos.writeObject(loc);
-			oos.writeObject(color);
+			oos.writeObject(request);
 
 			ViewTable.getInstance().addWidget(text, type, loc, color);
 
