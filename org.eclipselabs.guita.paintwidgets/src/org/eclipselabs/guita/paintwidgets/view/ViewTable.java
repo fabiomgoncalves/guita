@@ -75,8 +75,9 @@ public class ViewTable extends ViewPart{
 		viewer.refresh();
 	}
 
-	public List<WidgetReference> getWidgetsList(){
-		return widgets;
+	public void removeWidget(WidgetReference g){
+		widgets.remove(g);
+		viewer.refresh();
 	}
 
 	public boolean paintedWidget(String name, String type, String localization, String color){
@@ -109,7 +110,7 @@ public class ViewTable extends ViewPart{
 				result = w.getType();
 				break;
 			case 2:
-				result = w.getLocalization();
+				result = w.getLocation();
 				break;
 			case 3:
 				break;

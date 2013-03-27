@@ -41,7 +41,6 @@ public class PaintCommand extends AbstractHandler{
 			String text = s.getText();
 
 			IEditorPart editor = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().getActiveEditor();
-
 			IEditorInput input = editor.getEditorInput();
 			IPersistable pers = input.getPersistable();
 
@@ -55,7 +54,6 @@ public class PaintCommand extends AbstractHandler{
 				} catch (NotDefinedException e) {
 					e.printStackTrace();
 				}
-
 
 				if(type != null) {
 					String message = "\"" + text + "\"" + "\n" + type + "\"" + "\n" + loc;

@@ -9,17 +9,13 @@ import java.util.Iterator;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
-import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.ui.IWorkbenchPage;
-import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.handlers.HandlerUtil;
 
 public class RemoveCommand extends AbstractHandler{
 
 	public static final int PORT_IN = 8080;
-	
-	private final String color = null;
+
+	private String color = "";
 
 	@SuppressWarnings("unchecked")
 	@Override
@@ -28,14 +24,9 @@ public class RemoveCommand extends AbstractHandler{
 		Socket socket = null;
 		ObjectOutputStream oos = null;
 
-//		IWorkbenchWindow window = HandlerUtil.getActiveWorkbenchWindow(event);
-//		IWorkbenchPage page = window.getActivePage();
 		ViewTable view = ViewTable.getInstance();
-//		System.out.println(view.getSite().getSelectionProvider().getSelection());
-//		ISelection selection = view.getSite().getSelectionProvider().getSelection();
-
 		IStructuredSelection sel = view.getSelection();
-		
+
 		if (sel != null) {
 			Iterator<WidgetReference> iterator = sel.iterator();
 			while (iterator.hasNext()) {
@@ -44,11 +35,10 @@ public class RemoveCommand extends AbstractHandler{
 				try {
 					socket = new Socket("localhost", PORT_IN);
 					oos = new ObjectOutputStream(socket.getOutputStream());
-					oos.writeObject(w.getLocalization());
+					oos.writeObject(w.getLocation());
 					oos.writeObject(color);
 
-					// andre: a view nao devia expor a lista
-					view.getWidgetsList().remove(w);
+					view.removeWidget(w);
 
 				} catch (UnknownHostException e) {
 					e.printStackTrace();
@@ -69,7 +59,6 @@ public class RemoveCommand extends AbstractHandler{
 					}
 				}
 			}
-			view.refresh();
 		}
 		return null;
 	}
