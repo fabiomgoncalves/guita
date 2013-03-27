@@ -31,7 +31,7 @@ public aspect Aspecto {
 
 
 	public Aspecto(){
-		System.out.println("HI from TRACER!");	
+		System.out.println("HI from TRACER!");
 		try {
 			serverSocket = new ServerSocket(PORT_IN);
 		} catch (IOException e) {
@@ -57,7 +57,7 @@ public aspect Aspecto {
 
 								@Override
 								public void run() {
-									if(paintedWidgets.contains(actualWidget) && color.equals(null)){
+									if(paintedWidgets.contains(actualWidget) && color.equals("")){
 										removePaint(actualWidget);
 									}else{
 										paint(actualWidget, color);
@@ -101,6 +101,8 @@ public aspect Aspecto {
 		} else {
 			c.setBackground(new Color(null, 255, 0, 255));
 		}
+		
+		paintedWidgets.add(g);
 	}
 
 	public void removePaint(Widget g){
