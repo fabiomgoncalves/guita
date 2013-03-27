@@ -11,21 +11,19 @@ import java.util.Set;
 
 import org.aspectj.lang.reflect.SourceLocation;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Widget;
 
 
 public aspect Aspecto {
 
-	public static final int PORT_IN = 8082;
+	public static final int PORT_IN = 8080;
 	private ServerSocket serverSocket;
-	Socket socket = null;
-	ObjectInputStream ois = null;
-	
-	private Color normalBackground = new Color(null, 240, 240, 240);
 
 	private Map<String , Set<Widget>> widgetsList = new HashMap<String, Set<Widget>>();
 	private List<Widget> paintedWidgets = new ArrayList<Widget>();
+	private Map<Widget, Color> oldColors = new HashMap<Widget, Color>();
 
 	protected pointcut scope() : !within(Aspecto);
 
@@ -42,25 +40,27 @@ public aspect Aspecto {
 
 	public class RequestHandler extends Thread {
 		@Override
-		public void run() {	
+		public void run() {
+			Socket socket = null;
+			ObjectInputStream ois = null;
+			
 			while(true) {
 				try {
 					socket = serverSocket.accept();
 					ois = new ObjectInputStream(socket.getInputStream());
-					String request = (String)ois.readObject();
-					final String color = (String)ois.readObject();
+					final WidgetRequest request = (WidgetRequest)ois.readObject();
 
-					if(widgetsList.containsKey(request)){	
-						for(Widget g: widgetsList.get(request)){
+					if(widgetsList.containsKey(request.getLocation())){	
+						for(Widget g: widgetsList.get(request.getLocation())){
 							final Widget actualWidget = g;
 							actualWidget.getDisplay().syncExec(new Runnable() {
 
 								@Override
 								public void run() {
-									if(paintedWidgets.contains(actualWidget) && color.equals("")){
+									if(paintedWidgets.contains(actualWidget) && request.getColorRGB().equals(null)){
 										removePaint(actualWidget);
 									}else{
-										paint(actualWidget, color);
+										paint(actualWidget, request.getColorRGB());
 									}
 								}
 							});
@@ -87,27 +87,22 @@ public aspect Aspecto {
 		}
 	}
 
-	public void paint(Widget g, String color){
+	public void paint(Widget g, RGB color){
 		Control c = (Control)g;
+		oldColors.put(g, c.getBackground());
 
-		if(color.equals("Red")){
-			c.setBackground(new Color(null, 255, 0, 0));
-		} else if(color.equals("Blue")){
-			c.setBackground(new Color(null, 0, 0, 255));
-		} else if(color.equals("Green")){
-			c.setBackground(new Color(null, 0, 255, 0));
-		} else if(color.equals("Yellow")){
-			c.setBackground(new Color(null, 255, 255, 0));
-		} else {
-			c.setBackground(new Color(null, 255, 0, 255));
-		}
-		
+		c.setBackground(new Color(null, color));
+
 		paintedWidgets.add(g);
 	}
 
 	public void removePaint(Widget g){
 		Control c = (Control)g;
-		c.setBackground(normalBackground);
+
+		c.setBackground(oldColors.get(g));
+
+		oldColors.remove(g);
+		paintedWidgets.remove(g);
 	}
 
 	after() returning (Widget g): call(Widget+.new(..)) && scope() {
