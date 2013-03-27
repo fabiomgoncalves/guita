@@ -4,13 +4,13 @@ public class WidgetReference {
 
 	private String name;
 	private String type;
-	private String localization;
+	private String location;
 	private String color;
 
-	public WidgetReference(String name, String type, String localization, String color){
+	public WidgetReference(String name, String type, String location, String color){
 		this.name = name;
 		this.type = type;
-		this.localization = localization;
+		this.location = location;
 		this.color = color;
 	}
 	
@@ -22,8 +22,8 @@ public class WidgetReference {
 		return type;
 	}
 	
-	public String getLocalization(){
-		return localization;
+	public String getLocation(){
+		return location;
 	}
 	
 	public String getColor(){
