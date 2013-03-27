@@ -11,6 +11,9 @@ import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TableViewerColumn;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.ImageData;
+import org.eclipse.swt.graphics.PaletteData;
+import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
@@ -26,13 +29,7 @@ public class ViewTable extends ViewPart{
 	private static ViewTable instance;
 
 	private TableViewer viewer;
-	private List<WidgetReference> widgets = new ArrayList<WidgetReference>();
-
-	private static final Image redImage = Activator.getImageDescriptor("Icons/Red.png").createImage();
-	private static final Image blueImage = Activator.getImageDescriptor("Icons/Blue.png").createImage();
-	private static final Image greenImage = Activator.getImageDescriptor("Icons/Green.png").createImage();
-	private static final Image yellowImage = Activator.getImageDescriptor("Icons/Yellow.jpg").createImage();
-	private static final Image pinkImage = Activator.getImageDescriptor("Icons/Pink.jpg").createImage();
+	private List<WidgetTable> widgets = new ArrayList<WidgetTable>();
 
 
 	public ViewTable(){
@@ -55,11 +52,11 @@ public class ViewTable extends ViewPart{
 	}
 
 	public void addWidget(String name, String type, String localization, String color){
-		WidgetReference aux = new WidgetReference(name, type, localization, color);
+		WidgetTable aux = new WidgetTable(name, type, localization, color);
 		boolean found = false;
 
 		if(!widgets.isEmpty()){
-			for(WidgetReference w: widgets){
+			for(WidgetTable w: widgets){
 				if(w.getName().equals(aux.getName())){
 					if(!w.getColor().equals(aux.getColor())){
 						w.setColor(aux.getColor());
@@ -75,16 +72,16 @@ public class ViewTable extends ViewPart{
 		viewer.refresh();
 	}
 
-	public void removeWidget(WidgetReference g){
+	public void removeWidget(WidgetTable g){
 		widgets.remove(g);
 		viewer.refresh();
 	}
 
 	public boolean paintedWidget(String name, String type, String localization, String color){
-		WidgetReference aux = new WidgetReference(name, type, localization, color);
+		WidgetTable aux = new WidgetTable(name, type, localization, color);
 
 		if(!widgets.isEmpty()){
-			for(WidgetReference w: widgets){
+			for(WidgetTable w: widgets){
 				if(w.getName().equals(aux.getName())){
 					return true;
 				}
@@ -100,7 +97,7 @@ public class ViewTable extends ViewPart{
 
 	private class TableLabelProvider extends LabelProvider implements ITableLabelProvider {
 		public String getColumnText(Object element, int columnIndex) {
-			WidgetReference w = (WidgetReference) element;
+			WidgetTable w = (WidgetTable) element;
 			String result = "";
 			switch(columnIndex){
 			case 0:
@@ -121,25 +118,15 @@ public class ViewTable extends ViewPart{
 		}
 
 		public Image getColumnImage(Object element, int columnIndex) {
+			Image image = null;
 			if(columnIndex == 3){
-				WidgetReference w = (WidgetReference) element;
-				if(w.getColor().equals("Red")){
-					return redImage;
-				}
-				if(w.getColor().equals("Blue")){
-					return blueImage;
-				}
-				if(w.getColor().equals("Green")){
-					return greenImage;
-				}
-				if(w.getColor().equals("Yellow")){
-					return yellowImage;
-				}
-				if(w.getColor().equals("Pink")){
-					return pinkImage;
-				}
+				WidgetTable w = (WidgetTable) element;
+				
+				PaletteData paletteData = new PaletteData(new RGB[] {w.getColorRGB()});
+				ImageData imageData = new ImageData(55,55,1,paletteData);
+				image = new Image(null,imageData);
 			}
-			return null;
+			return image;
 		}
 	}
 
@@ -158,7 +145,7 @@ public class ViewTable extends ViewPart{
 	}
 
 	private void createColumns(final Composite parent, final TableViewer viewer) {
-		String[] titles = { "Name", "Type", "Localization", "Color"};
+		String[] titles = {"Name", "Type", "Location", "Color"};
 		int[] bounds = { 150, 200, 120, 100};
 
 		for(int i = 0; i != titles.length; i++){
