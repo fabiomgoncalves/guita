@@ -41,6 +41,7 @@ public class WidgetTable {
 
 	public void setColor(String color){
 		this.color = color;
+		setColorRGB(color);
 	}
 
 	public void setColorRGB(String color){
