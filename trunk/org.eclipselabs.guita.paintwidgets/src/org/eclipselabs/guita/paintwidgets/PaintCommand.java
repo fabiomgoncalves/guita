@@ -54,22 +54,20 @@ public class PaintCommand extends AbstractHandler{
 				} catch (NotDefinedException e) {
 					e.printStackTrace();
 				}
-				
-				WidgetRequest request = new WidgetRequest(loc, color);
 
 				if(type != null) {
 					String message = "\"" + text + "\"" + "\n" + type + "\"" + "\n" + loc;
 
 					if(type.indexOf("org.eclipse.swt.widgets.") > -1) {
-						if(ViewTable.getInstance().paintedWidget(text, type, loc, color)){
+						if(ViewTable.getInstance().alreadyPainted(text, type, loc, color)){
 							MessageBox messageDialog = new MessageBox(editor.getSite().getShell(), SWT.ICON_QUESTION | SWT.OK | SWT.CANCEL);
 							messageDialog.setText("Paint");
 							messageDialog.setMessage("This widget is already painted. Do you wish to change its color?");
 							if(messageDialog.open() == SWT.OK){
-								sendRequest(text, type, loc, color, request);
+								sendRequest(text, type, loc, color);
 							}
 						}else {
-							sendRequest(text, type, loc, color, request);
+							sendRequest(text, type, loc, color);
 						}
 					}
 					else {
@@ -84,11 +82,12 @@ public class PaintCommand extends AbstractHandler{
 		return null;
 	}
 
-	public void sendRequest(String text, String type, String loc, String color, WidgetRequest request){
+	public void sendRequest(String text, String type, String loc, String color){
 		try {
 			socket = new Socket("localhost", PORT_IN);
 			oos = new ObjectOutputStream(socket.getOutputStream());
-			oos.writeObject(request);
+			oos.writeObject(loc);
+			oos.writeObject(color);
 
 			ViewTable.getInstance().addWidget(text, type, loc, color);
 

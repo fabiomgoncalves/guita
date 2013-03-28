@@ -77,7 +77,7 @@ public class ViewTable extends ViewPart{
 		viewer.refresh();
 	}
 
-	public boolean paintedWidget(String name, String type, String localization, String color){
+	public boolean alreadyPainted(String name, String type, String localization, String color){
 		WidgetTable aux = new WidgetTable(name, type, localization, color);
 
 		if(!widgets.isEmpty()){
@@ -123,7 +123,7 @@ public class ViewTable extends ViewPart{
 				WidgetTable w = (WidgetTable) element;
 				
 				PaletteData paletteData = new PaletteData(new RGB[] {w.getColorRGB()});
-				ImageData imageData = new ImageData(55,55,1,paletteData);
+				ImageData imageData = new ImageData(70,25,1,paletteData);
 				image = new Image(null,imageData);
 			}
 			return image;
