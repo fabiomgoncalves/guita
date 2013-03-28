@@ -2,12 +2,12 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.aspectj.lang.reflect.SourceLocation;
 import org.eclipse.swt.graphics.Color;
@@ -22,8 +22,10 @@ public aspect Aspecto {
 	private ServerSocket serverSocket;
 
 	private Map<String , Set<Widget>> widgetsList = new HashMap<String, Set<Widget>>();
-	private List<Widget> paintedWidgets = new ArrayList<Widget>();
-	private Map<Widget, Color> oldColors = new HashMap<Widget, Color>();
+
+	private Map<Widget, Color> paintedWidgets = new HashMap<Widget, Color>();
+	
+	private List<String> pendingRequests = new ArrayList<String>();
 
 	protected pointcut scope() : !within(Aspecto);
 
@@ -43,12 +45,15 @@ public aspect Aspecto {
 		public void run() {
 			Socket socket = null;
 			ObjectInputStream ois = null;
-			
+
 			while(true) {
 				try {
 					socket = serverSocket.accept();
 					ois = new ObjectInputStream(socket.getInputStream());
-					final WidgetRequest request = (WidgetRequest)ois.readObject();
+					String location = (String)ois.readObject();
+					String color = (String)ois.readObject();
+
+					final WidgetRequest request = new WidgetRequest(location, color);
 
 					if(widgetsList.containsKey(request.getLocation())){	
 						for(Widget g: widgetsList.get(request.getLocation())){
@@ -57,7 +62,7 @@ public aspect Aspecto {
 
 								@Override
 								public void run() {
-									if(paintedWidgets.contains(actualWidget) && request.getColorRGB().equals(null)){
+									if(paintedWidgets.containsKey(actualWidget) && request.getColor().equals("")){
 										removePaint(actualWidget);
 									}else{
 										paint(actualWidget, request.getColorRGB());
@@ -89,19 +94,18 @@ public aspect Aspecto {
 
 	public void paint(Widget g, RGB color){
 		Control c = (Control)g;
-		oldColors.put(g, c.getBackground());
+
+		if(!paintedWidgets.containsKey(g))
+			paintedWidgets.put(g, c.getBackground());
 
 		c.setBackground(new Color(null, color));
-
-		paintedWidgets.add(g);
 	}
 
 	public void removePaint(Widget g){
 		Control c = (Control)g;
 
-		c.setBackground(oldColors.get(g));
+		c.setBackground(paintedWidgets.get(g));
 
-		oldColors.remove(g);
 		paintedWidgets.remove(g);
 	}
 
