@@ -13,6 +13,7 @@ import org.aspectj.lang.reflect.SourceLocation;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Widget;
 
 
@@ -24,7 +25,7 @@ public aspect Aspecto {
 	private Map<String , Set<Widget>> widgetsList = new HashMap<String, Set<Widget>>();
 
 	private Map<Widget, Color> paintedWidgets = new HashMap<Widget, Color>();
-	
+
 	private List<String> pendingRequests = new ArrayList<String>();
 
 	protected pointcut scope() : !within(Aspecto);
@@ -50,27 +51,9 @@ public aspect Aspecto {
 				try {
 					socket = serverSocket.accept();
 					ois = new ObjectInputStream(socket.getInputStream());
-					String location = (String)ois.readObject();
-					String color = (String)ois.readObject();
+					final Request request = (Request) ois.readObject();
 
-					final WidgetRequest request = new WidgetRequest(location, color);
-
-					if(widgetsList.containsKey(request.getLocation())){	
-						for(Widget g: widgetsList.get(request.getLocation())){
-							final Widget actualWidget = g;
-							actualWidget.getDisplay().syncExec(new Runnable() {
-
-								@Override
-								public void run() {
-									if(paintedWidgets.containsKey(actualWidget) && request.getColor().equals("")){
-										removePaint(actualWidget);
-									}else{
-										paint(actualWidget, request.getColorRGB());
-									}
-								}
-							});
-						}
-					}
+					search(request.getLocation());
 				}
 				catch(Exception e) {
 					e.printStackTrace();
@@ -88,6 +71,25 @@ public aspect Aspecto {
 						}
 					}
 				}
+			}
+		}
+	}
+	
+	public void search(String s){
+		if(widgetsList.containsKey(request.getLocation())){	
+			for(Widget g: widgetsList.get(request.getLocation())){
+				final Widget actualWidget = g;
+				actualWidget.getDisplay().syncExec(new Runnable() {
+
+					@Override
+					public void run() {
+						if(paintedWidgets.containsKey(actualWidget) && request.getColor() == null){
+							removePaint(actualWidget);
+						}else{
+							paint(actualWidget, request.getColorRGB());
+						}
+					}
+				});
 			}
 		}
 	}

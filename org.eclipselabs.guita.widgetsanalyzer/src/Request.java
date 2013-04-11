@@ -1,23 +1,24 @@
 import org.eclipse.swt.graphics.RGB;
 
 
-public class WidgetRequest {
-	
+public class Request {
+
 	private String location;
 	private String color;
 	private RGB colorRGB;
 
-	public WidgetRequest(String location, String color){
+	public Request(String location, String color){
 		this.location = location;
 		this.color = color;
-		
-		setColorRGB(color);
+
+		if(color != null)
+			setColorRGB(color);
 	}
 
 	public String getLocation(){
 		return location;
 	}
-	
+
 	public String getColor(){
 		return color;
 	}
@@ -25,7 +26,7 @@ public class WidgetRequest {
 	public RGB getColorRGB(){
 		return colorRGB;
 	}
-	
+
 	public void setColorRGB(String color){
 		if(color.equals("Red")){
 			colorRGB = new RGB(255, 0, 0);
