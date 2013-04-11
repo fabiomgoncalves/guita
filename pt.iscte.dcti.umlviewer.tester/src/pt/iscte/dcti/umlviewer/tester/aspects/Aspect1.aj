@@ -57,9 +57,25 @@ public aspect Aspect1 {
 
 	private void addClass(Class<?> c) {
 		classes.add(c);
-		for(Field f : c.getDeclaredFields()) {
-			if(allClasses.contains(f.getType()))
-				classes.add(f.getType());
+		//checkForDependencies(c);
+	}
+
+	//Visto que o código instrumentado importa as classes que necessita, não é preciso guardar
+	//um array com todas as classes. Basta ir buscar o tipo da dependencia directamente.
+	//ATENÇÃO: Colecções dentro de colecções, e Arrays de arrays.
+	//Processar fields, métodos, e construtores
+	private void checkForDependencies(Class<?> c) {
+		for(Field f: c.getDeclaredFields()) {
+			Class<?> clazz = f.getType();
+			if(clazz.isArray()) {
+				clazz = clazz.getComponentType();
+			}
+			else if(Collection.class.isAssignableFrom(clazz)) {
+				
+			}
+			if(allClasses.contains(clazz) && !classes.contains(clazz)) {
+				classes.add(clazz);
+			}
 		}
 	}
 
