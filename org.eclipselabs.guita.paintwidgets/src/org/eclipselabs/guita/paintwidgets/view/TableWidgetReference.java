@@ -2,7 +2,7 @@ package org.eclipselabs.guita.paintwidgets.view;
 
 import org.eclipse.swt.graphics.RGB;
 
-public class WidgetTable {
+public class TableWidgetReference {
 
 	private String name;
 	private String type;
@@ -10,7 +10,7 @@ public class WidgetTable {
 	private String color;
 	private RGB colorRGB;
 
-	public WidgetTable(String name, String type, String location, String color){
+	public TableWidgetReference(String name, String type, String location, String color){
 		this.name = name;
 		this.type = type;
 		this.location = location;

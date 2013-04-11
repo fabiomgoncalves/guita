@@ -20,6 +20,7 @@ import org.eclipse.ui.IPersistable;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.FileEditorInput;
 import org.eclipselabs.guita.paintwidgets.view.ViewTable;
+import org.eclipselabs.guita.paintwidgets.view.TableWidgetReference;
 import org.eclipselabs.variableanalyzer.service.VariableResolver;
 
 
@@ -32,8 +33,6 @@ public class PaintCommand extends AbstractHandler{
 
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
-		String color = "";
-
 		ISelection selection =  PlatformUI.getWorkbench().getActiveWorkbenchWindow().getSelectionService().getSelection();
 		if(selection instanceof TextSelection) {
 			TextSelection s = (TextSelection) selection;
@@ -49,25 +48,29 @@ public class PaintCommand extends AbstractHandler{
 				String type = VariableResolver.resolve(fileInput.getFile(), text, line);
 				String loc = fileInput.getPath().lastSegment() + ":" + line;
 
+				String color = null;
 				try {
 					color = event.getCommand().getName();
 				} catch (NotDefinedException e) {
 					e.printStackTrace();
 				}
-
+				
 				if(type != null) {
 					String message = "\"" + text + "\"" + "\n" + type + "\"" + "\n" + loc;
 
 					if(type.indexOf("org.eclipse.swt.widgets.") > -1) {
-						if(ViewTable.getInstance().alreadyPainted(text, type, loc, color)){
+						TableWidgetReference tableWidget = new TableWidgetReference(text, type, loc, color);
+						Request request = new Request(loc, color);
+						
+						if(ViewTable.getInstance().alreadyPainted(tableWidget)){
 							MessageBox messageDialog = new MessageBox(editor.getSite().getShell(), SWT.ICON_QUESTION | SWT.OK | SWT.CANCEL);
 							messageDialog.setText("Paint");
 							messageDialog.setMessage("This widget is already painted. Do you wish to change its color?");
 							if(messageDialog.open() == SWT.OK){
-								sendRequest(text, type, loc, color);
+								sendRequest(tableWidget, request);
 							}
 						}else {
-							sendRequest(text, type, loc, color);
+							sendRequest(tableWidget, request);
 						}
 					}
 					else {
@@ -82,14 +85,13 @@ public class PaintCommand extends AbstractHandler{
 		return null;
 	}
 
-	public void sendRequest(String text, String type, String loc, String color){
+	public void sendRequest(TableWidgetReference tableWidget, Request request){
 		try {
 			socket = new Socket("localhost", PORT_IN);
 			oos = new ObjectOutputStream(socket.getOutputStream());
-			oos.writeObject(loc);
-			oos.writeObject(color);
+			oos.writeObject(request);
 
-			ViewTable.getInstance().addWidget(text, type, loc, color);
+			ViewTable.getInstance().addWidget(tableWidget);
 
 		} catch (UnknownHostException e) {
 			e.printStackTrace();

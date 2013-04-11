@@ -10,12 +10,11 @@ import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipselabs.guita.paintwidgets.Request;
 
 public class RemoveCommand extends AbstractHandler{
 
 	public static final int PORT_IN = 8080;
-
-	private String color = "";
 
 	@SuppressWarnings("unchecked")
 	@Override
@@ -28,15 +27,15 @@ public class RemoveCommand extends AbstractHandler{
 		IStructuredSelection sel = view.getSelection();
 
 		if (sel != null) {
-			Iterator<WidgetTable> iterator = sel.iterator();
+			Iterator<TableWidgetReference> iterator = sel.iterator();
 			while (iterator.hasNext()) {
-				WidgetTable w = iterator.next();
+				TableWidgetReference w = iterator.next();
+				Request request = new Request(w.getLocation(), null);
 
 				try {
 					socket = new Socket("localhost", PORT_IN);
 					oos = new ObjectOutputStream(socket.getOutputStream());
-					oos.writeObject(w.getLocation());
-					oos.writeObject(color);
+					oos.writeObject(request);
 
 					view.removeWidget(w);
 

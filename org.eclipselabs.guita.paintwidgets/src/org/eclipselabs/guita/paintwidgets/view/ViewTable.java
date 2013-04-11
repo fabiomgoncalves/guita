@@ -29,7 +29,7 @@ public class ViewTable extends ViewPart{
 	private static ViewTable instance;
 
 	private TableViewer viewer;
-	private List<WidgetTable> widgets = new ArrayList<WidgetTable>();
+	private List<TableWidgetReference> widgets = new ArrayList<TableWidgetReference>();
 
 
 	public ViewTable(){
@@ -51,37 +51,34 @@ public class ViewTable extends ViewPart{
 		return (IStructuredSelection) viewer.getSelection();
 	}
 
-	public void addWidget(String name, String type, String localization, String color){
-		WidgetTable aux = new WidgetTable(name, type, localization, color);
+	public void addWidget(TableWidgetReference newWidget){
 		boolean found = false;
 
 		if(!widgets.isEmpty()){
-			for(WidgetTable w: widgets){
-				if(w.getName().equals(aux.getName())){
-					if(!w.getColor().equals(aux.getColor())){
-						w.setColor(aux.getColor());
+			for(TableWidgetReference w: widgets){
+				if(w.getName().equals(newWidget.getName())){
+					if(!w.getColor().equals(newWidget.getColor())){
+						w.setColor(newWidget.getColor());
 						found = true;
 					}
 				}
 			}
 		}
 		if(widgets.isEmpty() || !found){
-			widgets.add(aux);
+			widgets.add(newWidget);
 		}
 
 		viewer.refresh();
 	}
 
-	public void removeWidget(WidgetTable g){
+	public void removeWidget(TableWidgetReference g){
 		widgets.remove(g);
 		viewer.refresh();
 	}
 
-	public boolean alreadyPainted(String name, String type, String localization, String color){
-		WidgetTable aux = new WidgetTable(name, type, localization, color);
-
+	public boolean alreadyPainted(TableWidgetReference aux){
 		if(!widgets.isEmpty()){
-			for(WidgetTable w: widgets){
+			for(TableWidgetReference w: widgets){
 				if(w.getName().equals(aux.getName())){
 					return true;
 				}
@@ -97,7 +94,7 @@ public class ViewTable extends ViewPart{
 
 	private class TableLabelProvider extends LabelProvider implements ITableLabelProvider {
 		public String getColumnText(Object element, int columnIndex) {
-			WidgetTable w = (WidgetTable) element;
+			TableWidgetReference w = (TableWidgetReference) element;
 			String result = "";
 			switch(columnIndex){
 			case 0:
@@ -120,7 +117,7 @@ public class ViewTable extends ViewPart{
 		public Image getColumnImage(Object element, int columnIndex) {
 			Image image = null;
 			if(columnIndex == 3){
-				WidgetTable w = (WidgetTable) element;
+				TableWidgetReference w = (TableWidgetReference) element;
 				
 				PaletteData paletteData = new PaletteData(new RGB[] {w.getColorRGB()});
 				ImageData imageData = new ImageData(70,25,1,paletteData);
