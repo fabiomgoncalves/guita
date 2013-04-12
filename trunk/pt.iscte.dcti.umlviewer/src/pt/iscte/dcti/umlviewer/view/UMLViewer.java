@@ -30,12 +30,6 @@ public class UMLViewer extends ViewPart implements Service {
 	//Guardar os nodes em exibição no grafo. Mapeá-los através de uma String com o nome da classe.
 	
 	private static final boolean SHOW_REPORTS = true;
-	
-	private final Color CLASS_COLOR = new Color(null, 255, 255, 206);
-	private final Font CLASS_FONT = new Font(null, "Arial", 12, SWT.BOLD);
-	private final Image CLASS_IMG = new Image(Display.getDefault(), UMLClassFigure.class.getResourceAsStream("images/class_obj.gif"));
-	private final Image PUBLIC_IMG = new Image(Display.getDefault(), UMLClassFigure.class.getResourceAsStream("images/methpub_obj.gif"));
-	private final Image PRIVATE_IMG = new Image(Display.getDefault(), UMLClassFigure.class.getResourceAsStream("images/field_private_obj.gif"));
 
 	private static UMLViewer instance;
 
@@ -58,7 +52,7 @@ public class UMLViewer extends ViewPart implements Service {
 		composite.setLayout(new FillLayout());
 		graph = new Graph(composite, SWT.NONE);
 		graph.setConnectionStyle(ZestStyles.CONNECTIONS_DIRECTED);
-		addNode(createClassFigure("Waiting"));
+		addNode(createFigure("WAITING"));
 		setLayout();
 	}
 
@@ -69,13 +63,18 @@ public class UMLViewer extends ViewPart implements Service {
 	public void showFragment(Set<Class<?>> classes, Set<Method> methods) {
 		Collection<IFigure> figures = new LinkedList<IFigure>();
 		for(Class<?> clazz: classes) {
-			figures.add(createClassFigure(clazz.getSimpleName()));
+			figures.add(createFigure(clazz.getSimpleName()));
 		}
 		graph.getDisplay().syncExec(new Agent(figures));
 	}
 	
-	private void setLayout() {
-		graph.setLayoutAlgorithm(new SpringLayoutAlgorithm(LayoutStyles.NO_LAYOUT_NODE_RESIZING), true);
+	private IFigure createFigure(String className) {
+		if(SHOW_REPORTS) {
+			System.out.println("CREATING FIGURE FOR CLASS: " + className);
+		}
+		
+		IFigure figure = new UMLClassFigure(className);
+		return figure;
 	}
 	
 	private void addNode(IFigure figure) {
@@ -90,28 +89,8 @@ public class UMLViewer extends ViewPart implements Service {
 		}
 	}
 	
-	private IFigure createClassFigure(String className) {
-		if(SHOW_REPORTS) {
-			System.out.println("CREATING FIGURE FOR CLASS: " + className);
-		}
-		
-		Label label = new Label(className, CLASS_IMG);
-		label.setFont(CLASS_FONT);
-		
-		UMLClassFigure classFigure = new UMLClassFigure(CLASS_COLOR, label);
-		
-		Label attribute1 = new Label("attr1", PRIVATE_IMG);
-		Label attribute2 = new Label("attr2", PRIVATE_IMG);
-		Label method1 = new Label("method1", PUBLIC_IMG);
-		Label method2 = new Label("method2", PUBLIC_IMG);
-		
-		classFigure.getAttributesCompartment().add(attribute1);
-		classFigure.getAttributesCompartment().add(attribute2);
-		classFigure.getMethodsCompartment().add(method1);
-		classFigure.getMethodsCompartment().add(method2);
-		classFigure.setSize(-1, -1);
-		
-		return classFigure;
+	private void setLayout() {
+		graph.setLayoutAlgorithm(new SpringLayoutAlgorithm(LayoutStyles.NO_LAYOUT_NODE_RESIZING), true);
 	}
 	
 	private class Agent implements Runnable {
