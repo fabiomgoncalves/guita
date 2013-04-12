@@ -91,12 +91,12 @@ public aspect Aspect1 {
 					new RequestHandler(socket).start();
 				}
 			} 
-			catch(IOException e) { }
+			catch(IOException e) { e.printStackTrace(); }
 			finally {
 				if(server_socket != null) {
 					try {
 						server_socket.close();
-					} catch(IOException e) { }
+					} catch(IOException e) { e.printStackTrace(); }
 				}
 			}
 		}
@@ -119,23 +119,23 @@ public aspect Aspect1 {
 				output_stream = new ObjectOutputStream(socket.getOutputStream());
 				handleRequest();
 			}
-			catch (ClassNotFoundException e) { }
-			catch (IOException e) { }
+			catch (ClassNotFoundException e) { e.printStackTrace(); }
+			catch (IOException e) { e.printStackTrace(); }
 			finally {
 				if(output_stream != null) {
 					try {
 						output_stream.close();
-					} catch (IOException e) { }
+					} catch (IOException e) { e.printStackTrace(); }
 				}
 				if(input_stream != null) {
 					try {
 						input_stream.close();
-					} catch (IOException e) { }
+					} catch (IOException e) { e.printStackTrace(); }
 				}
 				if(socket != null) {
 					try {
 						socket.close();
-					} catch (IOException e) { }
+					} catch (IOException e) { e.printStackTrace(); }
 				}
 			}
 		}
