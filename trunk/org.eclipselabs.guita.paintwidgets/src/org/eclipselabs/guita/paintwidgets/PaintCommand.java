@@ -21,6 +21,8 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.FileEditorInput;
 import org.eclipselabs.guita.paintwidgets.view.ViewTable;
 import org.eclipselabs.guita.paintwidgets.view.TableWidgetReference;
+import org.eclipselabs.guita.request.Request;
+import org.eclipselabs.guita.request.Request.Color;
 import org.eclipselabs.variableanalyzer.service.VariableResolver;
 
 
@@ -54,14 +56,14 @@ public class PaintCommand extends AbstractHandler{
 				} catch (NotDefinedException e) {
 					e.printStackTrace();
 				}
-				
+
 				if(type != null) {
 					String message = "\"" + text + "\"" + "\n" + type + "\"" + "\n" + loc;
 
 					if(type.indexOf("org.eclipse.swt.widgets.") > -1) {
 						TableWidgetReference tableWidget = new TableWidgetReference(text, type, loc, color);
-						Request request = new Request(loc, color);
-						
+						Request request = Request.newPaintRequest(loc, mapColor(color));
+
 						if(ViewTable.getInstance().alreadyPainted(tableWidget)){
 							MessageBox messageDialog = new MessageBox(editor.getSite().getShell(), SWT.ICON_QUESTION | SWT.OK | SWT.CANCEL);
 							messageDialog.setText("Paint");
@@ -83,6 +85,21 @@ public class PaintCommand extends AbstractHandler{
 			}
 		}
 		return null;
+	}
+
+
+	public Color mapColor(String color){
+		if(color.equals("Red")){
+			return Color.RED;
+		}else if(color.equals("Blue")){
+			return Color.BLUE;
+		}else if(color.equals("Green")){
+			return Color.GREEN;
+		}else if(color.equals("Yellow")){
+			return Color.YELLOW;
+		}else{
+			return Color.PINK;
+		}
 	}
 
 	public void sendRequest(TableWidgetReference tableWidget, Request request){

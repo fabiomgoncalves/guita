@@ -10,7 +10,7 @@ import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipselabs.guita.paintwidgets.Request;
+import org.eclipselabs.guita.request.Request;
 
 public class RemoveCommand extends AbstractHandler{
 
@@ -30,7 +30,7 @@ public class RemoveCommand extends AbstractHandler{
 			Iterator<TableWidgetReference> iterator = sel.iterator();
 			while (iterator.hasNext()) {
 				TableWidgetReference w = iterator.next();
-				Request request = new Request(w.getLocation(), null);
+				Request request = Request.newUnpaintRequest(w.getLocation());
 
 				try {
 					socket = new Socket("localhost", PORT_IN);
