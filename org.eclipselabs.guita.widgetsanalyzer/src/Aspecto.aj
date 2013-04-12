@@ -15,6 +15,7 @@ import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Widget;
+import org.eclipselabs.guita.request.Request;
 
 
 public aspect Aspecto {
@@ -53,7 +54,7 @@ public aspect Aspecto {
 					ois = new ObjectInputStream(socket.getInputStream());
 					final Request request = (Request) ois.readObject();
 
-					search(request.getLocation());
+					search(request);
 				}
 				catch(Exception e) {
 					e.printStackTrace();
@@ -73,26 +74,36 @@ public aspect Aspecto {
 				}
 			}
 		}
+		
+		private void search(final Request request){
+			if(widgetsList.containsKey(request.getLocation())){	
+				for(Widget g: widgetsList.get(request.getLocation())){
+					final Widget actualWidget = g;
+					actualWidget.getDisplay().syncExec(new Runnable() {
+
+						@Override
+						public void run() {
+							if(paintedWidgets.containsKey(actualWidget) && request.isToRemove()){
+								removePaint(actualWidget);
+							}else{
+								paint(actualWidget, getColor(request));
+							}
+						}
+					});
+				}
+			}
+			
+			
+		}
+		
+		private RGB getColor(Request request) {
+			org.eclipselabs.guita.request.Request.Color color = request.getColorRGB();
+			return new RGB(color.getR(), color.getG(), color.getB());
+		}
+		
 	}
 	
-	public void search(String s){
-		if(widgetsList.containsKey(request.getLocation())){	
-			for(Widget g: widgetsList.get(request.getLocation())){
-				final Widget actualWidget = g;
-				actualWidget.getDisplay().syncExec(new Runnable() {
-
-					@Override
-					public void run() {
-						if(paintedWidgets.containsKey(actualWidget) && request.getColor() == null){
-							removePaint(actualWidget);
-						}else{
-							paint(actualWidget, request.getColorRGB());
-						}
-					}
-				});
-			}
-		}
-	}
+	
 
 	public void paint(Widget g, RGB color){
 		Control c = (Control)g;
@@ -121,6 +132,8 @@ public aspect Aspecto {
 			auxList.add(g);
 			widgetsList.put(aux, auxList);
 		}
+		
+		// se estiver no pending, pintar
 	}
 
 	after(Widget g): call(* Widget+.*(..)) && target(g)  && scope() {
@@ -133,6 +146,8 @@ public aspect Aspecto {
 			auxList.add(g);
 			widgetsList.put(aux, auxList);
 		}
+		
+		// se estiver no pending, pintar
 	}
 
 }
