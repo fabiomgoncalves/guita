@@ -54,23 +54,23 @@ public class SignalRequest extends AbstractHandler {
 				input_stream = new ObjectInputStream(socket.getInputStream());
 				handleConnection();
 			}
-			catch (UnknownHostException e) { } 
+			catch (UnknownHostException e) { e.printStackTrace(); } 
 			catch (IOException e) { } 
 			finally {
 				if(input_stream != null) {
 					try {
 						input_stream.close();
-					} catch (IOException e) { }
+					} catch (IOException e) { e.printStackTrace(); }
 				}
 				if(output_stream != null) {
 					try {
 						output_stream.close();
-					} catch (IOException e) { }
+					} catch (IOException e) { e.printStackTrace(); }
 				}
 				if(socket != null) {
 					try {
 						socket.close();
-					} catch (IOException e) { }
+					} catch (IOException e) { e.printStackTrace(); }
 				}
 			}
 			if (data != null) {
@@ -109,8 +109,8 @@ public class SignalRequest extends AbstractHandler {
 					//this ensures that server will not become permanently recording.
 				}
 			} 
-			catch (ClassNotFoundException e) { }
-			catch (IOException e) { } 
+			catch (ClassNotFoundException e) { e.printStackTrace(); }
+			catch (IOException e) { e.printStackTrace(); } 
 		}
 
 	}
