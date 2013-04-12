@@ -27,6 +27,8 @@ import pt.iscte.dcti.umlviewer.service.Service;
 
 public class UMLViewer extends ViewPart implements Service {
 	
+	//Guardar os nodes em exibição no grafo. Mapeá-los através de uma String com o nome da classe.
+	
 	private static final boolean SHOW_REPORTS = true;
 	
 	private final Color CLASS_COLOR = new Color(null, 255, 255, 206);
@@ -56,17 +58,13 @@ public class UMLViewer extends ViewPart implements Service {
 		composite.setLayout(new FillLayout());
 		graph = new Graph(composite, SWT.NONE);
 		graph.setConnectionStyle(ZestStyles.CONNECTIONS_DIRECTED);
-		graph.setLayoutAlgorithm(new SpringLayoutAlgorithm(LayoutStyles.NO_LAYOUT_NODE_RESIZING), true);
 		addNode(createClassFigure("Waiting"));
+		setLayout();
 	}
 
 	public void setFocus() {
 		graph.setFocus();
 	}
-
-	/*public void showFragment(Set<Class<?>> classes, Set<Method> methods) {
-		graph.getDisplay().syncExec(new Agent(classes));
-	}*/
 	
 	public void showFragment(Set<Class<?>> classes, Set<Method> methods) {
 		Collection<IFigure> figures = new LinkedList<IFigure>();
@@ -75,12 +73,10 @@ public class UMLViewer extends ViewPart implements Service {
 		}
 		graph.getDisplay().syncExec(new Agent(figures));
 	}
-
-	/*private void addNode(String str) {
-		System.out.println("ENTROU");
-		new UMLNode(graph, SWT.NONE, createClassFigure(str));
-		System.out.println("VAI SAIR");
-	}*/
+	
+	private void setLayout() {
+		graph.setLayoutAlgorithm(new SpringLayoutAlgorithm(LayoutStyles.NO_LAYOUT_NODE_RESIZING), true);
+	}
 	
 	private void addNode(IFigure figure) {
 		if(SHOW_REPORTS) {
@@ -98,6 +94,7 @@ public class UMLViewer extends ViewPart implements Service {
 		if(SHOW_REPORTS) {
 			System.out.println("CREATING FIGURE FOR CLASS: " + className);
 		}
+		
 		Label label = new Label(className, CLASS_IMG);
 		label.setFont(CLASS_FONT);
 		
@@ -116,23 +113,6 @@ public class UMLViewer extends ViewPart implements Service {
 		
 		return classFigure;
 	}
-
-	/*private class Agent implements Runnable {
-
-		private Set<Class<?>> classes;
-
-		private Agent(Set<Class<?>> classes) {
-			this.classes = classes;
-		}
-
-		public void run() {
-			for(Class<?> clazz: classes) {
-				addNode(clazz.getSimpleName());
-				System.out.println("CLASS: " + clazz.getSimpleName() + " -> " + clazz.getName());
-			}
-		}
-
-	}*/
 	
 	private class Agent implements Runnable {
 
@@ -146,6 +126,7 @@ public class UMLViewer extends ViewPart implements Service {
 			for(IFigure figure: figures) {
 				addNode(figure);
 			}
+			setLayout();
 		}
 
 	}
