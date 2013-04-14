@@ -56,7 +56,7 @@ public class ViewTable extends ViewPart{
 
 		if(!widgets.isEmpty()){
 			for(TableWidgetReference w: widgets){
-				if(w.getName().equals(newWidget.getName())){
+				if(w.getName().equals(newWidget.getName()) && w.getLocation().equals(newWidget.getLocation())){
 					if(!w.getColor().equals(newWidget.getColor())){
 						w.setColor(newWidget.getColor());
 						found = true;
@@ -79,7 +79,7 @@ public class ViewTable extends ViewPart{
 	public boolean alreadyPainted(TableWidgetReference aux){
 		if(!widgets.isEmpty()){
 			for(TableWidgetReference w: widgets){
-				if(w.getName().equals(aux.getName())){
+				if(w.getName().equals(aux.getName()) && w.getLocation().equals(aux.getLocation())){
 					return true;
 				}
 			}
