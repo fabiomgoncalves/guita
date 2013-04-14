@@ -3,6 +3,7 @@ import java.io.ObjectInputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.WeakHashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -13,7 +14,6 @@ import org.aspectj.lang.reflect.SourceLocation;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Widget;
 import org.eclipselabs.guita.request.Request;
 
@@ -23,11 +23,11 @@ public aspect Aspecto {
 	public static final int PORT_IN = 8080;
 	private ServerSocket serverSocket;
 
-	private Map<String , Set<Widget>> widgetsList = new HashMap<String, Set<Widget>>();
+	private Map<String , Set<Widget>> widgetsList = new WeakHashMap<String, Set<Widget>>();
 
 	private Map<Widget, Color> paintedWidgets = new HashMap<Widget, Color>();
 
-	private List<String> pendingRequests = new ArrayList<String>();
+	private List<Request> pendingRequests = new ArrayList<Request>();
 
 	protected pointcut scope() : !within(Aspecto);
 
@@ -74,7 +74,7 @@ public aspect Aspecto {
 				}
 			}
 		}
-		
+
 		private void search(final Request request){
 			if(widgetsList.containsKey(request.getLocation())){	
 				for(Widget g: widgetsList.get(request.getLocation())){
@@ -91,19 +91,16 @@ public aspect Aspecto {
 						}
 					});
 				}
+			}else{
+				pendingRequests.add(request);
 			}
-			
-			
 		}
-		
-		private RGB getColor(Request request) {
-			org.eclipselabs.guita.request.Request.Color color = request.getColorRGB();
-			return new RGB(color.getR(), color.getG(), color.getB());
-		}
-		
 	}
-	
-	
+
+	private RGB getColor(Request request) {
+		org.eclipselabs.guita.request.Request.Color color = request.getColor();
+		return new RGB(color.getR(), color.getG(), color.getB());
+	}
 
 	public void paint(Widget g, RGB color){
 		Control c = (Control)g;
@@ -132,8 +129,15 @@ public aspect Aspecto {
 			auxList.add(g);
 			widgetsList.put(aux, auxList);
 		}
-		
-		// se estiver no pending, pintar
+
+		if(!pendingRequests.isEmpty()){
+			for(int i = 0; i != pendingRequests.size(); i++){
+				if(pendingRequests.get(i).getLocation().equals(loc)){
+					paint(g, getColor(pendingRequests.get(i)));
+					pendingRequests.remove(i);
+				}
+			}
+		}
 	}
 
 	after(Widget g): call(* Widget+.*(..)) && target(g)  && scope() {
@@ -146,8 +150,15 @@ public aspect Aspecto {
 			auxList.add(g);
 			widgetsList.put(aux, auxList);
 		}
-		
-		// se estiver no pending, pintar
+
+		if(!pendingRequests.isEmpty()){
+			for(int i = 0; i != pendingRequests.size(); i++){
+				if(pendingRequests.get(i).getLocation().equals(loc)){
+					paint(g, getColor(pendingRequests.get(i)));
+					pendingRequests.remove(i);
+				}
+			}
+		}
 	}
 
 }
