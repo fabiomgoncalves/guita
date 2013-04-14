@@ -1,7 +1,6 @@
 package org.eclipselabs.guita.request;
+
 import java.io.Serializable;
-
-
 
 
 public class Request implements Serializable {
@@ -9,13 +8,13 @@ public class Request implements Serializable {
 	
 	
 	private String location;
-//	private String color;
-	private Color colorRGB;
+	private Color color;
 	
 	public static class Color implements Serializable {
 		private static final long serialVersionUID = 1L;
 
 		private final int r,g,b;
+		
 		public Color(int r, int g, int b) {
 			this.r = r;
 			this.g = g;
@@ -23,8 +22,8 @@ public class Request implements Serializable {
 		}
 		
 		public static final Color RED = new Color(255, 0, 0);
-		public static final Color BLUE = new Color(0, 0, 255);;
 		public static final Color GREEN = new Color(0, 255, 0);;
+		public static final Color BLUE = new Color(0, 0, 255);;
 		public static final Color YELLOW = new Color(255, 255, 0);
 		public static final Color PINK = new Color(255, 0, 255);
 
@@ -49,13 +48,9 @@ public class Request implements Serializable {
 		return new Request(location, null);
 	}
 		
-	
 	private Request(String location, Color color){
 		this.location = location;
-		this.colorRGB = color;
-
-//		if(color != null)
-//			setColorRGB(color);
+		this.color = color;
 	}
 
 	public String getLocation(){
@@ -63,24 +58,10 @@ public class Request implements Serializable {
 	}
 
 	public boolean isToRemove(){
-		return colorRGB == null;
+		return color == null;
 	}
 
-	public Color getColorRGB(){
-		return colorRGB;
+	public Color getColor(){
+		return color;
 	}
-
-//	public void setColorRGB(String color){
-//		if(color.equals("Red")){
-//			colorRGB = new RGB(255, 0, 0);
-//		}else if(color.equals("Blue")){
-//			colorRGB = new RGB(0, 0, 255);
-//		}else if(color.equals("Green")){
-//			colorRGB = new RGB(0, 255, 0);
-//		}else if(color.equals("Yellow")){
-//			colorRGB = new RGB(255, 255, 0);
-//		}else{
-//			colorRGB = new RGB(255, 0, 255);
-//		}
-//	}
 }

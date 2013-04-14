@@ -28,7 +28,7 @@ import org.eclipselabs.variableanalyzer.service.VariableResolver;
 
 public class PaintCommand extends AbstractHandler{
 
-	public static final int PORT_IN = 8080;
+	public static final int PORT_IN = 8081;
 	Socket socket = null;
 	ObjectOutputStream oos = null;
 
