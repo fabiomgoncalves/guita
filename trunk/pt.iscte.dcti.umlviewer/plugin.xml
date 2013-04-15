@@ -17,5 +17,26 @@
             name="UML Viewer">
       </view>
    </extension>
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            allPopups="false"
+            locationURI="toolbar:pt.iscte.dcti.umlviewer.view.UMLViewer">
+         <command
+               commandId="pt.iscte.dcti.umlviewer.commands.command1"
+               icon="src/pt/iscte/dcti/umlviewer/view/images/Remove.png"
+               label="Incremental"
+               style="push">
+         </command>
+      </menuContribution>
+   </extension>
+   <extension
+         point="org.eclipse.ui.commands">
+      <command
+            defaultHandler="pt.iscte.dcti.umlviewer.view.Comando1"
+            id="pt.iscte.dcti.umlviewer.commands.command1"
+            name="Comando1">
+      </command>
+   </extension>
 
 </plugin>

@@ -27,6 +27,8 @@ import pt.iscte.dcti.umlviewer.service.Service;
 
 public class UMLViewer extends ViewPart implements Service {
 	
+	public static final String ID = "pt.iscte.dcti.umlviewer.view.UMLViewer";
+	
 	//Guardar os nodes em exibição no grafo. Mapeá-los através de uma String com o nome da classe.
 	
 	private static final boolean SHOW_REPORTS = true;
