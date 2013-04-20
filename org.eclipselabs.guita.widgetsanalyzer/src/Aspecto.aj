@@ -3,6 +3,7 @@ import java.io.ObjectInputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.WeakHashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -20,7 +21,7 @@ import org.eclipselabs.guita.request.Request;
 
 public aspect Aspecto {
 
-	public static final int PORT_IN = 8080;
+	public static final int PORT_IN = 8081;
 	private ServerSocket serverSocket;
 
 	private Map<String , Set<Widget>> widgetsList = new WeakHashMap<String, Set<Widget>>();
@@ -130,12 +131,12 @@ public aspect Aspecto {
 			widgetsList.put(aux, auxList);
 		}
 
-		if(!pendingRequests.isEmpty()){
-			for(int i = 0; i != pendingRequests.size(); i++){
-				if(pendingRequests.get(i).getLocation().equals(loc)){
-					paint(g, getColor(pendingRequests.get(i)));
-					pendingRequests.remove(i);
-				}
+		Iterator<Request> iterator = pendingRequests.iterator();
+		while(iterator.hasNext()){
+			Request r = iterator.next();
+			if(r.getLocation().equals(aux)){
+				paint(g, getColor(r));
+				iterator.remove();
 			}
 		}
 	}
@@ -151,12 +152,12 @@ public aspect Aspecto {
 			widgetsList.put(aux, auxList);
 		}
 
-		if(!pendingRequests.isEmpty()){
-			for(int i = 0; i != pendingRequests.size(); i++){
-				if(pendingRequests.get(i).getLocation().equals(loc)){
-					paint(g, getColor(pendingRequests.get(i)));
-					pendingRequests.remove(i);
-				}
+		Iterator<Request> iterator = pendingRequests.iterator();
+		while(iterator.hasNext()){
+			Request r = iterator.next();
+			if(r.getLocation().equals(aux)){
+				paint(g, getColor(r));
+				iterator.remove();
 			}
 		}
 	}
