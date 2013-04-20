@@ -42,6 +42,12 @@ public class Modelo {
 				
 				Button button2 = new Button(shell2, SWT.PUSH);
 				button2.setText("TRES");
+				button2.addSelectionListener(new SelectionAdapter(){
+					public void widgetSelected(SelectionEvent e){
+						shell2.setVisible(false);
+						shell.setVisible(true);
+					}
+				});
 				
 				shell2.pack ();
 				shell2.open ();
