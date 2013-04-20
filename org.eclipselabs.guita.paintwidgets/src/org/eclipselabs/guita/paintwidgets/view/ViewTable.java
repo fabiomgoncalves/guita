@@ -46,7 +46,7 @@ public class ViewTable extends ViewPart{
 		}	
 		return instance;
 	}
-	
+
 	public IStructuredSelection getSelection() {
 		return (IStructuredSelection) viewer.getSelection();
 	}
@@ -57,14 +57,12 @@ public class ViewTable extends ViewPart{
 		if(!widgets.isEmpty()){
 			for(TableWidgetReference w: widgets){
 				if(w.getName().equals(newWidget.getName()) && w.getLocation().equals(newWidget.getLocation())){
-					if(!w.getColor().equals(newWidget.getColor())){
-						w.setColor(newWidget.getColor());
-						found = true;
-					}
+					w.setColor(newWidget.getColor());
+					found = true;
 				}
 			}
 		}
-		if(widgets.isEmpty() || !found){
+		if(!found){
 			widgets.add(newWidget);
 		}
 
@@ -97,16 +95,18 @@ public class ViewTable extends ViewPart{
 			TableWidgetReference w = (TableWidgetReference) element;
 			String result = "";
 			switch(columnIndex){
-			case 0:
-				result = w.getName();
+			case 0: //primeira coluna em branco devido a um bug do SWT
 				break;
 			case 1:
-				result = w.getType();
+				result = w.getName();
 				break;
 			case 2:
-				result = w.getLocation();
+				result = w.getType();
 				break;
 			case 3:
+				result = w.getLocation();
+				break;
+			case 4:
 				break;
 			default:
 				result = "";
@@ -116,9 +116,9 @@ public class ViewTable extends ViewPart{
 
 		public Image getColumnImage(Object element, int columnIndex) {
 			Image image = null;
-			if(columnIndex == 3){
+			if(columnIndex == 4){
 				TableWidgetReference w = (TableWidgetReference) element;
-				
+
 				PaletteData paletteData = new PaletteData(new RGB[] {w.getColorRGB()});
 				ImageData imageData = new ImageData(70,25,1,paletteData);
 				image = new Image(null,imageData);
@@ -142,8 +142,8 @@ public class ViewTable extends ViewPart{
 	}
 
 	private void createColumns(final Composite parent, final TableViewer viewer) {
-		String[] titles = {"Name", "Type", "Location", "Color"};
-		int[] bounds = { 150, 200, 120, 100};
+		String[] titles = {"", "Name", "Type", "Location", "Color"}; //primeira coluna em branco devido a um bug do SWT
+		int[] bounds = { 0, 150, 200, 120, 100};
 
 		for(int i = 0; i != titles.length; i++){
 			createTableViewerColumn(titles[i], bounds[i]);
@@ -153,10 +153,10 @@ public class ViewTable extends ViewPart{
 	private TableViewerColumn createTableViewerColumn(String title, int bound) {
 		final TableViewerColumn viewerColumn = new TableViewerColumn(viewer, SWT.NONE);
 		final TableColumn column = viewerColumn.getColumn();
-		
+
 		column.setText(title);
 		column.setWidth(bound);
-		column.setResizable(false);
+		column.setResizable(true);
 		column.setMoveable(true);
 		return viewerColumn;
 	}
