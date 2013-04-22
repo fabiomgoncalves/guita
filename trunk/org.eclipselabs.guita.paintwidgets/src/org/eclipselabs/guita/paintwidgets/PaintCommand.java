@@ -56,35 +56,39 @@ public class PaintCommand extends AbstractHandler{
 				} catch (NotDefinedException e) {
 					e.printStackTrace();
 				}
-
-				if(type != null) {
-					String message = "\"" + text + "\"" + "\n" + type + "\"" + "\n" + loc;
-
-					if(type.indexOf("org.eclipse.swt.widgets.") > -1) {
-						TableWidgetReference tableWidget = new TableWidgetReference(text, type, loc, color);
-						Request request = Request.newPaintRequest(loc, mapColor(color));
-
-						if(ViewTable.getInstance().alreadyPainted(tableWidget)){
-							MessageBox messageDialog = new MessageBox(editor.getSite().getShell(), SWT.ICON_QUESTION | SWT.OK | SWT.CANCEL);
-							messageDialog.setText("Paint");
-							messageDialog.setMessage("This widget is already painted. Do you wish to change its color?");
-							if(messageDialog.open() == SWT.OK){
-								sendRequest(tableWidget, request);
-							}
-						}else {
-							sendRequest(tableWidget, request);
-						}
-					}
-					else {
-						MessageDialog.open(MessageDialog.INFORMATION, editor.getSite().getShell(), "Variable", message, SWT.NONE);
-					}
-				}
-				else {
-					MessageDialog.open(MessageDialog.ERROR, editor.getSite().getShell(), "Variable", "Variable Not found", SWT.NONE);
-				}
+				
+				handleVar(editor, type, text, loc, color);
 			}
 		}
 		return null;
+	}
+	
+	public void handleVar(IEditorPart editor, String type, String text, String loc, String color){
+		if(type != null) {
+			String message = "\"" + text + "\"" + "\n" + type + "\"" + "\n" + loc;
+
+			if(type.indexOf("org.eclipse.swt.widgets.") > -1) {
+				TableWidgetReference tableWidget = new TableWidgetReference(text, type, loc, color);
+				Request request = Request.newPaintRequest(loc, mapColor(color));
+
+				if(ViewTable.getInstance().alreadyPainted(tableWidget)){
+					MessageBox messageDialog = new MessageBox(editor.getSite().getShell(), SWT.ICON_QUESTION | SWT.OK | SWT.CANCEL);
+					messageDialog.setText("Paint");
+					messageDialog.setMessage("This widget is already painted. Do you wish to change its color?");
+					if(messageDialog.open() == SWT.OK){
+						sendRequest(tableWidget, request);
+					}
+				}else {
+					sendRequest(tableWidget, request);
+				}
+			}
+			else {
+				MessageDialog.open(MessageDialog.INFORMATION, editor.getSite().getShell(), "Variable", message, SWT.NONE);
+			}
+		}
+		else {
+			MessageDialog.open(MessageDialog.ERROR, editor.getSite().getShell(), "Variable", "Variable Not found", SWT.NONE);
+		}
 	}
 
 
