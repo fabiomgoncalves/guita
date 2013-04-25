@@ -1,7 +1,10 @@
+package org.eclipselabs.guita.widgetsanalyzer;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.WeakHashMap;
@@ -18,11 +21,12 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Widget;
 import org.eclipselabs.guita.request.Request;
 
+public aspect Aspect {
 
-public aspect Aspecto {
-
-	public static final int PORT_IN = 8081;
+	public static final int PORT_IN = 8080;
 	private ServerSocket serverSocket;
+	private Socket socket = null;
+	private ObjectInputStream ois = null;
 
 	private Map<String , Set<Widget>> widgetsList = new WeakHashMap<String, Set<Widget>>();
 
@@ -30,10 +34,10 @@ public aspect Aspecto {
 
 	private List<Request> pendingRequests = new ArrayList<Request>();
 
-	protected pointcut scope() : !within(Aspecto);
+	protected pointcut scope() : !within(Aspect);
 
 
-	public Aspecto(){
+	public Aspect(){
 		System.out.println("HI from TRACER!");
 		try {
 			serverSocket = new ServerSocket(PORT_IN);
@@ -119,6 +123,33 @@ public aspect Aspecto {
 
 		paintedWidgets.remove(g);
 	}
+	
+	public void receivePendingRequests(){
+		try {
+			socket = new Socket("localhost", PORT_IN);
+			ois = new ObjectInputStream(socket.getInputStream());
+
+			final List<Request> request = (List<Request>) ois.readObject();
+			
+			pendingRequests = request;
+
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			if(ois != null){
+				try {
+					ois.close(); } catch(IOException e){}
+			}
+			if(socket != null){
+				try {
+					socket.close(); } catch(IOException e){}
+			}
+		}
+	}
 
 	after() returning (Widget g): call(Widget+.new(..)) && scope() {
 		SourceLocation loc = thisJoinPoint.getSourceLocation();
@@ -161,5 +192,4 @@ public aspect Aspecto {
 			}
 		}
 	}
-
 }
