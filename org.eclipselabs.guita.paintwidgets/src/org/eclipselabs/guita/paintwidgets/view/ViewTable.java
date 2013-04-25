@@ -1,6 +1,11 @@
 package org.eclipselabs.guita.paintwidgets.view;
 
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.jface.viewers.ArrayContentProvider;
@@ -21,10 +26,17 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
+import org.eclipselabs.guita.request.Request;
+import org.eclipselabs.guita.request.Request.Color;
 
 public class ViewTable extends ViewPart{
 
 	public static final String ID = "org.eclipselabs.guita.paintwidgets.ViewTable";
+
+	public static final int PORT_IN = 8080;
+	private ServerSocket serverSocket;
+	private Socket socket = null;
+	private ObjectOutputStream oos = null;
 
 	private static ViewTable instance;
 
@@ -39,7 +51,7 @@ public class ViewTable extends ViewPart{
 	public static ViewTable getInstance() {
 		IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
 		try {			
-			page.showView(ID);			
+			page.showView(ID);
 		} 
 		catch (PartInitException e) {
 			e.printStackTrace();
@@ -49,6 +61,17 @@ public class ViewTable extends ViewPart{
 
 	public IStructuredSelection getSelection() {
 		return (IStructuredSelection) viewer.getSelection();
+	}
+
+	public boolean alreadyPainted(TableWidgetReference aux){
+		if(!widgets.isEmpty()){
+			for(TableWidgetReference w: widgets){
+				if(w.getName().equals(aux.getName()) && w.getLocation().equals(aux.getLocation())){
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	public void addWidget(TableWidgetReference newWidget){
@@ -74,15 +97,57 @@ public class ViewTable extends ViewPart{
 		viewer.refresh();
 	}
 
-	public boolean alreadyPainted(TableWidgetReference aux){
-		if(!widgets.isEmpty()){
-			for(TableWidgetReference w: widgets){
-				if(w.getName().equals(aux.getName()) && w.getLocation().equals(aux.getLocation())){
-					return true;
+	public void sendWidgetsList(){
+
+		try {
+			serverSocket = new ServerSocket(PORT_IN);
+		} catch (IOException e) {
+			System.exit(1);
+		}
+
+		while(true){
+			List<Request> pendingRequests = new ArrayList<Request>();
+			try {
+				socket = serverSocket.accept();
+				oos = new ObjectOutputStream(socket.getOutputStream());
+				
+				Iterator<TableWidgetReference> iterator = widgets.iterator();
+				while(iterator.hasNext()){
+					TableWidgetReference g = iterator.next();
+					Request request = Request.newPaintRequest(g.getLocation(), mapColor(g.getColor()));
+
+					pendingRequests.add(request);
+				}
+
+				oos.writeObject(pendingRequests);
+			}
+			catch(Exception e) {
+				e.printStackTrace();
+			} finally {
+				if(oos != null){
+					try {
+						oos.close(); } catch(IOException e){}
+				}
+				if(socket != null){
+					try {
+						socket.close(); } catch(IOException e){}
 				}
 			}
 		}
-		return false;
+	}
+
+	public Color mapColor(String color){
+		if(color.equals("Red")){
+			return Color.RED;
+		}else if(color.equals("Blue")){
+			return Color.BLUE;
+		}else if(color.equals("Green")){
+			return Color.GREEN;
+		}else if(color.equals("Yellow")){
+			return Color.YELLOW;
+		}else{
+			return Color.PINK;
+		}
 	}
 
 	public void refresh(){
