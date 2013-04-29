@@ -3,31 +3,28 @@ package pt.iscte.dcti.umlviewer.tester.aspects;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.lang.reflect.Field;
+//import java.lang.reflect.Field;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Collection;
+//import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
 import pt.iscte.dcti.umlviewer.tester.util.ClassesToBytes;
-
-
 
 public aspect Aspect1 {
 
 	private static final int DEFAULT_PORT = 8080;
 
+	private Set<Class<?>> app_classes;
+	
 	private boolean recording;
-
-	private Set<Class<?>> allClasses;
-	private Set<Class<?>> classes;
+	private Set<Class<?>> fragment_classes;
 
 	public Aspect1() {
+		app_classes = new HashSet<Class<?>>();
 		recording = false;
-		allClasses = new HashSet<Class<?>>();
-		classes = null;
+		fragment_classes = null;
 		new Server().start();
 	}
 
@@ -36,8 +33,7 @@ public aspect Aspect1 {
 	}
 
 	private void startRecord() {
-		
-		classes = new HashSet<Class<?>>();
+		fragment_classes = new HashSet<Class<?>>();
 		recording = true;
 	}
 
@@ -45,8 +41,12 @@ public aspect Aspect1 {
 		recording = false;
 	}
 	
-	after() : staticinitialization( pt.iscte.dcti.umlviewer.tester.model..* ) {
-		allClasses.add(thisJoinPoint.getSignature().getDeclaringType());
+	private Set<Class<?>> getFragmentClasses() {
+		return fragment_classes;
+	}
+	
+	after() : staticinitialization(pt.iscte.dcti.umlviewer.tester.model..*) {
+		app_classes.add(thisJoinPoint.getSignature().getDeclaringType());
 	}
 	
 	after(Object o): execution(* pt.iscte.dcti.umlviewer.tester.model.*.* (..)) && target(o) {
@@ -56,7 +56,7 @@ public aspect Aspect1 {
 	}
 
 	private void addClass(Class<?> c) {
-		classes.add(c);
+		fragment_classes.add(c);
 		//checkForDependencies(c);
 	}
 
@@ -64,7 +64,7 @@ public aspect Aspect1 {
 	//um array com todas as classes. Basta ir buscar o tipo da dependencia directamente.
 	//ATENÇÃO: Colecções dentro de colecções, e Arrays de arrays.
 	//Processar fields, métodos, e construtores
-	private void checkForDependencies(Class<?> c) {
+	/*private void checkForDependencies(Class<?> c) {
 		for(Field f: c.getDeclaredFields()) {
 			Class<?> clazz = f.getType();
 			if(clazz.isArray()) {
@@ -73,11 +73,11 @@ public aspect Aspect1 {
 			else if(Collection.class.isAssignableFrom(clazz)) {
 				
 			}
-			if(allClasses.contains(clazz) && !classes.contains(clazz)) {
-				classes.add(clazz);
+			if(app_classes.contains(clazz) && !fragment_classes.contains(clazz)) {
+				fragment_classes.add(clazz);
 			}
 		}
-	}
+	}*/
 
 	private class Server extends Thread {
 		
@@ -152,11 +152,11 @@ public aspect Aspect1 {
 				}
 				else if(status.intValue() == 1 && request.intValue() == 0) {
 					endRecord();
-					Map<String, byte[]> data = ClassesToBytes.getClassBytes(classes);
+					Map<String, byte[]> data = ClassesToBytes.getClassBytes(getFragmentClasses());
 					output_stream.writeObject(data);
 				}
 				else if(request.intValue() == -1) {
-					//END SESSION
+					//END SESSION REQUEST
 					output_stream.writeObject(new Integer(-1));
 				}
 				else {
