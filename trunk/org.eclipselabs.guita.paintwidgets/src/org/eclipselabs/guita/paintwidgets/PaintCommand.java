@@ -1,6 +1,7 @@
 package org.eclipselabs.guita.paintwidgets;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -28,11 +29,8 @@ import org.eclipselabs.variableanalyzer.service.VariableResolver;
 
 public class PaintCommand extends AbstractHandler{
 
-	public static final int PORT_IN = 8080;
-	Socket socket = null;
-	ObjectOutputStream oos = null;
-
-
+	public static final int PORT1 = 8081;
+	
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 		ISelection selection =  PlatformUI.getWorkbench().getActiveWorkbenchWindow().getSelectionService().getSelection();
@@ -68,18 +66,17 @@ public class PaintCommand extends AbstractHandler{
 			String message = "\"" + text + "\"" + "\n" + type + "\"" + "\n" + loc;
 
 			if(type.indexOf("org.eclipse.swt.widgets.") > -1) {
-				TableWidgetReference tableWidget = new TableWidgetReference(text, type, loc, color);
 				Request request = Request.newPaintRequest(loc, mapColor(color));
 
-				if(ViewTable.getInstance().alreadyPainted(tableWidget)){
+				if(ViewTable.getInstance().alreadyPainted(text, loc)){
 					MessageBox messageDialog = new MessageBox(editor.getSite().getShell(), SWT.ICON_QUESTION | SWT.OK | SWT.CANCEL);
 					messageDialog.setText("Paint");
 					messageDialog.setMessage("This widget is already painted. Do you wish to change its color?");
 					if(messageDialog.open() == SWT.OK){
-						sendRequest(tableWidget, request);
+						sendRequest(text, type, loc, color, request);
 					}
 				}else {
-					sendRequest(tableWidget, request);
+					sendRequest(text, type, loc, color, request);
 				}
 			}
 			else {
@@ -106,34 +103,49 @@ public class PaintCommand extends AbstractHandler{
 		}
 	}
 
-	public void sendRequest(TableWidgetReference tableWidget, Request request){
+	public void sendRequest(String text, String type, String loc, String color, Request request){
+		Socket socket = null;
+		Socket socket2 = null;
+		ObjectOutputStream oos = null;
+		ObjectInputStream ois = null;
+		
 		try {
-			socket = new Socket("localhost", PORT_IN);
+			socket = new Socket("localhost", PORT1);
 			oos = new ObjectOutputStream(socket.getOutputStream());
 			oos.writeObject(request);
+			
+			socket2 = ViewTable.getInstance().getServerSocket().accept();
+			ois = new ObjectInputStream(socket2.getInputStream());
+			int number = (Integer) ois.readObject();
 
-			ViewTable.getInstance().addWidget(tableWidget);
+			TableWidgetReference newWidget = new TableWidgetReference(text, type, loc, color, number);
+			ViewTable.getInstance().addWidget(newWidget);
 
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
 		} finally {
 			if(oos != null){
 				try {
-					oos.close();
-				} catch(IOException e){
-				}
+					oos.close(); } catch(IOException e){}
+			}
+			if(ois != null){
+				try {
+					ois.close(); } catch(IOException e){}
 			}
 			if(socket != null){
 				try {
-					socket.close();
-				} catch(IOException e){
-				}
+					socket.close(); } catch(IOException e){}
+			}
+			if(socket2 != null){
+				try {
+					socket2.close(); } catch(IOException e){}
 			}
 		}
 	}
-
 
 	@Override
 	public boolean isEnabled() {
