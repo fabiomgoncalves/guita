@@ -12,6 +12,7 @@ import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IPersistable;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.FileEditorInput;
+import org.eclipselabs.variableanalyzer.service.VariableInfo;
 import org.eclipselabs.variableanalyzer.service.VariableResolver;
 
 
@@ -35,9 +36,9 @@ public class ResolveTypeCommand extends AbstractHandler {
 			
 			if(pers instanceof FileEditorInput) {
 				FileEditorInput fileInput = (FileEditorInput) pers;
-				String type = VariableResolver.resolve(fileInput.getFile(), text, line);
-				if(type != null) {
-					String message = "\"" + text + "\"" + "\n" + type + "\n" + fileInput.getPath() + "\n" + line + "\n" + offset;
+				VariableInfo info = VariableResolver.resolve(fileInput.getFile(), text, line);
+				if(info != null) {
+					String message = "\"" + text + "\"" + "\n" + info.getType() + "\norder: " + info.getLineExecutionOrder() + "\n" + fileInput.getPath() + "\n" + line + "\n" + offset;
 					MessageDialog.open(MessageDialog.INFORMATION, editor.getSite().getShell(), "Variable", message, SWT.NONE);
 				}
 				else {
