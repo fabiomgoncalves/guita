@@ -5,9 +5,10 @@ import org.eclipselabs.variableanalyzer.VariableAnalyzer;
 
 public class VariableResolver {
 
-	public static String resolve(IFile file, String varName, int line) {
+	public static VariableInfo resolve(IFile file, String varName, int line) {
 		VariableAnalyzer analyzer = new VariableAnalyzer(file);
-		String type = analyzer.resolveType(varName, line);
-		return type;
+		VariableInfo varInfo = analyzer.resolveType(varName, line);
+		analyzer.print();
+		return varInfo;
 	}
 }

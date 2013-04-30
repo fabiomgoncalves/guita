@@ -3,6 +3,7 @@ package org.eclipselabs.variableanalyzer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,15 +15,19 @@ import org.eclipse.jdt.core.dom.Assignment;
 import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.ConstructorInvocation;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.ImportDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.ReturnStatement;
 import org.eclipse.jdt.core.dom.SimpleName;
+import org.eclipse.jdt.core.dom.Expression;
+
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
+import org.eclipselabs.variableanalyzer.service.VariableInfo;
 
 public class Visitor extends ASTVisitor {
 	private CompilationUnit unit;
@@ -33,7 +38,7 @@ public class Visitor extends ASTVisitor {
 		this.unit = unit;
 		imports = new HashMap<String, String>();
 		currentBlock = new CodeBlock();
-		
+
 		// include all field declarations first
 		unit.accept(new ASTVisitor() {
 			@Override
@@ -49,20 +54,32 @@ public class Visitor extends ASTVisitor {
 		});
 	}
 
-	public String resolveType(String varName, int line) {
+	public VariableInfo resolveType(String varName, int line) {
 		return currentBlock.resolveType(varName, line);
 	}
 
-	public List<String> resolveTypes(int line) {
-		return currentBlock.resolveTypes(line);
-	}
-	
 	private int line(ASTNode node) {
 		return unit.getLineNumber(node.getStartPosition());
 	}
 
+	private class Variable {
+		final String name;
+		final String type;
+
+		public Variable(String name, String type) {
+			this.name = name;
+			this.type = type;
+		}
+
+		@Override
+		public String toString() {
+			return name + " : " + type;
+		}
+	}
+
 	private class CodeBlock {
-		Map<String, Map<Integer, String>> varTypes;
+		// line number -> ("var1",Label), ("var1",Label), ("var2",Button)
+		Map<Integer, List<Variable>> vars;
 
 		CodeBlock parent;
 		List<CodeBlock> children;
@@ -73,7 +90,8 @@ public class Visitor extends ASTVisitor {
 
 		CodeBlock(CodeBlock parent) {
 			this.parent = parent;
-			varTypes = new LinkedHashMap<String, Map<Integer, String>>();
+			vars = new LinkedHashMap<Integer, List<Variable>>();
+
 			children = Collections.emptyList();
 			if(parent != null)
 				parent.addChild(this);
@@ -92,61 +110,54 @@ public class Visitor extends ASTVisitor {
 		void addVar(SimpleName name) {
 			String type =  resolveType(name.getFullyQualifiedName());
 			if(type != null)
-				addVar(name.getFullyQualifiedName(), line(name), type);
+				addVar(line(name), new Variable(name.getFullyQualifiedName(), type));
 		}
 
 		private String resolveType(String name) {
-			if(varTypes.containsKey(name))
-				return varTypes.get(name).values().iterator().next();
-			else if(!isRoot())
-				return parent.resolveType(name);
-			else
-				return null;
+			for(Integer i : vars.keySet()) {
+				for(Variable v : vars.get(i)) {
+					if(v.name.equals(name))
+						return v.type;
+				}
+			}
+			return isRoot() ? null : parent.resolveType(name);
 		}
+
+
 
 		void addVar(VariableDeclaration var, String type) {
-			String key = var.getName().getFullyQualifiedName();
-			addVar(key, line(var), type);
+			String name = var.getName().getFullyQualifiedName();
+			addVar(line(var), new Variable(name, expand(type)));
 		}
 
-		private void addVar(String name, int line, String type) {
-			if(!varTypes.containsKey(name))
-				varTypes.put(name, new HashMap<Integer, String>());
+		private void addVar(int line, Variable var) {
+			if(!vars.containsKey(line))
+				vars.put(line, new ArrayList<Variable>());
 
-			varTypes.get(name).put(line, expand(type));
-		}
+			vars.get(line).add(var);
+		} 
 
-		public String resolveType(String varName, int line) {
-			if(varTypes.containsKey(varName) && varTypes.get(varName).containsKey(line))
-				return varTypes.get(varName).get(line);
+		public VariableInfo resolveType(String varName, int line) {
+			if(vars.containsKey(line)) {
+				int order = 0;
+				for(Variable v : vars.get(line)) {
+					if(v.name.equals(varName))
+						return new VariableInfo(v.type, order);
+
+					order++;
+				}
+			}
 
 			for(CodeBlock c : children) {
-				String t = c.resolveType(varName, line);
-				if(t != null)
-					return t;
+				VariableInfo info = c.resolveType(varName, line);
+				if(info != null)
+					return info;
 			}
 
 			return null;
 		}
 
-		public List<String> resolveTypes(int line) {
-			List<String> list = new ArrayList<String>();
-			resolveTypesAux(line, list);
-			return list;
-		}
 
-		private void resolveTypesAux(int line, List<String> list) {
-			for(Entry<String, Map<Integer, String>> entry : varTypes.entrySet())
-				if(entry.getValue().containsKey(line))
-					list.add(entry.getValue().get(line));
-
-			for(CodeBlock c : children)
-				c.resolveTypesAux(line, list);
-		}
-
-		void print() {
-			print(0);
-		}
 
 		private String tabs(int n) {
 			char[] v = new char[n];
@@ -156,16 +167,21 @@ public class Visitor extends ASTVisitor {
 		}
 
 		private void print(int level) {
-			for(String var : varTypes.keySet())
-				System.out.println(tabs(level) + var + " : " + varTypes.get(var));
-
+			for(Integer line : vars.keySet()) {
+				System.out.print(tabs(level) + line + " -> ");
+				for(Variable v : vars.get(line))
+					System.out.print(v + ", ");
+				
+				System.out.println();
+			}
+		
 			for(CodeBlock c : children)
 				c.print(level+1);
 		}
 	}
 
 	void printVars() {
-		currentBlock.print();
+		currentBlock.print(0);
 	}
 
 
@@ -180,16 +196,21 @@ public class Visitor extends ASTVisitor {
 		else
 			return type;
 	}
-	
-	private void checkSimpleNameVar(Object o) {
+
+	private void checkArgument(Object o) {
 		if(o instanceof SimpleName)
 			currentBlock.addVar((SimpleName) o);
+		else if(o instanceof MethodInvocation) {
+			Expression e = ((MethodInvocation) o).getExpression();
+			if(e instanceof SimpleName)
+				currentBlock.addVar((SimpleName) e);
+		}
 	}
-	
-	
-	
-	
-	
+
+
+
+
+
 
 	@Override
 	public boolean visit(ImportDeclaration n) {
@@ -211,52 +232,72 @@ public class Visitor extends ASTVisitor {
 			currentBlock = currentBlock.parent;
 	}
 
-	
-	
-	
-	
+
+
 	@Override
 	public boolean visit(VariableDeclarationStatement n) {
 		//		System.out.println("*>"+ n + " " + line(n));
 		for(Object o : n.fragments()) {
 			if(o instanceof VariableDeclarationFragment) {
 				VariableDeclarationFragment var = (VariableDeclarationFragment) o;
-				currentBlock.addVar(var, n.getType().toString());
+				Expression e = var.getInitializer();
+				boolean visit = handleRightHandExpression(e);
+				Variable leftVar = new Variable(var.getName().getFullyQualifiedName(), n.getType().toString());
+				currentBlock.addVar(line(var), leftVar);
+				return visit;
 			}
 		}
 
 		return true;
 	}
 
-	
-	@Override
-	public boolean visit(Assignment n) {
-		checkSimpleNameVar(n.getLeftHandSide());
-		checkSimpleNameVar(n.getRightHandSide());
-		return true;
+	private boolean handleRightHandExpression(Expression e) {
+		if(e instanceof MethodInvocation) {
+			visit((MethodInvocation) e);
+			return false;
+		}
+		else if(e instanceof ClassInstanceCreation) {
+			visit((ClassInstanceCreation) e);
+			return false;
+		}
+		else {
+			return true;
+		}
 	}
 
-	
+
+	@Override
+	public boolean visit(Assignment n) {
+		boolean visit = handleRightHandExpression(n.getRightHandSide());
+		if(n.getLeftHandSide() instanceof SimpleName) {
+			String name = ((SimpleName) n.getLeftHandSide()).getFullyQualifiedName();
+			String type = currentBlock.resolveType(name);
+			currentBlock.addVar(line(n.getLeftHandSide()), new Variable(name, type));
+		}
+		return visit;
+	}
+
+
 	@Override
 	public boolean visit(ClassInstanceCreation n) {
 		for(Object o : n.arguments())
-			checkSimpleNameVar(o);
-	
+			checkArgument(o);
+
 		return true;
 	}
-	
+
 	@Override
 	public boolean visit(MethodInvocation n) {
-		checkSimpleNameVar(n.getExpression());
 		for(Object o : n.arguments())
-			checkSimpleNameVar(o);
+			checkArgument(o);
 
+		checkArgument(n.getExpression());
 		return true;
 	}
 
 	@Override
 	public boolean visit(ReturnStatement n) {
-		checkSimpleNameVar(n.getExpression());
+		checkArgument(n.getExpression());
 		return true;
 	}
 
