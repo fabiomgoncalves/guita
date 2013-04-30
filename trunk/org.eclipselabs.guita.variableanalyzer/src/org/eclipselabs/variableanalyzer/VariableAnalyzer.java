@@ -1,6 +1,5 @@
 package org.eclipselabs.variableanalyzer;
 
-import java.util.List;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -9,6 +8,7 @@ import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipselabs.variableanalyzer.service.VariableInfo;
 
 public class VariableAnalyzer {
 
@@ -26,14 +26,10 @@ public class VariableAnalyzer {
 		node.accept(visitor);
 	}
 	
-	public String resolveType(String varName, int line) {
+	public VariableInfo resolveType(String varName, int line) {
 		return visitor.resolveType(varName, line);
 	}
 
-	public List<String> resolveTypes(int line) {
-		return visitor.resolveTypes(line);
-	}
-	
 	public void print() {
 		visitor.printVars();
 	}
