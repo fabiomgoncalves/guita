@@ -45,7 +45,7 @@ public class Modelo {
 				button2.setText("TRES");
 				button2.addSelectionListener(new SelectionAdapter(){
 					public void widgetSelected(SelectionEvent e){
-						shell2.setVisible(false);
+						shell2.dispose();
 						shell.setVisible(true);
 					}
 				});
