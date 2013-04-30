@@ -33,10 +33,9 @@ public class ViewTable extends ViewPart{
 
 	public static final String ID = "org.eclipselabs.guita.paintwidgets.ViewTable";
 
-	public static final int PORT_IN = 8080;
+	public static final int PORT2 = 8091;
 	private ServerSocket serverSocket;
 	private Socket socket = null;
-	private ObjectOutputStream oos = null;
 
 	private static ViewTable instance;
 
@@ -46,6 +45,12 @@ public class ViewTable extends ViewPart{
 
 	public ViewTable(){
 		instance = this;
+
+		try {
+			serverSocket = new ServerSocket(PORT2);
+		} catch (IOException e) {
+			System.exit(1);
+		}
 	}
 
 	public static ViewTable getInstance() {
@@ -59,14 +64,18 @@ public class ViewTable extends ViewPart{
 		return instance;
 	}
 
+	public ServerSocket getServerSocket(){
+		return serverSocket;
+	}
+
 	public IStructuredSelection getSelection() {
 		return (IStructuredSelection) viewer.getSelection();
 	}
 
-	public boolean alreadyPainted(TableWidgetReference aux){
+	public boolean alreadyPainted(String name, String location){
 		if(!widgets.isEmpty()){
 			for(TableWidgetReference w: widgets){
-				if(w.getName().equals(aux.getName()) && w.getLocation().equals(aux.getLocation())){
+				if(w.getName().equals(name)){
 					return true;
 				}
 			}
@@ -79,7 +88,7 @@ public class ViewTable extends ViewPart{
 
 		if(!widgets.isEmpty()){
 			for(TableWidgetReference w: widgets){
-				if(w.getName().equals(newWidget.getName()) && w.getLocation().equals(newWidget.getLocation())){
+				if(w.getName().equals(newWidget.getName())){
 					w.setColor(newWidget.getColor());
 					found = true;
 				}
@@ -97,20 +106,19 @@ public class ViewTable extends ViewPart{
 		viewer.refresh();
 	}
 
-	public void sendWidgetsList(){
+	public List<TableWidgetReference> getWidgetsTable(){
+		return widgets;
+	}
 
-		try {
-			serverSocket = new ServerSocket(PORT_IN);
-		} catch (IOException e) {
-			System.exit(1);
-		}
+	public void sendWidgetsList(){
+		ObjectOutputStream oos = null;
 
 		while(true){
 			List<Request> pendingRequests = new ArrayList<Request>();
 			try {
 				socket = serverSocket.accept();
 				oos = new ObjectOutputStream(socket.getOutputStream());
-				
+
 				Iterator<TableWidgetReference> iterator = widgets.iterator();
 				while(iterator.hasNext()){
 					TableWidgetReference g = iterator.next();
@@ -169,9 +177,21 @@ public class ViewTable extends ViewPart{
 				result = w.getType();
 				break;
 			case 3:
-				result = w.getLocation();
+				boolean end = false;
+				int i = 0;
+				while(!end){
+					result += w.getLocation().charAt(i);
+
+					if(w.getLocation().charAt(++i) == ':'){
+						end = true;
+					}
+				}
+
 				break;
 			case 4:
+				break;
+			case 5:
+				result = Integer.toString(w.getNumberOfWidgets());
 				break;
 			default:
 				result = "";
@@ -207,8 +227,8 @@ public class ViewTable extends ViewPart{
 	}
 
 	private void createColumns(final Composite parent, final TableViewer viewer) {
-		String[] titles = {"", "Name", "Type", "Location", "Color"}; //primeira coluna em branco devido a um bug do SWT
-		int[] bounds = { 0, 150, 200, 120, 100};
+		String[] titles = {"", "Name", "Type", "Location", "Color", "Number of Painted Widgets"}; //primeira coluna em branco devido a um bug do SWT
+		int[] bounds = { 0, 150, 200, 120, 100, 250};
 
 		for(int i = 0; i != titles.length; i++){
 			createTableViewerColumn(titles[i], bounds[i]);

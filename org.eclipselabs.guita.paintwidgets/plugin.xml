@@ -75,7 +75,7 @@
             name="Pink">
       </command>
       <command
-            defaultHandler="org.eclipselabs.guita.paintwidgets.view.RemoveCommand"
+            defaultHandler="org.eclipselabs.guita.paintwidgets.UnpaintCommand"
             id="org.eclipselabs.guita.paintwidgets.remove"
             name="Remove">
       </command>

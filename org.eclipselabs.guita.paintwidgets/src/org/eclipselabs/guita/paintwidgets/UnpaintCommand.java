@@ -1,4 +1,4 @@
-package org.eclipselabs.guita.paintwidgets.view;
+package org.eclipselabs.guita.paintwidgets;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -10,11 +10,13 @@ import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipselabs.guita.paintwidgets.view.TableWidgetReference;
+import org.eclipselabs.guita.paintwidgets.view.ViewTable;
 import org.eclipselabs.guita.request.Request;
 
-public class RemoveCommand extends AbstractHandler{
+public class UnpaintCommand extends AbstractHandler{
 
-	public static final int PORT_IN = 8080;
+	public static final int PORT_IN = 8081;
 
 	@SuppressWarnings("unchecked")
 	@Override
