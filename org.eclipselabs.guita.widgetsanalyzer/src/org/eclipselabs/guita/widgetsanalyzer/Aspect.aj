@@ -23,8 +23,8 @@ import org.eclipselabs.guita.request.Request;
 
 public aspect Aspect {
 
-	public static final int PORT1 = 8081;
-	public static final int PORT2 = 8091;
+	public static final int PORT1 = 8080;
+	public static final int PORT2 = 8090;
 	private ServerSocket serverSocket;
 
 	private Map<String , List<Widget>> widgetsList = new HashMap<String, List<Widget>>();
@@ -32,9 +32,6 @@ public aspect Aspect {
 	private Map<Widget, Color> paintedWidgets = new HashMap<Widget, Color>();
 
 	private List<Request> pendingRequests = new ArrayList<Request>();
-
-	private int numberPaintedWidgets;
-	private boolean sendNumberWidgets;
 
 	protected pointcut scope() : !within(Aspect);
 
@@ -59,9 +56,10 @@ public aspect Aspect {
 				try {
 					socket = serverSocket.accept();
 					ois = new ObjectInputStream(socket.getInputStream());
-					final Request request = (Request) ois.readObject();
+					Request request = (Request) ois.readObject();
 
-					search(request);
+					managePendingRequests(search(request), request);
+
 				}
 				catch(Exception e) {
 					e.printStackTrace();
@@ -83,35 +81,66 @@ public aspect Aspect {
 		}
 	}
 
-	private void search(final Request request){
-		numberPaintedWidgets = 0;
-		sendNumberWidgets = true;
+	private class SearchRunnable implements Runnable {
+
+		private Widget widget;
+		private Request request;
+		private int numberPaintedWidgets;
+		private boolean isToSend = true;
+		private boolean toAdd = true;
+
+		public SearchRunnable(Widget widget, Request request){
+			this.widget = widget;
+			this.request = request;
+		}
+
+		@Override
+		public void run() {
+			if(paintedWidgets.containsKey(widget) && request.isToRemove()){
+				removePaint(widget);
+				isToSend = false;
+				toAdd = false;
+			}else{
+				paint(widget, getColor(request));
+				numberPaintedWidgets++;
+			}
+		}
+
+		public int getNumberPaintedWidgets(){
+			return numberPaintedWidgets;
+		}
+
+		public boolean getIsToSend(){
+			return isToSend;
+		}
+
+		public boolean getIsToAdd(){
+			return toAdd;
+		}
+	}
+
+
+	private boolean search(Request request){
+		SearchRunnable runnable = null;
+		boolean isToSend = true;
+		boolean toAdd = true;
+		int numberPaintedWidgets = 0;
 
 		if(widgetsList.containsKey(request.getLocation())){	
 			for(Widget g: widgetsList.get(request.getLocation())){
-				final Widget actualWidget = g;
-				actualWidget.getDisplay().syncExec(new Runnable() {
-
-					@Override
-					public void run() {
-						if(paintedWidgets.containsKey(actualWidget) && request.isToRemove()){
-							removePaint(actualWidget);
-							pendingRequests.remove(request);
-							sendNumberWidgets = false;
-						}else{
-							paint(actualWidget, getColor(request));
-							pendingRequests.add(request);
-							numberPaintedWidgets++;
-						}
-					}
-				});
+				runnable = new SearchRunnable(g, request);
+				g.getDisplay().syncExec(runnable);
 			}
-		}else{
-			pendingRequests.add(request);
+
+			isToSend = runnable.getIsToSend();
+			toAdd = runnable.getIsToAdd();
+			numberPaintedWidgets = runnable.getNumberPaintedWidgets();
 		}
-		if(sendNumberWidgets){
+
+		if(isToSend)
 			sendNumberOfPaintedWidgets(numberPaintedWidgets);
-		}
+
+		return toAdd;
 	}
 
 	private RGB getColor(Request request) {
@@ -160,36 +189,43 @@ public aspect Aspect {
 		paintedWidgets.remove(g);
 	}
 
-	public void receiveStartupRequests(){
-		Socket socket = null;
-		ObjectInputStream ois = null;
-
-		try {
-			socket = new Socket("localhost", PORT2);
-			ois = new ObjectInputStream(socket.getInputStream());
-
-			@SuppressWarnings("unchecked")
-			final List<Request> startupRequests = (List<Request>) ois.readObject();
-
-			pendingRequests = startupRequests;
-
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			if(ois != null){
-				try {
-					ois.close(); } catch(IOException e){}
-			}
-			if(socket != null){
-				try {
-					socket.close(); } catch(IOException e){}
-			}
-		}
+	public void managePendingRequests(boolean aux, Request request){
+		if(aux)
+			pendingRequests.add(request);
+		else
+			pendingRequests.remove(request);
 	}
+
+	//	public void receiveStartupRequests(){
+	//		Socket socket = null;
+	//		ObjectInputStream ois = null;
+	//
+	//		try {
+	//			socket = new Socket("localhost", PORT2);
+	//			ois = new ObjectInputStream(socket.getInputStream());
+	//
+	//			@SuppressWarnings("unchecked")
+	//			final List<Request> startupRequests = (List<Request>) ois.readObject();
+	//
+	//			pendingRequests = startupRequests;
+	//
+	//		} catch (UnknownHostException e) {
+	//			e.printStackTrace();
+	//		} catch (IOException e) {
+	//			e.printStackTrace();
+	//		} catch (Exception e) {
+	//			e.printStackTrace();
+	//		} finally {
+	//			if(ois != null){
+	//				try {
+	//					ois.close(); } catch(IOException e){}
+	//			}
+	//			if(socket != null){
+	//				try {
+	//					socket.close(); } catch(IOException e){}
+	//			}
+	//		}
+	//	}
 
 	after() returning (final Widget g): call(Widget+.new(..)) && scope() {
 		SourceLocation loc = thisJoinPoint.getSourceLocation();
@@ -202,20 +238,31 @@ public aspect Aspect {
 			widgetsList.put(aux, auxList);
 		}
 
-		Iterator<Request> iterator = pendingRequests.iterator();
-		while(iterator.hasNext()){
-			Request r = iterator.next();
-			if(r.getLocation().equals(aux)){
-				search(r);
+
+		if(!pendingRequests.isEmpty()){
+			for(Request r : pendingRequests) {
+				if(r.getLocation().equals(aux))
+					search(r);
 			}
 		}
+
 
 		g.addDisposeListener(new DisposeListener() {
 			public void widgetDisposed(DisposeEvent event) {
 
-				//ALGO
+				Iterator<String> iterator = widgetsList.keySet().iterator();
+				while(iterator.hasNext()){
+					String key = iterator.next();
+					Iterator<Widget> iterator2 = widgetsList.get(key).iterator();
+					while(iterator2.hasNext()){
+						Widget w = iterator2.next();
+						if(w.equals(g))
+							iterator2.remove();
+					}
+					if(widgetsList.get(key).isEmpty())
+						iterator.remove();
+				}
 
-				System.out.println(g);
 			}
 		});
 	}
@@ -231,11 +278,10 @@ public aspect Aspect {
 			widgetsList.put(aux, auxList);
 		}
 
-		Iterator<Request> iterator = pendingRequests.iterator();
-		while(iterator.hasNext()){
-			Request r = iterator.next();
-			if(r.getLocation().equals(aux)){
-				search(r);
+		if(!pendingRequests.isEmpty()){
+			for(Request r : pendingRequests) {
+				if(r.getLocation().equals(aux))
+					search(r);
 			}
 		}
 	}
