@@ -33,7 +33,7 @@ public class ViewTable extends ViewPart{
 
 	public static final String ID = "org.eclipselabs.guita.paintwidgets.ViewTable";
 
-	public static final int PORT2 = 8091;
+	public static final int PORT2 = 8090;
 	private ServerSocket serverSocket;
 	private Socket socket = null;
 
