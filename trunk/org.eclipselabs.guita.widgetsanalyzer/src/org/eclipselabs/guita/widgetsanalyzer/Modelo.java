@@ -20,6 +20,9 @@ public class Modelo {
 		shell = new Shell(display);
 		shell.setLayout(new GridLayout(1, false));
 		shell.setText("Form 1");
+		
+		System.out.println(shell.getClass());
+		System.out.println(ola.getClass());
 
 		Label label1 = new Label(shell, SWT.NULL);
 		label1.setText("Algum texto !!!");
