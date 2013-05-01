@@ -29,7 +29,7 @@ import org.eclipselabs.variableanalyzer.service.VariableResolver;
 
 public class PaintCommand extends AbstractHandler{
 
-	public static final int PORT1 = 8081;
+	public static final int PORT1 = 8080;
 	
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
