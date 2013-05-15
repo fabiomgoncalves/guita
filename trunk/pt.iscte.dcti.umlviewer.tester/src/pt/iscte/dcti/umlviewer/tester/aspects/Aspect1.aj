@@ -3,13 +3,18 @@ package pt.iscte.dcti.umlviewer.tester.aspects;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-//import java.lang.reflect.Field;
+import java.lang.reflect.Field;
 import java.net.ServerSocket;
 import java.net.Socket;
-//import java.util.Collection;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
+import org.aspectj.lang.reflect.MethodSignature;
+
+import pt.iscte.dcti.umlviewer.network.external.ClassDataTransferObject;
 import pt.iscte.dcti.umlviewer.tester.util.ClassesToBytes;
 
 public aspect Aspect1 {
@@ -17,9 +22,9 @@ public aspect Aspect1 {
 	private static final int DEFAULT_PORT = 8080;
 
 	private Set<Class<?>> app_classes;
-	
+
 	private boolean recording;
-	private Set<Class<?>> fragment_classes;
+	private Map<Class<?>, Collection<String>> fragment_classes;
 
 	public Aspect1() {
 		app_classes = new HashSet<Class<?>>();
@@ -33,54 +38,46 @@ public aspect Aspect1 {
 	}
 
 	private void startRecord() {
-		fragment_classes = new HashSet<Class<?>>();
+		fragment_classes = new HashMap<Class<?>, Collection<String>>();
 		recording = true;
 	}
 
 	private void endRecord() {
 		recording = false;
 	}
-	
-	private Set<Class<?>> getFragmentClasses() {
+
+	private Map<Class<?>, Collection<String>> getFragmentClasses() {
 		return fragment_classes;
 	}
-	
+
 	after() : staticinitialization(pt.iscte.dcti.umlviewer.tester.model..*) {
 		app_classes.add(thisJoinPoint.getSignature().getDeclaringType());
 	}
-	
+
 	after(Object o): execution(* pt.iscte.dcti.umlviewer.tester.model.*.* (..)) && target(o) {
 		if(recording) {
-			addClass(o.getClass());
-		}
-	}
-
-	private void addClass(Class<?> c) {
-		fragment_classes.add(c);
-		//checkForDependencies(c);
-	}
-
-	//Visto que o código instrumentado importa as classes que necessita, não é preciso guardar
-	//um array com todas as classes. Basta ir buscar o tipo da dependencia directamente.
-	//ATENÇÃO: Colecções dentro de colecções, e Arrays de arrays.
-	//Processar fields, métodos, e construtores
-	/*private void checkForDependencies(Class<?> c) {
-		for(Field f: c.getDeclaredFields()) {
-			Class<?> clazz = f.getType();
-			if(clazz.isArray()) {
-				clazz = clazz.getComponentType();
+			MethodSignature sig = (MethodSignature) thisJoinPoint.getSignature();
+			Class<?> clazz = sig.getDeclaringType();
+			if(fragment_classes.get(clazz) == null) { //#1
+				fragment_classes.put(clazz, new LinkedList<String>());
 			}
-			else if(Collection.class.isAssignableFrom(clazz)) {
-				
-			}
-			if(app_classes.contains(clazz) && !fragment_classes.contains(clazz)) {
-				fragment_classes.add(clazz);
+			fragment_classes.get(clazz).add(sig.getMethod().getName()); //#2
+			//#3
+			for(Field f: clazz.getDeclaredFields()) {
+				if(app_classes.contains(f.getType()) && !fragment_classes.containsKey(f.getType())) { //#4
+					fragment_classes.put(f.getType(), null);
+				}
 			}
 		}
-	}*/
+	}
+	
+	//#1 - !containsKey || (containsKey && value == null)
+	//#2 - Em vez de guardar o nome do método, guardar o próprio método em si? Ou guardar uma String "completa"?
+	//#3 - EM FALTA: Processar extends/implements e dependencias em métodos (return type e parametros de entrada)
+	//#4 - EM FALTA: Colecções e Arrays de arrays. Atenção a colecções de colecções, e arrays de arrays.
 
 	private class Server extends Thread {
-		
+
 		private ServerSocket server_socket;
 
 		public void run() {
@@ -152,7 +149,7 @@ public aspect Aspect1 {
 				}
 				else if(status.intValue() == 1 && request.intValue() == 0) {
 					endRecord();
-					Map<String, byte[]> data = ClassesToBytes.getClassBytes(getFragmentClasses());
+					Map<String, ClassDataTransferObject> data = ClassesToBytes.getClassBytes(getFragmentClasses());
 					output_stream.writeObject(data);
 				}
 				else if(request.intValue() == -1) {
