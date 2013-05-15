@@ -31,13 +31,6 @@
          </command>
          <command
                commandId="pt.iscte.dcti.umlviewer.command1"
-               icon="icons/plus-icon.png"
-               label="Incremental Toggle"
-               style="toggle"
-               tooltip="Toggle incremental diagrams">
-         </command>
-         <command
-               commandId="pt.iscte.dcti.umlviewer.command2"
                icon="icons/Remove.png"
                label="Clear diagram"
                style="push"
@@ -50,11 +43,6 @@
       <command
             defaultHandler="pt.iscte.dcti.umlviewer.handlers.Command1"
             id="pt.iscte.dcti.umlviewer.command1"
-            name="Incremental">
-      </command>
-      <command
-            defaultHandler="pt.iscte.dcti.umlviewer.handlers.Command2"
-            id="pt.iscte.dcti.umlviewer.command2"
             name="Clear">
       </command>
    </extension>
