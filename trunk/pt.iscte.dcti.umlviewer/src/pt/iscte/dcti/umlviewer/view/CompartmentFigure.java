@@ -26,6 +26,10 @@ public class CompartmentFigure extends Figure {
 		setLayoutManager(layout);
 		setBorder(new CompartmentFigureBorder());
 	}
+	
+	public void mymethod() {
+		layout();
+	}
 
 	class CompartmentFigureBorder extends AbstractBorder {
 		public Insets getInsets(IFigure figure) {
