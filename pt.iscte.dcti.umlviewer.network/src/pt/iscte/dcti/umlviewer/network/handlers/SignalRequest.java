@@ -3,29 +3,35 @@ package pt.iscte.dcti.umlviewer.network.handlers;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.HashSet;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
+
+import pt.iscte.dcti.umlviewer.network.external.ClassDataTransferObject;
 import pt.iscte.dcti.umlviewer.network.util.ByteClassLoader;
 import pt.iscte.dcti.umlviewer.service.Service;
 import pt.iscte.dcti.umlviewer.service.ServiceHelper;
 
 public class SignalRequest extends AbstractHandler {
+	
+	private static final boolean SHOW_REPORTS = true;
 
 	private static final int DEFAULT_PORT = 8080;
 
-	private static final boolean SHOW_REPORTS = true;
-
 	private Service service;
+	
+	private ByteClassLoader class_loader;
 
 	public SignalRequest() {
 		service = ServiceHelper.getService();
+		class_loader = new ByteClassLoader(this.getClass().getClassLoader());
 		if(SHOW_REPORTS) {
 			System.out.println("SIGNAL READY");
 		}
@@ -37,13 +43,13 @@ public class SignalRequest extends AbstractHandler {
 	}
 
 	private class RecordAgent extends Thread {
-		
+
 		private InetAddress addr;
 		private Socket socket;
 		private ObjectOutputStream output_stream;
 		private ObjectInputStream input_stream;
 
-		private Map<String, byte[]> data = null;
+		private Map<String, ClassDataTransferObject> data = null;
 
 		public void run() {
 			//spamming the "option click" will trigger various threads.
@@ -74,8 +80,8 @@ public class SignalRequest extends AbstractHandler {
 				}
 			}
 			if (data != null) {
-				Set<Class<?>> classes = loadClassesFromData(data);
-				service.showFragment(classes, null);
+				Map<Class<?>, Collection<String>> fragment_classes = loadClassesFromData();
+				service.showFragment(fragment_classes);
 			}
 		}
 
@@ -86,7 +92,7 @@ public class SignalRequest extends AbstractHandler {
 				//both this class and aspect need to synchronize their status.
 				if(status.intValue() == 1) {
 					output_stream.writeObject(new Integer(0));
-					data = (Map<String, byte[]>)input_stream.readObject();
+					data = (Map<String, ClassDataTransferObject>)input_stream.readObject(); //#1
 					if(SHOW_REPORTS) {
 						System.out.println("STOPPED RECORDING");
 					}
@@ -113,21 +119,35 @@ public class SignalRequest extends AbstractHandler {
 			catch (IOException e) { e.printStackTrace(); } 
 		}
 
-	}
+		//#1 - CONTROLAR: aspecto pode enviar sinal de terminar sessão em vez do fragmento.
 
-	private Set<Class<?>> loadClassesFromData(Map<String, byte[]> data) {
-		Set<Class<?>> classes = new HashSet<Class<?>>();
-		ByteClassLoader classLoader = new ByteClassLoader(this.getClass().getClassLoader(), data);
-		for(String className : classLoader.getAvailableClasses()) {
-			Class<?> c = null;
-			try {
-				c = classLoader.loadClass(className);
-				classes.add(c);
-			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
+		private Map<Class<?>, Collection<String>> loadClassesFromData() {
+			Map<Class<?>, Collection<String>> fragment_classes = new HashMap<Class<?>, Collection<String>>();
+			class_loader.setData(data);
+			for(String class_name : class_loader.getAvailableClasses()) {
+				Class<?> clazz = null;
+				try {
+					if(SHOW_REPORTS) {
+						System.out.println("LOADING CLASS " + class_name);
+					}
+
+					clazz = class_loader.loadClass(class_name); //#2
+					Collection<String> class_methods = class_loader.getClassMethods(class_name);
+					fragment_classes.put(clazz, class_methods);
+
+					if(SHOW_REPORTS) {
+						System.out.println("LOADED SUCCESSFULLY " + clazz.getName());
+					}	
+				} catch (ClassNotFoundException e) {
+					e.printStackTrace();
+				}
 			}
+			return fragment_classes;
 		}
-		return classes;
+		
+		//#2 - loadClass() poderá devolver null e causar lançamento de 
+		//IllegalArgumentException quando faz put()?
+
 	}
 
 }
