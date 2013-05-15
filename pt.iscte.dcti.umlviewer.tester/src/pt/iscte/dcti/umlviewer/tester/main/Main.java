@@ -3,6 +3,7 @@ package pt.iscte.dcti.umlviewer.tester.main;
 import java.util.Scanner;
 import pt.iscte.dcti.umlviewer.tester.model.Class1;
 import pt.iscte.dcti.umlviewer.tester.model.Class2;
+import pt.iscte.dcti.umlviewer.tester.model.Class3;
 
 public class Main {
 	
@@ -12,13 +13,17 @@ public class Main {
 		Scanner teclado = new Scanner(System.in);
 		teclado.nextLine();
 		c1.method1();
+		//c1.static_method();
+		//Class1.static_method();
 		teclado = new Scanner(System.in);
 		teclado.nextLine();
 		c2.method2();
 		teclado = new Scanner(System.in);
 		teclado.nextLine();
-		c1.method1();
-		c2.method2();
+		c1.method5();
+		c2.method4();
+		Class3 c3 = new Class3();
+		c3.method3();
 		teclado = new Scanner(System.in);
 		teclado.nextLine();
 	}
