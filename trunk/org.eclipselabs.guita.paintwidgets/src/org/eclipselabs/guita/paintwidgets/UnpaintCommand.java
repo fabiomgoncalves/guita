@@ -16,7 +16,7 @@ import org.eclipselabs.guita.request.Request;
 
 public class UnpaintCommand extends AbstractHandler{
 
-	public static final int PORT_IN = 8080;
+	public static final int PORT1 = 8080;
 
 	@SuppressWarnings("unchecked")
 	@Override
@@ -32,10 +32,10 @@ public class UnpaintCommand extends AbstractHandler{
 			Iterator<TableWidgetReference> iterator = sel.iterator();
 			while (iterator.hasNext()) {
 				TableWidgetReference w = iterator.next();
-				Request request = Request.newUnpaintRequest(w.getLocation());
+				Request request = Request.newUnpaintRequest(w.getLocation(), w.getType());
 
 				try {
-					socket = new Socket("localhost", PORT_IN);
+					socket = new Socket("localhost", PORT1);
 					oos = new ObjectOutputStream(socket.getOutputStream());
 					oos.writeObject(request);
 
