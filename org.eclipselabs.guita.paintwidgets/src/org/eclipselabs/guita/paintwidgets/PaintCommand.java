@@ -1,7 +1,6 @@
 package org.eclipselabs.guita.paintwidgets;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -14,6 +13,7 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.text.TextSelection;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
@@ -24,13 +24,14 @@ import org.eclipselabs.guita.paintwidgets.view.ViewTable;
 import org.eclipselabs.guita.paintwidgets.view.TableWidgetReference;
 import org.eclipselabs.guita.request.Request;
 import org.eclipselabs.guita.request.Request.Color;
+import org.eclipselabs.variableanalyzer.service.VariableInfo;
 import org.eclipselabs.variableanalyzer.service.VariableResolver;
 
 
 public class PaintCommand extends AbstractHandler{
 
-	public static final int PORT1 = 8080;
-	
+	public static final int PORT1 = 8081;
+
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 		ISelection selection =  PlatformUI.getWorkbench().getActiveWorkbenchWindow().getSelectionService().getSelection();
@@ -45,7 +46,9 @@ public class PaintCommand extends AbstractHandler{
 
 			if(pers instanceof FileEditorInput) {
 				FileEditorInput fileInput = (FileEditorInput) pers;
-				String type = VariableResolver.resolve(fileInput.getFile(), text, line);
+				VariableInfo info = VariableResolver.resolve(fileInput.getFile(), text, line);
+				String type = info.getType();
+				int order = info.getLineExecutionOrder();
 				String loc = fileInput.getPath().lastSegment() + ":" + line;
 
 				String color = null;
@@ -54,38 +57,43 @@ public class PaintCommand extends AbstractHandler{
 				} catch (NotDefinedException e) {
 					e.printStackTrace();
 				}
-				
-				handleVar(editor, type, text, loc, color);
+
+				handleVar(editor, type, text, loc, color, order);
 			}
 		}
 		return null;
 	}
-	
-	public void handleVar(IEditorPart editor, String type, String text, String loc, String color){
+
+	public void handleVar(IEditorPart editor, String type, String text, String loc, String color, int order){
 		if(type != null) {
 			String message = "\"" + text + "\"" + "\n" + type + "\"" + "\n" + loc;
 
-			if(type.indexOf("org.eclipse.swt.widgets.") > -1) {
-				Request request = Request.newPaintRequest(loc, mapColor(color));
+			boolean isWidget = false;
+			try {
+				Class<?> clazz = Class.forName("org.eclipse.swt.widgets." + type);
+				isWidget = Control.class.isAssignableFrom(clazz);
+			} 
+			catch (ClassNotFoundException e) {
+				MessageDialog.open(MessageDialog.ERROR, editor.getSite().getShell(), "Variable", "Variable must be a subtype of Control", SWT.NONE);
+			}
+			
+			if(isWidget) {
+				Request request = Request.newPaintRequest(loc, type, mapColor(color), order);
 
 				if(ViewTable.getInstance().alreadyPainted(text, loc)){
 					MessageBox messageDialog = new MessageBox(editor.getSite().getShell(), SWT.ICON_QUESTION | SWT.OK | SWT.CANCEL);
 					messageDialog.setText("Paint");
 					messageDialog.setMessage("This widget is already painted. Do you wish to change its color?");
-					if(messageDialog.open() == SWT.OK){
+					if(messageDialog.open() == SWT.OK)
 						sendRequest(text, type, loc, color, request);
-					}
-				}else {
+				}else
 					sendRequest(text, type, loc, color, request);
-				}
 			}
-			else {
+			else
 				MessageDialog.open(MessageDialog.INFORMATION, editor.getSite().getShell(), "Variable", message, SWT.NONE);
-			}
 		}
-		else {
+		else
 			MessageDialog.open(MessageDialog.ERROR, editor.getSite().getShell(), "Variable", "Variable Not found", SWT.NONE);
-		}
 	}
 
 
@@ -105,44 +113,26 @@ public class PaintCommand extends AbstractHandler{
 
 	public void sendRequest(String text, String type, String loc, String color, Request request){
 		Socket socket = null;
-		Socket socket2 = null;
 		ObjectOutputStream oos = null;
-		ObjectInputStream ois = null;
-		
+
 		try {
 			socket = new Socket("localhost", PORT1);
 			oos = new ObjectOutputStream(socket.getOutputStream());
 			oos.writeObject(request);
-			
-			socket2 = ViewTable.getInstance().getServerSocket().accept();
-			ois = new ObjectInputStream(socket2.getInputStream());
-			int number = (Integer) ois.readObject();
 
-			TableWidgetReference newWidget = new TableWidgetReference(text, type, loc, color, number);
+			TableWidgetReference newWidget = new TableWidgetReference(text, type, loc, color, 0);
 			ViewTable.getInstance().addWidget(newWidget);
 
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
 		} finally {
 			if(oos != null){
-				try {
-					oos.close(); } catch(IOException e){}
-			}
-			if(ois != null){
-				try {
-					ois.close(); } catch(IOException e){}
+				try { oos.close(); } catch(IOException e){}
 			}
 			if(socket != null){
-				try {
-					socket.close(); } catch(IOException e){}
-			}
-			if(socket2 != null){
-				try {
-					socket2.close(); } catch(IOException e){}
+				try { socket.close(); } catch(IOException e){}
 			}
 		}
 	}

@@ -8,7 +8,9 @@ public class Request implements Serializable {
 	
 	
 	private String location;
+	private String type;
 	private Color color;
+	private int order;
 	
 	public static class Color implements Serializable {
 		private static final long serialVersionUID = 1L;
@@ -40,21 +42,26 @@ public class Request implements Serializable {
 		}
 	}
 
-	public static Request newPaintRequest(String location, Color color) {
-		return new Request(location, color);
+	public static Request newPaintRequest(String location, String type, Color color, int order) {
+		return new Request(location, type, color, order);
 	}
 	
-	public static Request newUnpaintRequest(String location) {
-		return new Request(location, null);
+	public static Request newUnpaintRequest(String location, String type) {
+		return new Request(location, type, null, 0);
 	}
 		
-	private Request(String location, Color color){
+	private Request(String location, String type, Color color, int order){
 		this.location = location;
+		this.type = type;
 		this.color = color;
 	}
 
 	public String getLocation(){
 		return location;
+	}
+	
+	public String getType(){
+		return type;
 	}
 
 	public boolean isToRemove(){
@@ -63,5 +70,9 @@ public class Request implements Serializable {
 
 	public Color getColor(){
 		return color;
+	}
+	
+	public int getOrder(){
+		return order;
 	}
 }

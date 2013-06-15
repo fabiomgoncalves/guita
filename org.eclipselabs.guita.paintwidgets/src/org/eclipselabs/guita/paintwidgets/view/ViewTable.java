@@ -1,6 +1,7 @@
 package org.eclipselabs.guita.paintwidgets.view;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -34,8 +35,9 @@ public class ViewTable extends ViewPart{
 	public static final String ID = "org.eclipselabs.guita.paintwidgets.ViewTable";
 
 	public static final int PORT2 = 8090;
-	private ServerSocket serverSocket;
-	private Socket socket = null;
+	public static final int PORT3 = 8100;
+	private ServerSocket serverSocket2;
+	private ServerSocket serverSocket3;
 
 	private static ViewTable instance;
 
@@ -47,9 +49,79 @@ public class ViewTable extends ViewPart{
 		instance = this;
 
 		try {
-			serverSocket = new ServerSocket(PORT2);
+			serverSocket2 = new ServerSocket(PORT2);
+			serverSocket3 = new ServerSocket(PORT3);
 		} catch (IOException e) {
 			System.exit(1);
+		}
+
+		new InitializationService().start();
+		new ReceivePaintedWidgetsNumber().start();
+	}
+
+	public class InitializationService extends Thread {
+		@Override
+		public void run() {
+			Socket socket = null;
+			ObjectInputStream ois = null;
+			ObjectOutputStream oos = null;
+
+			while(true){
+				List<Request> pendingRequests = new ArrayList<Request>();
+				try {
+					socket = serverSocket3.accept();
+					ois = new ObjectInputStream(socket.getInputStream());
+					String status = (String) ois.readObject();
+
+					Iterator<TableWidgetReference> iterator = widgets.iterator();
+					while(iterator.hasNext()){
+						TableWidgetReference g = iterator.next();
+						Request request = Request.newPaintRequest(g.getLocation(), g.getType(), mapColor(g.getColor()), 0); //ATENCAO
+						pendingRequests.add(request);
+					}
+					oos = new ObjectOutputStream(socket.getOutputStream());
+					oos.writeObject(pendingRequests);
+
+				}
+				catch(Exception e) {
+					e.printStackTrace();
+				} finally {
+					if(oos != null){
+						try { oos.close(); } catch(IOException e){}
+					}
+					if(socket != null){
+						try { socket.close(); } catch(IOException e){}
+					}
+				}
+			}
+		}
+	}
+
+	public class ReceivePaintedWidgetsNumber extends Thread {
+		@Override
+		public void run() {
+			Socket socket = null;
+			ObjectInputStream ois = null;
+
+			while(true){
+				try {
+					socket = serverSocket2.accept();
+					ois = new ObjectInputStream(socket.getInputStream());
+					int number = (Integer) ois.readObject();
+					String location = (String) ois.readObject();
+					String type = (String) ois.readObject();
+					
+					for(TableWidgetReference w: widgets){
+						if(w.getLocation().equals(location) && w.getType().equals(type))
+							w.setNumberPaintedWidgets(number);
+					}
+						
+				} catch (IOException e) {
+					e.printStackTrace();
+				} catch (ClassNotFoundException e) {
+					e.printStackTrace();
+				}
+			}
 		}
 	}
 
@@ -64,10 +136,6 @@ public class ViewTable extends ViewPart{
 		return instance;
 	}
 
-	public ServerSocket getServerSocket(){
-		return serverSocket;
-	}
-
 	public IStructuredSelection getSelection() {
 		return (IStructuredSelection) viewer.getSelection();
 	}
@@ -75,9 +143,8 @@ public class ViewTable extends ViewPart{
 	public boolean alreadyPainted(String name, String location){
 		if(!widgets.isEmpty()){
 			for(TableWidgetReference w: widgets){
-				if(w.getName().equals(name)){
+				if(w.getName().equals(name))
 					return true;
-				}
 			}
 		}
 		return false;
@@ -94,9 +161,8 @@ public class ViewTable extends ViewPart{
 				}
 			}
 		}
-		if(!found){
+		if(!found)
 			widgets.add(newWidget);
-		}
 
 		viewer.refresh();
 	}
@@ -108,40 +174,6 @@ public class ViewTable extends ViewPart{
 
 	public List<TableWidgetReference> getWidgetsTable(){
 		return widgets;
-	}
-
-	public void sendWidgetsList(){
-		ObjectOutputStream oos = null;
-
-		while(true){
-			List<Request> pendingRequests = new ArrayList<Request>();
-			try {
-				socket = serverSocket.accept();
-				oos = new ObjectOutputStream(socket.getOutputStream());
-
-				Iterator<TableWidgetReference> iterator = widgets.iterator();
-				while(iterator.hasNext()){
-					TableWidgetReference g = iterator.next();
-					Request request = Request.newPaintRequest(g.getLocation(), mapColor(g.getColor()));
-
-					pendingRequests.add(request);
-				}
-
-				oos.writeObject(pendingRequests);
-			}
-			catch(Exception e) {
-				e.printStackTrace();
-			} finally {
-				if(oos != null){
-					try {
-						oos.close(); } catch(IOException e){}
-				}
-				if(socket != null){
-					try {
-						socket.close(); } catch(IOException e){}
-				}
-			}
-		}
 	}
 
 	public Color mapColor(String color){
@@ -191,7 +223,7 @@ public class ViewTable extends ViewPart{
 			case 4:
 				break;
 			case 5:
-				result = Integer.toString(w.getNumberOfWidgets());
+				result = Integer.toString(w.getNumberOfPaintedWidgets());
 				break;
 			default:
 				result = "";
