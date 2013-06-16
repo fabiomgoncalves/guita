@@ -23,15 +23,17 @@ import org.eclipselabs.guita.request.Request;
 
 public aspect Aspect {
 
-	public static final int PORT1 = 8080; // Receber pedidos de paint e unpaint
-	public static final int PORT2 = 8090; // Mandar numero de objectos pintados
+	private static final int PORT1 = 8080; // Receber pedidos de paint e unpaint
+	private static final int PORT2 = 8090; // Mandar numero de objectos pintados
 	private ServerSocket serverSocket;
 
-	private Map<String , List<Widget>> widgetsList = new HashMap<String, List<Widget>>();
+	private static final int MAX_WIDGETS_PER_LINE = 10;
 
-	private Map<Widget, Color> paintedWidgets = new HashMap<Widget, Color>();
+	private Map<String , List<Control>> widgetsList = new HashMap<String, List<Control>>();
 
-	private List<Request> pendingRequests = new ArrayList<Request>();
+	private Map<Control, Color> paintedWidgets = new HashMap<Control, Color>();
+
+	private List<Request> requests = new ArrayList<Request>();
 
 	protected pointcut scope() : !within(Aspect);
 
@@ -62,9 +64,9 @@ public aspect Aspect {
 					Request request = (Request) ois.readObject();
 
 					if(search(request))
-						pendingRequests.add(request);
+						requests.add(request);
 					else
-						pendingRequests.remove(request);
+						requests.remove(request);
 
 				}
 				catch(Exception e) {
@@ -88,11 +90,11 @@ public aspect Aspect {
 		boolean sendNumberOfWidgets = true;
 		boolean addToPending = true;
 		int numberPaintedWidgets = 0;
-		List<Widget> aux = new ArrayList<Widget>();
+		List<Control> aux = new ArrayList<Control>();
 
 		if(widgetsList.containsKey(request.getLocation())){	//FUNCIONA PARA UM WIDGET, MAS E SE FOR UM CICLO? COMO SE FAZ COM A ORDEM?
 			aux = widgetsList.get(request.getLocation());
-			Widget g = aux.get(request.getOrder());
+			Control g = aux.get(request.getOrder());
 			runnable = new SearchRunnable(g, request);
 			g.getDisplay().syncExec(runnable);
 
@@ -108,18 +110,18 @@ public aspect Aspect {
 
 		if(sendNumberOfWidgets)
 			sendNumberOfPaintedWidgets(numberPaintedWidgets, request);
-		
+
 		return addToPending;
 	}
 
 	private class SearchRunnable implements Runnable {
-		private Widget widget;
+		private Control widget;
 		private Request request;
 		private int numberPaintedWidgets;
 		private boolean addToPending = true;
 		private boolean sendNumberOfWidgets = true;
 
-		public SearchRunnable(Widget widget, Request request){
+		public SearchRunnable(Control widget, Request request){
 			this.widget = widget;
 			this.request = request;
 		}
@@ -154,19 +156,15 @@ public aspect Aspect {
 		return new RGB(color.getR(), color.getG(), color.getB());
 	}
 
-	public void paint(Widget g, RGB color){
-		Control c = (Control)g;
-
+	public void paint(Control g, RGB color){
 		if(!paintedWidgets.containsKey(g))
-			paintedWidgets.put(g, c.getBackground());
+			paintedWidgets.put(g, g.getBackground());
 
-		c.setBackground(new Color(null, color));
+		g.setBackground(new Color(null, color));
 	}
 
-	public void removePaint(Widget g){
-		Control c = (Control)g;
-
-		c.setBackground(paintedWidgets.get(g));
+	public void removePaint(Control g){
+		g.setBackground(paintedWidgets.get(g));
 
 		paintedWidgets.remove(g);
 	}
@@ -180,6 +178,7 @@ public aspect Aspect {
 			oos.writeObject(number);
 			oos.writeObject(request.getLocation());
 			oos.writeObject(request.getType());
+			oos.writeObject(request.getOrder());
 
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
@@ -211,7 +210,7 @@ public aspect Aspect {
 			ois = new ObjectInputStream(socket.getInputStream());
 			@SuppressWarnings("unchecked")
 			final List<Request> startupRequests = (List<Request>) ois.readObject();
-			pendingRequests = startupRequests;
+			requests = startupRequests;
 
 		}
 		catch (UnknownHostException e) {
@@ -236,21 +235,27 @@ public aspect Aspect {
 		}
 	}
 
-	after() returning (final Widget g): call(Widget+.new(..)) && scope() {
+	after() returning (final Control g): call(Widget+.new(..)) && scope() {
 		SourceLocation loc = thisJoinPoint.getSourceLocation();
 		String aux = loc.getFileName() + ":" + loc.getLine();
-		List<Widget> list = widgetsList.get(aux);
+		List<Control> list = widgetsList.get(aux);
 
 		if(list == null) {
-			list = new ArrayList<Widget>();
+			list = new ArrayList<Control>();
 			widgetsList.put(aux, list);
 		}
 
-		//		if(!list.contains(g))
-		list.add(g);
+		if(list.size() < MAX_WIDGETS_PER_LINE){
+			Object[] args = thisJoinPoint.getArgs();
+			for(Object arg  : args)
+				if(arg != null && Control.class.isAssignableFrom(arg.getClass()))
+					list.add((Control) arg);
+			//		if(!list.contains(g));
+			list.add(g);
+		}
 
-		if(!pendingRequests.isEmpty()){
-			for(Request r : pendingRequests) {
+		if(!requests.isEmpty()){
+			for(Request r : requests) {
 				if(r.getLocation().equals(aux))
 					search(r);
 			}
@@ -262,7 +267,7 @@ public aspect Aspect {
 				Iterator<String> iterator = widgetsList.keySet().iterator();
 				while(iterator.hasNext()){
 					String key = iterator.next();
-					Iterator<Widget> iterator2 = widgetsList.get(key).iterator();
+					Iterator<Control> iterator2 = widgetsList.get(key).iterator();
 					while(iterator2.hasNext()){
 						Widget w = iterator2.next();
 						if(w.equals(g))
@@ -276,37 +281,33 @@ public aspect Aspect {
 		});
 	}
 
-	after(Widget g): call(* Widget+.*(..)) && target(g)  && scope() {
-		Object[] args = thisJoinPoint.getArgs();
-		for(Object arg  : args)
-			if(arg != null && Control.class.isAssignableFrom(arg.getClass()))
-				System.out.println("ARG: " +  arg);
-
+	after(Control g): call(* Control+.*(..)) && target(g)  && scope() {
 		SourceLocation loc = thisJoinPoint.getSourceLocation();
 		String aux = loc.getFileName() + ":" + loc.getLine();
-		List<Widget> list = widgetsList.get(aux);
+		List<Control> list = widgetsList.get(aux);
 
 		if(list == null) {
-			list = new ArrayList<Widget>();
+			list = new ArrayList<Control>();
 			widgetsList.put(aux, list);
 		}
 
-		//		if(!list.contains(g))
-		list.add(g);
+		if(list.size() < MAX_WIDGETS_PER_LINE)
+			//		if(!list.contains(g));
+			list.add(g);
 
-		if(!pendingRequests.isEmpty()){
-			for(Request r : pendingRequests) {
+		if(!requests.isEmpty()){
+			for(Request r : requests) {
 				if(r.getLocation().equals(aux))
 					search(r);
 			}
 		}
 	}
 
-	after(Widget w) : set(Widget+ *.*) && args(w) && scope() {
-		//		System.out.println(thisJoinPoint.getSourceLocation());
-	}
-
-	after() : get(Widget+ *.*) && scope() {
-		//		System.out.println("GET" + thisJoinPoint.getSourceLocation());
-	}
+	//	after(Widget w) : set(Widget+ *.*) && args(w) && scope() {
+	//		//		System.out.println(thisJoinPoint.getSourceLocation());
+	//	}
+	//
+	//	after() : get(Widget+ *.*) && scope() {
+	//		//		System.out.println("GET" + thisJoinPoint.getSourceLocation());
+	//	}
 }
