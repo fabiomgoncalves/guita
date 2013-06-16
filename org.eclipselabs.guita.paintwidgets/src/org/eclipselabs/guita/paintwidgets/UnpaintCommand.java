@@ -16,7 +16,7 @@ import org.eclipselabs.guita.request.Request;
 
 public class UnpaintCommand extends AbstractHandler{
 
-	public static final int PORT1 = 8080;
+	private static final int PORT1 = 8080;
 
 	@SuppressWarnings("unchecked")
 	@Override

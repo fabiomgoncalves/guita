@@ -30,7 +30,7 @@ import org.eclipselabs.variableanalyzer.service.VariableResolver;
 
 public class PaintCommand extends AbstractHandler{
 
-	public static final int PORT1 = 8081;
+	private static final int PORT1 = 8080;
 
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
@@ -85,9 +85,9 @@ public class PaintCommand extends AbstractHandler{
 					messageDialog.setText("Paint");
 					messageDialog.setMessage("This widget is already painted. Do you wish to change its color?");
 					if(messageDialog.open() == SWT.OK)
-						sendRequest(text, type, loc, color, request);
+						sendRequest(text, type, loc, color, request, order);
 				}else
-					sendRequest(text, type, loc, color, request);
+					sendRequest(text, type, loc, color, request, order);
 			}
 			else
 				MessageDialog.open(MessageDialog.INFORMATION, editor.getSite().getShell(), "Variable", message, SWT.NONE);
@@ -111,16 +111,17 @@ public class PaintCommand extends AbstractHandler{
 		}
 	}
 
-	public void sendRequest(String text, String type, String loc, String color, Request request){
+	public void sendRequest(String text, String type, String loc, String color, Request request, int order){
 		Socket socket = null;
 		ObjectOutputStream oos = null;
+		final int numberPaintedWidgets = 0;
 
 		try {
 			socket = new Socket("localhost", PORT1);
 			oos = new ObjectOutputStream(socket.getOutputStream());
 			oos.writeObject(request);
 
-			TableWidgetReference newWidget = new TableWidgetReference(text, type, loc, color, 0);
+			TableWidgetReference newWidget = new TableWidgetReference(text, type, loc, color, numberPaintedWidgets, order);
 			ViewTable.getInstance().addWidget(newWidget);
 
 		} catch (UnknownHostException e) {

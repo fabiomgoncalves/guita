@@ -32,10 +32,10 @@ import org.eclipselabs.guita.request.Request.Color;
 
 public class ViewTable extends ViewPart{
 
-	public static final String ID = "org.eclipselabs.guita.paintwidgets.ViewTable";
+	private static final String ID = "org.eclipselabs.guita.paintwidgets.ViewTable";
 
-	public static final int PORT2 = 8090;
-	public static final int PORT3 = 8100;
+	private static final int PORT2 = 8090;
+	private static final int PORT3 = 8100;
 	private ServerSocket serverSocket2;
 	private ServerSocket serverSocket3;
 
@@ -65,18 +65,20 @@ public class ViewTable extends ViewPart{
 			Socket socket = null;
 			ObjectInputStream ois = null;
 			ObjectOutputStream oos = null;
+			List<Request> pendingRequests = null;
 
 			while(true){
-				List<Request> pendingRequests = new ArrayList<Request>();
+				pendingRequests = new ArrayList<Request>();
 				try {
 					socket = serverSocket3.accept();
 					ois = new ObjectInputStream(socket.getInputStream());
+					@SuppressWarnings("unused")
 					String status = (String) ois.readObject();
 
 					Iterator<TableWidgetReference> iterator = widgets.iterator();
 					while(iterator.hasNext()){
 						TableWidgetReference g = iterator.next();
-						Request request = Request.newPaintRequest(g.getLocation(), g.getType(), mapColor(g.getColor()), 0); //ATENCAO
+						Request request = Request.newPaintRequest(g.getLocation(), g.getType(), mapColor(g.getColor()), g.getOrder());
 						pendingRequests.add(request);
 					}
 					oos = new ObjectOutputStream(socket.getOutputStream());
@@ -110,11 +112,19 @@ public class ViewTable extends ViewPart{
 					int number = (Integer) ois.readObject();
 					String location = (String) ois.readObject();
 					String type = (String) ois.readObject();
+					int order = (Integer) ois.readObject();
+					
+					System.out.println("AQUIIIIIIIIIIIIIIIIIIII  " + number);
+					
 					
 					for(TableWidgetReference w: widgets){
-						if(w.getLocation().equals(location) && w.getType().equals(type))
+						if(w.getLocation().equals(location) && w.getType().equals(type) && w.getOrder() == order){
 							w.setNumberPaintedWidgets(number);
+							System.out.println("ENCONTREI E TROQUEI");
+						}
 					}
+					
+					//refresh();
 						
 				} catch (IOException e) {
 					e.printStackTrace();

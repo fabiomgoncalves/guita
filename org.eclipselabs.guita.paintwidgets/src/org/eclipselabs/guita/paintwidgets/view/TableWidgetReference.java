@@ -8,15 +8,17 @@ public class TableWidgetReference {
 	private String type;
 	private String location;
 	private String color;
+	private int order;
 	private int numberOfPaintedWidgets;
 	private RGB colorRGB;
 
-	public TableWidgetReference(String name, String type, String location, String color, int numberOfPaintedWidgets){
+	public TableWidgetReference(String name, String type, String location, String color, int numberOfPaintedWidgets, int order){
 		this.name = name;
 		this.type = type;
 		this.location = location;
 		this.color = color;
 		this.numberOfPaintedWidgets = numberOfPaintedWidgets;
+		this.order = order;
 
 		setColorRGB(color);
 	}
@@ -39,6 +41,10 @@ public class TableWidgetReference {
 	
 	public int getNumberOfPaintedWidgets(){
 		return numberOfPaintedWidgets;
+	}
+	
+	public int getOrder(){
+		return order;
 	}
 	
 	public RGB getColorRGB(){

@@ -6,7 +6,6 @@ import java.io.Serializable;
 public class Request implements Serializable {
 	private static final long serialVersionUID = 1L;
 	
-	
 	private String location;
 	private String type;
 	private Color color;
@@ -54,6 +53,7 @@ public class Request implements Serializable {
 		this.location = location;
 		this.type = type;
 		this.color = color;
+		this.order = order;
 	}
 
 	public String getLocation(){
