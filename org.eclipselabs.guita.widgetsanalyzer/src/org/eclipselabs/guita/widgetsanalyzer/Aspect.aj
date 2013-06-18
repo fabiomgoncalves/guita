@@ -27,8 +27,6 @@ public aspect Aspect {
 	private static final int PORT2 = 8090; // Mandar numero de objectos pintados
 	private ServerSocket serverSocket;
 
-	private static final int MAX_WIDGETS_PER_LINE = 10;
-
 	private Map<String , List<Control>> widgetsList = new HashMap<String, List<Control>>();
 
 	private Map<Control, Color> paintedWidgets = new HashMap<Control, Color>();
@@ -94,18 +92,15 @@ public aspect Aspect {
 
 		if(widgetsList.containsKey(request.getLocation())){	//FUNCIONA PARA UM WIDGET, MAS E SE FOR UM CICLO? COMO SE FAZ COM A ORDEM?
 			aux = widgetsList.get(request.getLocation());
-			Control g = aux.get(request.getOrder());
-			runnable = new SearchRunnable(g, request);
-			g.getDisplay().syncExec(runnable);
+			if(request.getOrder() <= aux.size()){ // PARA EVITAR FALHAS NA PINTURA E NAO REBENTAR... bucha como diz o Luis Nunes... Nao muito eficaz...
+				Control g = aux.get(request.getOrder());
+				runnable = new SearchRunnable(g, request);
+				g.getDisplay().syncExec(runnable);
 
-			//for(Widget g: widgetsList.get(request.getLocation())){
-			//runnable = new SearchRunnable(g, request);
-			//g.getDisplay().syncExec(runnable);
-			//}
-
-			sendNumberOfWidgets = runnable.getSendNumberOfWidgets();
-			addToPending = runnable.getAddToPending();
-			numberPaintedWidgets = runnable.getNumberPaintedWidgets();
+				sendNumberOfWidgets = runnable.getSendNumberOfWidgets();
+				addToPending = runnable.getAddToPending();
+				numberPaintedWidgets = runnable.getNumberPaintedWidgets();
+			}
 		}
 
 		if(sendNumberOfWidgets)
@@ -235,8 +230,7 @@ public aspect Aspect {
 		}
 	}
 
-	after() returning (final Control g): call(Widget+.new(..)) && scope() {
-		SourceLocation loc = thisJoinPoint.getSourceLocation();
+	private void captureObjects(Control g, SourceLocation loc, Object[] args){
 		String aux = loc.getFileName() + ":" + loc.getLine();
 		List<Control> list = widgetsList.get(aux);
 
@@ -245,14 +239,15 @@ public aspect Aspect {
 			widgetsList.put(aux, list);
 		}
 
-		if(list.size() < MAX_WIDGETS_PER_LINE){
-			Object[] args = thisJoinPoint.getArgs();
-			for(Object arg  : args)
-				if(arg != null && Control.class.isAssignableFrom(arg.getClass()))
-					list.add((Control) arg);
-			//		if(!list.contains(g));
+		for(Object arg  : args)
+			if(arg != null && Control.class.isAssignableFrom(arg.getClass())){
+				System.out.println(arg.getClass());
+				list.add((Control) arg);
+			}
+				
+
+		if(!list.contains(g))
 			list.add(g);
-		}
 
 		if(!requests.isEmpty()){
 			for(Request r : requests) {
@@ -260,6 +255,12 @@ public aspect Aspect {
 					search(r);
 			}
 		}
+	}
+
+	after() returning (final Control g): call(Widget+.new(..)) && scope() {
+		SourceLocation loc = thisJoinPoint.getSourceLocation();
+		Object[] args = thisJoinPoint.getArgs();
+		captureObjects(g, loc, args);
 
 		g.addDisposeListener(new DisposeListener() {
 			public void widgetDisposed(DisposeEvent event) {
@@ -283,24 +284,8 @@ public aspect Aspect {
 
 	after(Control g): call(* Control+.*(..)) && target(g)  && scope() {
 		SourceLocation loc = thisJoinPoint.getSourceLocation();
-		String aux = loc.getFileName() + ":" + loc.getLine();
-		List<Control> list = widgetsList.get(aux);
-
-		if(list == null) {
-			list = new ArrayList<Control>();
-			widgetsList.put(aux, list);
-		}
-
-		if(list.size() < MAX_WIDGETS_PER_LINE)
-			//		if(!list.contains(g));
-			list.add(g);
-
-		if(!requests.isEmpty()){
-			for(Request r : requests) {
-				if(r.getLocation().equals(aux))
-					search(r);
-			}
-		}
+		Object[] args = thisJoinPoint.getArgs();
+		captureObjects(g, loc, args);
 	}
 
 	//	after(Widget w) : set(Widget+ *.*) && args(w) && scope() {

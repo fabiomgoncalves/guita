@@ -11,7 +11,7 @@ import org.eclipse.swt.widgets.Text;
 
 public class Modelo {
 	
-	private static Button[] ola = new Button[10];
+	private static Button[] array = new Button[10];
 	
 	private static Shell shell;
 
@@ -21,14 +21,23 @@ public class Modelo {
 		shell.setLayout(new GridLayout(1, false));
 		shell.setText("Form 1");
 
-		Label label1 = new Label(shell, SWT.NULL);
+		final Label label1 = new Label(shell, SWT.NULL);
 		label1.setText("Algum texto !!!");
 		
-		for(int i = 0; i != ola.length; i++){
-			ola[i] = new Button(shell, SWT.PUSH);
-			ola[i].setText("ALGO");
+		for(int i = 0; i != array.length; i++){
+			Button b = new Button(shell, SWT.PUSH);
+			array[i] = b;
+			array[i].setText("ALGO");
+			b.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					label1.setText(label1.getText() + "!");
+					label1.getParent().layout();
+				}
+			});
 		}
-
+		
+		
 		Button button1 = new Button(shell, SWT.PUSH);
 		button1.setText("OK");
 		button1.addSelectionListener(new SelectionAdapter(){
@@ -36,7 +45,7 @@ public class Modelo {
 				shell.setVisible(false);
 				final Shell shell2 = new Shell(display);
 				shell2.setLayout(new GridLayout(1, false));
-				shell2.setText("Form 2");
+				shell2.setText("Form 2");shell2.setText(shell.getText() + "?");shell2.setText(shell2.getText());
 				
 				Label label1 = new Label(shell2, SWT.NULL);
 				label1.setText("DOIS");
@@ -60,10 +69,10 @@ public class Modelo {
 		});
 
 		Button button2 = new Button(shell, SWT.PUSH);
-		button2.setText("Cancelar");
+		button2.setText(label1.getText());
 
 		Text text = new Text(shell, SWT.SINGLE);
-		text.setText(label1.getText());
+		text.setText("Introduzir algum texto aqui...");
 
 		label1.setText("Outro texto");
 
