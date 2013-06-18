@@ -30,7 +30,7 @@ public class RemoveAllCommand extends AbstractHandler{
 		Iterator<TableWidgetReference> iterator = widgets.iterator();
 		while (iterator.hasNext()) {
 			TableWidgetReference w = iterator.next();
-			Request request = Request.newUnpaintRequest(w.getLocation(), w.getType());
+			Request request = Request.newUnpaintRequest(w.getLocation(), w.getType(), w.getOrder());
 
 			try {
 				socket = new Socket("localhost", PORT_IN);

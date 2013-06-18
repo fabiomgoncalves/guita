@@ -45,8 +45,8 @@ public class Request implements Serializable {
 		return new Request(location, type, color, order);
 	}
 	
-	public static Request newUnpaintRequest(String location, String type) {
-		return new Request(location, type, null, 0);
+	public static Request newUnpaintRequest(String location, String type, int order) {
+		return new Request(location, type, null, order);
 	}
 		
 	private Request(String location, String type, Color color, int order){
