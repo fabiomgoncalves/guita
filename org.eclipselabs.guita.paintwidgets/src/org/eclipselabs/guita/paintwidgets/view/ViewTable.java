@@ -21,6 +21,7 @@ import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.ui.IWorkbenchPage;
@@ -113,19 +114,20 @@ public class ViewTable extends ViewPart{
 					String location = (String) ois.readObject();
 					String type = (String) ois.readObject();
 					int order = (Integer) ois.readObject();
-					
-					System.out.println("AQUIIIIIIIIIIIIIIIIIIII  " + number);
-					
-					
+
 					for(TableWidgetReference w: widgets){
-						if(w.getLocation().equals(location) && w.getType().equals(type) && w.getOrder() == order){
+						if(w.getLocation().equals(location) && w.getType().equals(type) && w.getOrder() == order)
 							w.setNumberPaintedWidgets(number);
-							System.out.println("ENCONTREI E TROQUEI");
-						}
 					}
-					
-					//refresh();
-						
+
+					Display.getDefault().asyncExec(new Runnable() {
+						@Override
+						public void run() {
+							refresh();
+						}
+					});
+
+
 				} catch (IOException e) {
 					e.printStackTrace();
 				} catch (ClassNotFoundException e) {
