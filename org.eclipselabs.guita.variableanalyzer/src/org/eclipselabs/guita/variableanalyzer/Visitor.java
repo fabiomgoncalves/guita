@@ -1,11 +1,13 @@
-package org.eclipselabs.variableanalyzer;
+package org.eclipselabs.guita.variableanalyzer;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
@@ -24,15 +26,19 @@ import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
-import org.eclipselabs.variableanalyzer.service.VariableInfo;
+import org.eclipselabs.guita.variableanalyzer.service.TypeFilter;
+import org.eclipselabs.guita.variableanalyzer.service.VariableInfo;
 
 public class Visitor extends ASTVisitor {
 	private CompilationUnit unit;
 	private Map<String, String> imports;
 	private CodeBlock currentBlock;
+	private TypeFilter filter;
 
-	public Visitor(CompilationUnit unit) {
+	public Visitor(CompilationUnit unit, TypeFilter filter) {
 		this.unit = unit;
+		this.filter = filter;
+
 		imports = new HashMap<String, String>();
 		currentBlock = new CodeBlock();
 
@@ -128,10 +134,12 @@ public class Visitor extends ASTVisitor {
 		}
 
 		private void addVar(int line, Variable var) {
-			if(!vars.containsKey(line))
-				vars.put(line, new ArrayList<Variable>());
+			if(filter.include(var.type)) {
+				if(!vars.containsKey(line))
+					vars.put(line, new ArrayList<Variable>());
 
-			vars.get(line).add(var);
+				vars.get(line).add(var);
+			}
 		} 
 
 		public VariableInfo resolveType(String varName, int line) {
@@ -139,7 +147,12 @@ public class Visitor extends ASTVisitor {
 				int order = 0;
 				for(Variable v : vars.get(line)) {
 					if(v.name.equals(varName))
-						return new VariableInfo(v.type, order);
+						return new VariableInfo(
+								v.type, 
+								order, 
+								numberOfVariables(line), 
+								numberOfVariablesWithType(line, v.type),
+								numberOfVariablesWithName(line, v.name));
 
 					order++;
 				}
@@ -155,6 +168,36 @@ public class Visitor extends ASTVisitor {
 		}
 
 
+		public int numberOfVariables(int line) {
+			if(!vars.containsKey(line))
+				throw new IllegalArgumentException("no key");
+
+			return vars.get(line).size();
+		}
+
+		public int numberOfVariablesWithType(int line, String type) {
+			if(!vars.containsKey(line))
+				throw new IllegalArgumentException("no key");
+
+			int count = 0;
+			for(Variable var : vars.get(line)) {
+				if(var.type.equals(type))
+					count++;
+			}
+			return count;
+		}
+
+		public int numberOfVariablesWithName(int line, String name) {
+			if(!vars.containsKey(line))
+				throw new IllegalArgumentException("no key");
+
+			int count = 0;
+			for(Variable var : vars.get(line)) {
+				if(var.name.equals(name))
+					count++;
+			}
+			return count;
+		}
 
 		private String tabs(int n) {
 			char[] v = new char[n];
@@ -168,10 +211,10 @@ public class Visitor extends ASTVisitor {
 				System.out.print(tabs(level) + line + " -> ");
 				for(Variable v : vars.get(line))
 					System.out.print(v + ", ");
-				
+
 				System.out.println();
 			}
-		
+
 			for(CodeBlock c : children)
 				c.print(level+1);
 		}
@@ -230,7 +273,6 @@ public class Visitor extends ASTVisitor {
 	}
 
 
-
 	@Override
 	public boolean visit(VariableDeclarationStatement n) {
 		//		System.out.println("*>"+ n + " " + line(n));
@@ -257,14 +299,24 @@ public class Visitor extends ASTVisitor {
 			visit((ClassInstanceCreation) e);
 			return false;
 		}
+		else if(e instanceof SimpleName) {
+			currentBlock.addVar((SimpleName) e);
+			return false;
+		}
 		else {
 			return true;
 		}
 	}
 
 
+
+
+
+
+
 	@Override
 	public boolean visit(Assignment n) {
+		System.out.println("ASS>"+ n + " " + line(n));
 		boolean visit = handleRightHandExpression(n.getRightHandSide());
 		if(n.getLeftHandSide() instanceof SimpleName) {
 			String name = ((SimpleName) n.getLeftHandSide()).getFullyQualifiedName();
