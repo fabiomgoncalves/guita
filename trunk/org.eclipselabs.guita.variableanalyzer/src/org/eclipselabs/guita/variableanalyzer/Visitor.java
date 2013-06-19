@@ -316,7 +316,7 @@ public class Visitor extends ASTVisitor {
 
 	@Override
 	public boolean visit(Assignment n) {
-		System.out.println("ASS>"+ n + " " + line(n));
+	//	System.out.println("ASS>"+ n + " " + line(n));
 		boolean visit = handleRightHandExpression(n.getRightHandSide());
 		if(n.getLeftHandSide() instanceof SimpleName) {
 			String name = ((SimpleName) n.getLeftHandSide()).getFullyQualifiedName();

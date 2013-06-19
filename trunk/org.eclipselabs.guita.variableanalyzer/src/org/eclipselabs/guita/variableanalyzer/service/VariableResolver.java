@@ -8,7 +8,7 @@ public class VariableResolver {
 	public static VariableInfo resolve(IFile file, String varName, int line, TypeFilter filter) {
 		VariableAnalyzer analyzer = new VariableAnalyzer(file, filter);
 		VariableInfo varInfo = analyzer.resolveType(varName, line);
-		analyzer.print();
+//		analyzer.print();
 		return varInfo;
 	}
 	
