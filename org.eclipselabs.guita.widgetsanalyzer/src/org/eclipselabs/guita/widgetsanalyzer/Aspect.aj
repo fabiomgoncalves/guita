@@ -92,15 +92,13 @@ public aspect Aspect {
 
 		if(widgetsList.containsKey(request.getLocation())){	//FUNCIONA PARA UM WIDGET, MAS E SE FOR UM CICLO? COMO SE FAZ COM A ORDEM?
 			aux = widgetsList.get(request.getLocation());
-			if(request.getOrder() <= aux.size()){ // PARA EVITAR FALHAS NA PINTURA E NAO REBENTAR... bucha como diz o Luis Nunes... Nao muito eficaz...
-				Control g = aux.get(request.getOrder());
-				runnable = new SearchRunnable(g, request);
-				g.getDisplay().syncExec(runnable);
+			Control g = aux.get(request.getOrder());
+			runnable = new SearchRunnable(g, request);
+			g.getDisplay().syncExec(runnable);
 
-				sendNumberOfWidgets = runnable.getSendNumberOfWidgets();
-				addToPending = runnable.getAddToPending();
-				numberPaintedWidgets = runnable.getNumberPaintedWidgets();
-			}
+			sendNumberOfWidgets = runnable.getSendNumberOfWidgets();
+			addToPending = runnable.getAddToPending();
+			numberPaintedWidgets = runnable.getNumberPaintedWidgets();
 		}
 
 		if(sendNumberOfWidgets)
@@ -244,7 +242,7 @@ public aspect Aspect {
 				System.out.println(arg.getClass());
 				list.add((Control) arg);
 			}
-				
+
 
 		if(!list.contains(g))
 			list.add(g);
