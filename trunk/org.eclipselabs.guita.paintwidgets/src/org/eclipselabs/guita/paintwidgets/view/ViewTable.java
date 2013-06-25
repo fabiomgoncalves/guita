@@ -271,7 +271,7 @@ public class ViewTable extends ViewPart{
 	}
 
 	private void createColumns(final Composite parent, final TableViewer viewer) {
-		String[] titles = {"", "Name", "Type", "Location", "Color", "Number of Painted Widgets"}; //primeira coluna em branco devido a um bug do SWT
+		String[] titles = {"", "Name", "Type", "Location", "Color", "Widgets"}; //primeira coluna em branco devido a um bug do SWT
 		int[] bounds = { 0, 150, 200, 120, 100, 250};
 
 		for(int i = 0; i != titles.length; i++){
