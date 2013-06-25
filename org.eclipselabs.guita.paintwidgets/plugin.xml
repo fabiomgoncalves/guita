@@ -41,7 +41,7 @@
             locationURI="toolbar:org.eclipselabs.guita.paintwidgets.ViewTable">
          <command
                commandId="org.eclipselabs.guita.paintwidgets.remove"
-               icon="Icons/Remove.png"
+               icon="icons/delete.gif"
                label="Remove from Table"
                style="push">
          </command>
@@ -84,8 +84,9 @@
          point="org.eclipse.ui.views">
       <view
             class="org.eclipselabs.guita.paintwidgets.view.ViewTable"
+            icon="icons/icon.gif"
             id="org.eclipselabs.guita.paintwidgets.ViewTable"
-            name="ViewTable"
+            name="Marked Widgets"
             restorable="true">
       </view>
    </extension>
