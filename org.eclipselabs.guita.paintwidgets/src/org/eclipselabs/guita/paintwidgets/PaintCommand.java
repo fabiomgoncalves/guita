@@ -73,8 +73,6 @@ public class PaintCommand extends AbstractHandler{
 			if(pers instanceof FileEditorInput) {
 				FileEditorInput fileInput = (FileEditorInput) pers;
 				VariableInfo info = VariableResolver.resolve(fileInput.getFile(), text, line, new SWTControlFilter());
-				String type = info.getType();
-				int order = info.getLineExecutionOrder();
 				String loc = fileInput.getPath().lastSegment() + ":" + line;
 
 				String color = null;
@@ -84,19 +82,19 @@ public class PaintCommand extends AbstractHandler{
 					e.printStackTrace();
 				}
 
-				handleVar(editor, type, text, loc, color, order);
+				handleVar(editor, info, text, loc, color);
 			}
 		}
 		return null;
 	}
 
-	public void handleVar(IEditorPart editor, String type, String text, String loc, String color, int order){
-		if(type != null) {
-			String message = "\"" + text + "\"" + "\n" + type + "\"" + "\n" + loc;
+	public void handleVar(IEditorPart editor, VariableInfo info, String text, String loc, String color){
+		if(info.getType() != null) {
+			String message = "\"" + text + "\"" + "\n" + info.getType() + "\"" + "\n" + loc;
 
 			boolean isWidget = false;
 			try {
-				Class<?> clazz = Class.forName("org.eclipse.swt.widgets." + type);
+				Class<?> clazz = Class.forName("org.eclipse.swt.widgets." + info.getType());
 				isWidget = Control.class.isAssignableFrom(clazz);
 			} 
 			catch (ClassNotFoundException e) {
@@ -104,16 +102,16 @@ public class PaintCommand extends AbstractHandler{
 			}
 			
 			if(isWidget) {
-				Request request = Request.newPaintRequest(loc, type, mapColor(color), order);
+				Request request = Request.newPaintRequest(loc, info, mapColor(color));
 
 				if(ViewTable.getInstance().alreadyPainted(text, loc)){
 					MessageBox messageDialog = new MessageBox(editor.getSite().getShell(), SWT.ICON_QUESTION | SWT.OK | SWT.CANCEL);
 					messageDialog.setText("Paint");
 					messageDialog.setMessage("This widget is already painted. Do you wish to change its color?");
 					if(messageDialog.open() == SWT.OK)
-						sendRequest(text, type, loc, color, request, order);
+						sendRequest(text, info, loc, color, request);
 				}else
-					sendRequest(text, type, loc, color, request, order);
+					sendRequest(text, info, loc, color, request);
 			}
 			else
 				MessageDialog.open(MessageDialog.INFORMATION, editor.getSite().getShell(), "Variable", message, SWT.NONE);
@@ -137,7 +135,7 @@ public class PaintCommand extends AbstractHandler{
 		}
 	}
 
-	public void sendRequest(String text, String type, String loc, String color, Request request, int order){
+	public void sendRequest(String text, VariableInfo info, String loc, String color, Request request){
 		Socket socket = null;
 		ObjectOutputStream oos = null;
 		final int numberPaintedWidgets = 0;
@@ -147,7 +145,7 @@ public class PaintCommand extends AbstractHandler{
 			oos = new ObjectOutputStream(socket.getOutputStream());
 			oos.writeObject(request);
 
-			TableWidgetReference newWidget = new TableWidgetReference(text, type, loc, color, numberPaintedWidgets, order);
+			TableWidgetReference newWidget = new TableWidgetReference(text, info, loc, color, numberPaintedWidgets);
 			ViewTable.getInstance().addWidget(newWidget);
 
 		} catch (UnknownHostException e) {
