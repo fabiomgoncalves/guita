@@ -1,6 +1,8 @@
 package org.eclipselabs.guita.variableanalyzer.service;
 
-public class VariableInfo {
+import java.io.Serializable;
+
+public class VariableInfo implements Serializable {
 	private final String type;
 	private final int order;
 	
