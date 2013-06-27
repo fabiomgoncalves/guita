@@ -32,7 +32,7 @@ public class UnpaintCommand extends AbstractHandler{
 			Iterator<TableWidgetReference> iterator = sel.iterator();
 			while (iterator.hasNext()) {
 				TableWidgetReference w = iterator.next();
-				Request request = Request.newUnpaintRequest(w.getLocation(), w.getType(), w.getOrder());
+				Request request = Request.newUnpaintRequest(w.getLocation(), w.getInfo());
 
 				try {
 					socket = new Socket("localhost", PORT1);

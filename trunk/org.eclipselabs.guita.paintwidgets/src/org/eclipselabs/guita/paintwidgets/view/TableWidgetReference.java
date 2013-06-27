@@ -1,24 +1,23 @@
 package org.eclipselabs.guita.paintwidgets.view;
 
 import org.eclipse.swt.graphics.RGB;
+import org.eclipselabs.guita.variableanalyzer.service.VariableInfo;
 
 public class TableWidgetReference {
 
 	private String name;
-	private String type;
+	private VariableInfo info;
 	private String location;
 	private String color;
-	private int order;
 	private int numberOfPaintedWidgets;
 	private RGB colorRGB;
 
-	public TableWidgetReference(String name, String type, String location, String color, int numberOfPaintedWidgets, int order){
+	public TableWidgetReference(String name, VariableInfo info, String location, String color, int numberOfPaintedWidgets){
 		this.name = name;
-		this.type = type;
+		this.info = info;
 		this.location = location;
 		this.color = color;
 		this.numberOfPaintedWidgets = numberOfPaintedWidgets;
-		this.order = order;
 
 		setColorRGB(color);
 	}
@@ -28,7 +27,7 @@ public class TableWidgetReference {
 	}
 
 	public String getType(){
-		return type;
+		return info.getType();
 	}
 
 	public String getLocation(){
@@ -44,11 +43,15 @@ public class TableWidgetReference {
 	}
 	
 	public int getOrder(){
-		return order;
+		return info.getLineExecutionOrder();
 	}
 	
 	public RGB getColorRGB(){
 		return colorRGB;
+	}
+	
+	public VariableInfo getInfo(){
+		return info;
 	}
 
 	public void setColor(String color){

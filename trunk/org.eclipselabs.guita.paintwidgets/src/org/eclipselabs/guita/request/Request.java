@@ -2,14 +2,15 @@ package org.eclipselabs.guita.request;
 
 import java.io.Serializable;
 
+import org.eclipselabs.guita.variableanalyzer.service.VariableInfo;
+
 
 public class Request implements Serializable {
 	private static final long serialVersionUID = 1L;
 	
+	private VariableInfo info;
 	private String location;
-	private String type;
 	private Color color;
-	private int order;
 	
 	public static class Color implements Serializable {
 		private static final long serialVersionUID = 1L;
@@ -41,19 +42,18 @@ public class Request implements Serializable {
 		}
 	}
 
-	public static Request newPaintRequest(String location, String type, Color color, int order) {
-		return new Request(location, type, color, order);
+	public static Request newPaintRequest(String location, VariableInfo info, Color color) {
+		return new Request(location, info, color);
 	}
 	
-	public static Request newUnpaintRequest(String location, String type, int order) {
-		return new Request(location, type, null, order);
+	public static Request newUnpaintRequest(String location, VariableInfo info) {
+		return new Request(location, info, null);
 	}
 		
-	private Request(String location, String type, Color color, int order){
+	private Request(String location, VariableInfo info, Color color){
 		this.location = location;
-		this.type = type;
+		this.info = info;
 		this.color = color;
-		this.order = order;
 	}
 
 	public String getLocation(){
@@ -61,7 +61,7 @@ public class Request implements Serializable {
 	}
 	
 	public String getType(){
-		return type;
+		return info.getType();
 	}
 
 	public boolean isToRemove(){
@@ -73,6 +73,18 @@ public class Request implements Serializable {
 	}
 	
 	public int getOrder(){
-		return order;
+		return info.getLineExecutionOrder();
+	}
+	
+	public int getTotalVars(){
+		return info.getTotalVars();
+	}
+	
+	public int getTotalVarsOfType(){
+		return info.getNumberOfVarsWithSameType();
+	}
+	
+	public int getTotalVarsOfName(){
+		return info.getNumberOfVarsWithSameName();
 	}
 }
