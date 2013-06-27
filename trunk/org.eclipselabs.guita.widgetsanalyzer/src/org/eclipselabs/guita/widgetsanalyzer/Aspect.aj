@@ -87,7 +87,7 @@ public aspect Aspect {
 		int numberPaintedWidgets = 0;
 		List<Control> aux = new ArrayList<Control>();
 
-		if(widgetsList.containsKey(request.getLocation())){	//FUNCIONA PARA UM WIDGET, MAS E SE FOR UM CICLO? COMO SE FAZ COM A ORDEM?
+		if(widgetsList.containsKey(request.getLocation())){
 			aux = widgetsList.get(request.getLocation());
 			RGB color = request.isToRemove() ? null : getColor(request);
 
