@@ -84,64 +84,57 @@ public aspect Aspect {
 	}
 
 	private boolean search(Request request){
-		SearchRunnable runnable = null;
-		boolean sendNumberOfWidgets = true;
-		boolean addToPending = true;
 		int numberPaintedWidgets = 0;
 		List<Control> aux = new ArrayList<Control>();
 
 		if(widgetsList.containsKey(request.getLocation())){	//FUNCIONA PARA UM WIDGET, MAS E SE FOR UM CICLO? COMO SE FAZ COM A ORDEM?
 			aux = widgetsList.get(request.getLocation());
-			Control g = aux.get(request.getOrder());
-			runnable = new SearchRunnable(g, request);
-			g.getDisplay().syncExec(runnable);
+			RGB color = request.isToRemove() ? null : getColor(request);
 
-			sendNumberOfWidgets = runnable.getSendNumberOfWidgets();
-			addToPending = runnable.getAddToPending();
-			numberPaintedWidgets = runnable.getNumberPaintedWidgets();
+			if(request.getTotalVarsOfType() == 1) {
+
+				for(Control c : aux)
+					if(c.getClass().getSimpleName().equals(request.getType())) {
+						SearchRunnable runnable = new SearchRunnable(c, color);
+						c.getDisplay().syncExec(runnable);
+						numberPaintedWidgets++;
+					}
+			}
+			else {
+				Control g = aux.get(request.getOrder());
+				SearchRunnable runnable = new SearchRunnable(g, color);
+				g.getDisplay().syncExec(runnable);
+				numberPaintedWidgets = 1;
+			}
 		}
 
-		if(sendNumberOfWidgets)
+		boolean addToRequests = !request.isToRemove();
+
+		if(addToRequests)
 			sendNumberOfPaintedWidgets(numberPaintedWidgets, request);
 
-		return addToPending;
+		return addToRequests;
 	}
 
 	private class SearchRunnable implements Runnable {
 		private Control widget;
-		private Request request;
-		private int numberPaintedWidgets;
-		private boolean addToPending = true;
-		private boolean sendNumberOfWidgets = true;
+		private RGB color;
 
-		public SearchRunnable(Control widget, Request request){
+		public SearchRunnable(Control widget, RGB color){
 			this.widget = widget;
-			this.request = request;
+			this.color = color;
 		}
 
 		@Override
 		public void run() {
-			if(paintedWidgets.containsKey(widget) && request.isToRemove()){
+			if(paintedWidgets.containsKey(widget) && color == null) {
 				removePaint(widget);
-				sendNumberOfWidgets = false;
-				addToPending = false;
-			}else{
-				paint(widget, getColor(request));
-				numberPaintedWidgets++;
+			}
+			else{
+				paint(widget, color);
 			}
 		}
 
-		public int getNumberPaintedWidgets(){
-			return numberPaintedWidgets;
-		}
-
-		public boolean getAddToPending(){
-			return addToPending;
-		}
-
-		public boolean getSendNumberOfWidgets(){
-			return sendNumberOfWidgets;
-		}
 	}
 
 	private RGB getColor(Request request) {
@@ -238,10 +231,8 @@ public aspect Aspect {
 		}
 
 		for(Object arg  : args)
-			if(arg != null && Control.class.isAssignableFrom(arg.getClass())){
-				System.out.println(arg.getClass());
+			if(arg != null && Control.class.isAssignableFrom(arg.getClass()))
 				list.add((Control) arg);
-			}
 
 
 		if(!list.contains(g))
