@@ -76,7 +76,7 @@ public privileged aspect GUIEnhancer {
 	protected pointcut scope() : !within(GUIEnhancer);
 
 	public GUIEnhancer() {
-		System.out.println("hi from GUI enhancer");
+		System.out.println("GUITA: GUI Trace Active");
 		this.portIn = Defaults.APPLICATION_PORT;
 		this.portOut = Defaults.ECLIPSE_PORT;
 
