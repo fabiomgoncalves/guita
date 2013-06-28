@@ -1,4 +1,4 @@
-package org.eclipselabs.guita.widgetsanalyzer;
+package org.eclipselabs.guita.widgetsanalyzer.test;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
