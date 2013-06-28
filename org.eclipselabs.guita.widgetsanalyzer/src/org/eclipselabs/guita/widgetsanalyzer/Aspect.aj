@@ -3,6 +3,7 @@ package org.eclipselabs.guita.widgetsanalyzer;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.ConnectException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -21,7 +22,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Widget;
 import org.eclipselabs.guita.request.Request;
 
-public aspect Aspect {
+public privileged aspect Aspect {
 
 	private static final int PORT1 = 8080; // Receber pedidos de paint e unpaint
 	private static final int PORT2 = 8090; // Mandar numero de objectos pintados
@@ -37,7 +38,7 @@ public aspect Aspect {
 
 
 	public Aspect(){
-		System.out.println("HI from TRACER!");
+		System.out.println("GUITA: code2gui");
 		try {
 			serverSocket = new ServerSocket(PORT1);
 		} catch (IOException e) {
@@ -155,7 +156,7 @@ public aspect Aspect {
 		paintedWidgets.remove(g);
 	}
 
-	public void sendNumberOfPaintedWidgets(int number, Request request){
+	private void sendNumberOfPaintedWidgets(int number, Request request){
 		Socket socket = null;
 		ObjectOutputStream oos = null;
 		try {
@@ -198,6 +199,9 @@ public aspect Aspect {
 			final List<Request> startupRequests = (List<Request>) ois.readObject();
 			requests = startupRequests;
 
+		}
+		catch(ConnectException ce) {
+		
 		}
 		catch (UnknownHostException e) {
 			e.printStackTrace();
@@ -271,7 +275,9 @@ public aspect Aspect {
 		});
 	}
 
-	after(Control g): call(* Control+.*(..)) && target(g)  && scope() {
+//	after(Control g): call(* Control+.*(..)) && target(g)  && scope() {
+	after(): call(* *.*(..)) && target(Control+)  && scope() {
+		Control g = (Control) thisJoinPoint.getTarget();
 		SourceLocation loc = thisJoinPoint.getSourceLocation();
 		Object[] args = thisJoinPoint.getArgs();
 		captureObjects(g, loc, args);
