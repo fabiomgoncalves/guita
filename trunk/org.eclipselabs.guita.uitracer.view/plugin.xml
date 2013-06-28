@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.4"?>
 <plugin>
+ 
    <extension
          point="org.eclipse.ui.views">
       <view
@@ -8,8 +9,7 @@
             class="org.eclipselabs.guita.uitracer.view.TraceView"
             icon="icons/icon.gif"
             id="org.eclipselabs.guita.uitracer.view"
-            name="GUI Trace"
-            restorable="true">
+            name="GUI Trace">
       </view>
       <category
             id="org.eclipselabs.guita.category"
@@ -17,19 +17,24 @@
       </category>
    </extension>
    <extension
-         point="org.eclipse.ui.viewActions">
-      <viewContribution
-            id="pt.guide.traceview.deleteTabs"
-            targetID="org.eclipselabs.guita.guitracer.view">
-         <action
-               class="org.eclipselabs.guita.uitracer.view.RemoveActionDelegate"
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            allPopups="false"
+            locationURI="toolbar:org.eclipselabs.guita.uitracer.view?after=additions">
+         <command
+               commandId="org.eclipselabs.guita.uitrace.view.clear"
                icon="icons/delete.gif"
-               id="pt.guide.traceview.action1"
                label="Clear"
-               style="push"
-               toolbarPath="additions">
-         </action>
-      </viewContribution>
+               style="push">
+         </command>
+      </menuContribution>
    </extension>
-
+   <extension
+         point="org.eclipse.ui.commands">
+      <command
+            defaultHandler="org.eclipselabs.guita.uitracer.view.ClearCommand"
+            id="org.eclipselabs.guita.uitrace.view.clear"
+            name="Clear">
+      </command>
+   </extension>
 </plugin>

@@ -61,8 +61,6 @@ public class Activator implements BundleActivator {
 		}
 
 		new RequestListener().start();
-		
-		System.out.println(getImage("icons/delete.gif"));
 	}
 
 	Image getImage(String path) {

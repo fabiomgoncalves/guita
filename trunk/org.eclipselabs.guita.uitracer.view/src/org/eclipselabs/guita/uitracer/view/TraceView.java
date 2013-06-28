@@ -1,5 +1,6 @@
 package org.eclipselabs.guita.uitracer.view;
 
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
@@ -8,6 +9,7 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.ui.part.ViewPart;
 import org.eclipselabs.guita.uitrace.common.Trace;
 
