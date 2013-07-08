@@ -1,4 +1,4 @@
-package org.eclipselabs.guita.paintwidgets.view;
+package org.eclipselabs.guita.paintwidgets.commands;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -11,8 +11,10 @@ import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipselabs.guita.codetrace.common.Request;
+import org.eclipselabs.guita.paintwidgets.view.TableWidgetReference;
+import org.eclipselabs.guita.paintwidgets.view.ViewTable;
 
-public class RemoveAllCommand extends AbstractHandler{
+public class UnpaintAllCommand extends AbstractHandler{
 	
 	public static final int PORT_IN = 8080;
 
@@ -30,7 +32,7 @@ public class RemoveAllCommand extends AbstractHandler{
 		Iterator<TableWidgetReference> iterator = widgets.iterator();
 		while (iterator.hasNext()) {
 			TableWidgetReference w = iterator.next();
-			Request request = Request.newUnpaintRequest(w.getLocation(), w.getInfo());
+			Request request = Request.newUnpaintRequest(w.getLocation(), w.getInfo(), w.getName());
 
 			try {
 				socket = new Socket("localhost", PORT_IN);

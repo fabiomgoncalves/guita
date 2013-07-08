@@ -55,37 +55,37 @@
    <extension
          point="org.eclipse.ui.commands">
       <command
-            defaultHandler="org.eclipselabs.guita.paintwidgets.PaintCommand"
+            defaultHandler="org.eclipselabs.guita.paintwidgets.commands.PaintCommand"
             id="org.eclipselabs.guita.paintwidgets.white"
             name="White">
       </command>
       <command
-            defaultHandler="org.eclipselabs.guita.paintwidgets.PaintCommand"
+            defaultHandler="org.eclipselabs.guita.paintwidgets.commands.PaintCommand"
             id="org.eclipselabs.guita.paintwidgets.red"
             name="Red">
       </command>
       <command
-            defaultHandler="org.eclipselabs.guita.paintwidgets.PaintCommand"
+            defaultHandler="org.eclipselabs.guita.paintwidgets.commands.PaintCommand"
             id="org.eclipselabs.guita.paintwidgets.blue"
             name="Blue">
       </command>
       <command
-            defaultHandler="org.eclipselabs.guita.paintwidgets.PaintCommand"
+            defaultHandler="org.eclipselabs.guita.paintwidgets.commands.PaintCommand"
             id="org.eclipselabs.guita.paintwidgets.green"
             name="Green">
       </command>
       <command
-            defaultHandler="org.eclipselabs.guita.paintwidgets.PaintCommand"
+            defaultHandler="org.eclipselabs.guita.paintwidgets.commands.PaintCommand"
             id="org.eclipselabs.guita.paintwidgets.yellow"
             name="Yellow">
       </command>
       <command
-            defaultHandler="org.eclipselabs.guita.paintwidgets.PaintCommand"
+            defaultHandler="org.eclipselabs.guita.paintwidgets.commands.PaintCommand"
             id="org.eclipselabs.guita.paintwidgets.pink"
             name="Pink">
       </command>
       <command
-            defaultHandler="org.eclipselabs.guita.paintwidgets.UnpaintCommand"
+            defaultHandler="org.eclipselabs.guita.paintwidgets.commands.UnpaintCommand"
             id="org.eclipselabs.guita.paintwidgets.remove"
             name="Remove">
       </command>
