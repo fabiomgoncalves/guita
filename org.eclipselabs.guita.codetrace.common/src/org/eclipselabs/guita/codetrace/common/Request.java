@@ -8,6 +8,7 @@ public class Request implements Serializable {
 	private static final long serialVersionUID = 1L;
 	
 	private VariableInfo info;
+	private String name;
 	private String location;
 	private Color color;
 	
@@ -42,18 +43,19 @@ public class Request implements Serializable {
 		}
 	}
 
-	public static Request newPaintRequest(String location, VariableInfo info, Color color) {
-		return new Request(location, info, color);
+	public static Request newPaintRequest(String location, VariableInfo info, Color color, String name) {
+		return new Request(location, info, color, name);
 	}
 	
-	public static Request newUnpaintRequest(String location, VariableInfo info) {
-		return new Request(location, info, null);
+	public static Request newUnpaintRequest(String location, VariableInfo info, String name) {
+		return new Request(location, info, null, name);
 	}
 		
-	private Request(String location, VariableInfo info, Color color){
+	private Request(String location, VariableInfo info, Color color, String name){
 		this.location = location;
 		this.info = info;
 		this.color = color;
+		this.name = name;
 	}
 
 	public String getLocation(){
@@ -70,6 +72,10 @@ public class Request implements Serializable {
 
 	public Color getColor(){
 		return color;
+	}
+	
+	public String getName(){
+		return name;
 	}
 	
 	public int getOrder(){
