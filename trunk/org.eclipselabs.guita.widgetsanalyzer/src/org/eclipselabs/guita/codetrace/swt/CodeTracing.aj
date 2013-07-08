@@ -16,6 +16,8 @@ import java.util.List;
 import org.aspectj.lang.reflect.SourceLocation;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.events.PaintEvent;
+import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Control;
@@ -144,15 +146,32 @@ public privileged aspect CodeTracing {
 		return new RGB(color.getR(), color.getG(), color.getB());
 	}
 
-	public void paint(Control g, RGB color){
-		if(!paintedWidgets.containsKey(g))
-			paintedWidgets.put(g, g.getBackground());
+	public void paint(Control g, final RGB color){
+		if(g.getClass().getSimpleName().equals("Shell") || g.getClass().getSimpleName().equals("Composite"))
+			g.setBackground(new Color(null, color));
+		else{
+			g.addPaintListener(new PaintListener() {
 
-		g.setBackground(new Color(null, color));
+				@Override
+				public void paintControl(PaintEvent e) {
+					e.gc.setForeground(new Color(null, color.red, color.green, color.blue));
+					e.gc.drawOval(0, 0, e.width-1, e.height-1);
+				}
+			});
+			g.redraw();
+		}
+
+		if(!paintedWidgets.containsKey(g))
+			paintedWidgets.put(g, new Color(null, color.red, color.green, color.blue));
 	}
 
 	public void removePaint(Control g){
-		g.setBackground(paintedWidgets.get(g));
+		if(g.getClass().getSimpleName().equals("Shell") || g.getClass().getSimpleName().equals("Composite"))
+			g.setBackground(paintedWidgets.get(g));
+		else{
+			g.removePaintListener(null);
+			g.redraw();
+		}
 
 		paintedWidgets.remove(g);
 	}
@@ -202,7 +221,7 @@ public privileged aspect CodeTracing {
 
 		}
 		catch(ConnectException ce) {
-		
+
 		}
 		catch (UnknownHostException e) {
 			e.printStackTrace();
@@ -276,7 +295,6 @@ public privileged aspect CodeTracing {
 		});
 	}
 
-//	after(Control g): call(* Control+.*(..)) && target(g)  && scope() {
 	after(): call(* *.*(..)) && target(Control+)  && scope() {
 		Control g = (Control) thisJoinPoint.getTarget();
 		SourceLocation loc = thisJoinPoint.getSourceLocation();
