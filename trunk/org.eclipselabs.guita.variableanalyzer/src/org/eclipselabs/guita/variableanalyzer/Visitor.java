@@ -26,8 +26,8 @@ import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
+import org.eclipselabs.guita.codetrace.common.VariableInfo;
 import org.eclipselabs.guita.variableanalyzer.service.TypeFilter;
-import org.eclipselabs.guita.variableanalyzer.service.VariableInfo;
 
 public class Visitor extends ASTVisitor {
 	private CompilationUnit unit;
