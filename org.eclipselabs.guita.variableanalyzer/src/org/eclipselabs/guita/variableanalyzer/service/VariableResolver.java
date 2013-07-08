@@ -2,6 +2,7 @@ package org.eclipselabs.guita.variableanalyzer.service;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipselabs.guita.variableanalyzer.VariableAnalyzer;
+import org.eclipselabs.guita.codetrace.common.VariableInfo;
 
 public class VariableResolver {
 

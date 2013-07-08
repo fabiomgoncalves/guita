@@ -8,8 +8,8 @@ import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipselabs.guita.codetrace.common.VariableInfo;
 import org.eclipselabs.guita.variableanalyzer.service.TypeFilter;
-import org.eclipselabs.guita.variableanalyzer.service.VariableInfo;
 
 public class VariableAnalyzer {
 
