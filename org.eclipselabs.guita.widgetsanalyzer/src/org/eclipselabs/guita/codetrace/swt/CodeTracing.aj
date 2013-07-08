@@ -1,4 +1,4 @@
-package org.eclipselabs.guita.widgetsanalyzer;
+package org.eclipselabs.guita.codetrace.swt;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -20,9 +20,10 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Widget;
-import org.eclipselabs.guita.request.Request;
+import org.eclipselabs.guita.codetrace.common.Request;
 
-public privileged aspect Aspect {
+
+public privileged aspect CodeTracing {
 
 	private static final int PORT1 = 8080; // Receber pedidos de paint e unpaint
 	private static final int PORT2 = 8090; // Mandar numero de objectos pintados
@@ -34,11 +35,11 @@ public privileged aspect Aspect {
 
 	private List<Request> requests = new ArrayList<Request>();
 
-	protected pointcut scope() : !within(Aspect);
+	protected pointcut scope() : !within(CodeTracing);
 
 
-	public Aspect(){
-		System.out.println("GUITA: code2gui");
+	public CodeTracing(){
+		System.out.println("GUITA: Code Trace Active");
 		try {
 			serverSocket = new ServerSocket(PORT1);
 		} catch (IOException e) {
@@ -139,7 +140,7 @@ public privileged aspect Aspect {
 	}
 
 	private RGB getColor(Request request) {
-		org.eclipselabs.guita.request.Request.Color color = request.getColor();
+		Request.Color color = request.getColor();
 		return new RGB(color.getR(), color.getG(), color.getB());
 	}
 

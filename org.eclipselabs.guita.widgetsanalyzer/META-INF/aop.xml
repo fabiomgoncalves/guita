@@ -2,6 +2,6 @@
 <aspectj>
     <aspects>
         <aspect
-            name="org.eclipselabs.guita.widgetsanalyzer.Aspect" />
+            name="org.eclipselabs.guita.codetrace.swt.CodeTracing" />
     </aspects>
 </aspectj>
