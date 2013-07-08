@@ -22,12 +22,12 @@ import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IPersistable;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.FileEditorInput;
+import org.eclipselabs.guita.codetrace.common.Request;
+import org.eclipselabs.guita.codetrace.common.VariableInfo;
+import org.eclipselabs.guita.codetrace.common.Request.Color;
 import org.eclipselabs.guita.paintwidgets.view.ViewTable;
 import org.eclipselabs.guita.paintwidgets.view.TableWidgetReference;
-import org.eclipselabs.guita.request.Request;
-import org.eclipselabs.guita.request.Request.Color;
 import org.eclipselabs.guita.variableanalyzer.service.TypeFilter;
-import org.eclipselabs.guita.variableanalyzer.service.VariableInfo;
 import org.eclipselabs.guita.variableanalyzer.service.VariableResolver;
 
 
@@ -130,8 +130,11 @@ public class PaintCommand extends AbstractHandler{
 			return Color.GREEN;
 		}else if(color.equals("Yellow")){
 			return Color.YELLOW;
-		}else{
+		}else if(color.equals("Pink")){
 			return Color.PINK;
+		}
+		else {
+			return Color.WHITE;
 		}
 	}
 

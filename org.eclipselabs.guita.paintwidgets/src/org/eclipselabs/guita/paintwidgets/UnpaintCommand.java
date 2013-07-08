@@ -10,9 +10,9 @@ import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipselabs.guita.codetrace.common.Request;
 import org.eclipselabs.guita.paintwidgets.view.TableWidgetReference;
 import org.eclipselabs.guita.paintwidgets.view.ViewTable;
-import org.eclipselabs.guita.request.Request;
 
 public class UnpaintCommand extends AbstractHandler{
 

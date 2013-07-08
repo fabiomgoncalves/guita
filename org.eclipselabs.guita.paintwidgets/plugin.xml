@@ -10,6 +10,11 @@
                id="org.eclipselabs.guita.paintwidgets.MENU"
                label="Paint">
             <command
+                  commandId="org.eclipselabs.guita.paintwidgets.white"
+                  label="White"
+                  style="push">
+            </command>
+            <command
                   commandId="org.eclipselabs.guita.paintwidgets.red"
                   label="Red"
                   style="push">
@@ -49,6 +54,11 @@
    </extension>
    <extension
          point="org.eclipse.ui.commands">
+      <command
+            defaultHandler="org.eclipselabs.guita.paintwidgets.PaintCommand"
+            id="org.eclipselabs.guita.paintwidgets.white"
+            name="White">
+      </command>
       <command
             defaultHandler="org.eclipselabs.guita.paintwidgets.PaintCommand"
             id="org.eclipselabs.guita.paintwidgets.red"
