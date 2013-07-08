@@ -233,7 +233,6 @@ public class TraceItem extends CTabItem {
 
 	private void handle(IEditorPart part, final Location loc) {
 		if(part instanceof AbstractTextEditor && !editorsHooked.contains(part)) {
-			System.out.println("EDITOR*! " + part);
 			editorsHooked.add(part);
 			AbstractTextEditor editor = (AbstractTextEditor) part;
 			editor.getDocumentProvider().getDocument(editor.getEditorInput())
