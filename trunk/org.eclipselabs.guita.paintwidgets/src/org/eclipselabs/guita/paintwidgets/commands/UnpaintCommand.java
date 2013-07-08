@@ -1,4 +1,4 @@
-package org.eclipselabs.guita.paintwidgets;
+package org.eclipselabs.guita.paintwidgets.commands;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -32,7 +32,7 @@ public class UnpaintCommand extends AbstractHandler{
 			Iterator<TableWidgetReference> iterator = sel.iterator();
 			while (iterator.hasNext()) {
 				TableWidgetReference w = iterator.next();
-				Request request = Request.newUnpaintRequest(w.getLocation(), w.getInfo());
+				Request request = Request.newUnpaintRequest(w.getLocation(), w.getInfo(), w.getName());
 
 				try {
 					socket = new Socket("localhost", PORT1);

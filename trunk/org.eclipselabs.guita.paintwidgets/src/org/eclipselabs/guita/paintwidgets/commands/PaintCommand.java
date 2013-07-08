@@ -1,4 +1,4 @@
-package org.eclipselabs.guita.paintwidgets;
+package org.eclipselabs.guita.paintwidgets.commands;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -102,7 +102,7 @@ public class PaintCommand extends AbstractHandler{
 			}
 			
 			if(isWidget) {
-				Request request = Request.newPaintRequest(loc, info, mapColor(color));
+				Request request = Request.newPaintRequest(loc, info, mapColor(color), text);
 
 				if(ViewTable.getInstance().alreadyPainted(text, loc)){
 					MessageBox messageDialog = new MessageBox(editor.getSite().getShell(), SWT.ICON_QUESTION | SWT.OK | SWT.CANCEL);

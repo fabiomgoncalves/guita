@@ -79,7 +79,7 @@ public class ViewTable extends ViewPart{
 					Iterator<TableWidgetReference> iterator = widgets.iterator();
 					while(iterator.hasNext()){
 						TableWidgetReference g = iterator.next();
-						Request request = Request.newPaintRequest(g.getLocation(), g.getInfo(), mapColor(g.getColor()));
+						Request request = Request.newPaintRequest(g.getLocation(), g.getInfo(), mapColor(g.getColor()), g.getName());
 						pendingRequests.add(request);
 					}
 					oos = new ObjectOutputStream(socket.getOutputStream());
