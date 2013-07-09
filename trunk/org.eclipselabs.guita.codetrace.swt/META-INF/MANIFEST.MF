@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Widgetsanalyzer
+Bundle-SymbolicName: org.eclipselabs.guita.codetrace.swt
+Bundle-Version: 1.0.0.qualifier
+Export-Package: org.eclipselabs.guita.codetrace.swt
+Require-Bundle: org.eclipse.swt;bundle-version="0.0.0";visibility:=reexport,
+ org.aspectj.runtime;visibility:=reexport,
+ org.eclipselabs.guita.codetrace.common;bundle-version="1.0.0";visibility:=reexport
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
