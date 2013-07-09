@@ -20,7 +20,9 @@ import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.RGB;
+import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Widget;
 import org.eclipselabs.guita.codetrace.common.Request;
 
@@ -53,7 +55,7 @@ public privileged aspect CodeTracing {
 		new RequestHandler().start();
 	}
 
-	public class RequestHandler extends Thread {
+	private class RequestHandler extends Thread {
 		@Override
 		public void run() {
 			Socket socket = null;
@@ -120,7 +122,7 @@ public privileged aspect CodeTracing {
 		return addToRequests;
 	}
 
-	private class SearchRunnable implements Runnable {
+	private class SearchRunnable implements Runnable{
 		private Control widget;
 		private RGB color;
 
@@ -131,45 +133,59 @@ public privileged aspect CodeTracing {
 
 		@Override
 		public void run() {
-			if(paintedWidgets.containsKey(widget) && color == null) {
+			if(paintedWidgets.containsKey(widget) && color == null)
 				removePaint(widget);
-			}
-			else{
+			else
 				paint(widget, color);
-			}
 		}
 
 	}
 
-	private RGB getColor(Request request) {
+	private RGB getColor(Request request){
 		Request.Color color = request.getColor();
 		return new RGB(color.getR(), color.getG(), color.getB());
 	}
 
-	public void paint(Control g, final RGB color){
-		if(g.getClass().getSimpleName().equals("Shell") || g.getClass().getSimpleName().equals("Composite"))
-			g.setBackground(new Color(null, color));
-		else{
-			g.addPaintListener(new PaintListener() {
-
-				@Override
-				public void paintControl(PaintEvent e) {
-					e.gc.setForeground(new Color(null, color.red, color.green, color.blue));
-					e.gc.drawOval(0, 0, e.width-1, e.height-1);
-				}
-			});
-			g.redraw();
-		}
-
-		if(!paintedWidgets.containsKey(g))
-			paintedWidgets.put(g, new Color(null, color.red, color.green, color.blue));
+	private boolean algo (Control g){
+		return g.getClass().equals(Shell.class) || Composite.class.isAssignableFrom(g.getClass());
 	}
 
-	public void removePaint(Control g){
-		if(g.getClass().getSimpleName().equals("Shell") || g.getClass().getSimpleName().equals("Composite"))
+	private PaintListener listener = new PaintListener(){
+
+		@Override
+		public void paintControl(PaintEvent e) {
+			if(paintedWidgets.containsKey(e.widget)) {
+				e.gc.setForeground(paintedWidgets.get(e.widget));
+				e.gc.drawOval(0, 0, e.width-1, e.height-1);
+			}
+		}
+	};
+
+	private void paint(Control g, RGB color){
+		if(algo(g)){
+			if(!paintedWidgets.containsKey(g))
+				paintedWidgets.put(g, g.getBackground());
+
+			g.setBackground(new Color(g.getDisplay(), color));
+		}
+		else {
+			if(paintedWidgets.containsKey(g)){
+				g.removePaintListener(listener);
+				g.redraw();
+			}
+			
+			paintedWidgets.put(g, new Color(g.getDisplay(), color.red, color.green, color.blue));
+
+			g.addPaintListener(listener);
+			g.redraw();
+		}
+	}
+
+	private void removePaint(Control g){
+		if(algo(g))
 			g.setBackground(paintedWidgets.get(g));
-		else{
-			g.removePaintListener(null);
+		else {
+			g.removePaintListener(listener);
 			g.redraw();
 		}
 
@@ -203,7 +219,7 @@ public privileged aspect CodeTracing {
 		}
 	}
 
-	public void receiveStartupRequests(){
+	private void receiveStartupRequests(){
 		final int PORT3 = 8100; // Receber lista inicial
 		Socket socket = null;
 		ObjectInputStream ois = null;
