@@ -29,8 +29,8 @@ import org.eclipselabs.guita.codetrace.common.Request;
 
 public privileged aspect CodeTracing {
 
-	private static final int PORT1 = 8080; // Receber pedidos de paint e unpaint
-	private static final int PORT2 = 8090; // Mandar numero de objectos pintados
+	private static final int PORT1 = 8080; // Receive paint and unpaint requests
+	private static final int PORT2 = 8090; // Send number of painted widgets
 	private ServerSocket serverSocket;
 
 	private Map<String , List<Control>> widgetsList = new HashMap<String, List<Control>>();
@@ -151,11 +151,11 @@ public privileged aspect CodeTracing {
 	}
 
 	private PaintListener listener = new PaintListener(){
-
 		@Override
 		public void paintControl(PaintEvent e) {
 			if(paintedWidgets.containsKey(e.widget)) {
 				e.gc.setForeground(paintedWidgets.get(e.widget));
+				e.gc.setLineWidth(2);
 				e.gc.drawOval(0, 0, e.width-1, e.height-1);
 			}
 		}
@@ -201,7 +201,7 @@ public privileged aspect CodeTracing {
 			oos.writeObject(number);
 			oos.writeObject(request.getLocation());
 			oos.writeObject(request.getType());
-			oos.writeObject(request.getOrder());
+			oos.writeObject(request.getName());
 
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
@@ -220,7 +220,7 @@ public privileged aspect CodeTracing {
 	}
 
 	private void receiveStartupRequests(){
-		final int PORT3 = 8100; // Receber lista inicial
+		final int PORT3 = 8100; // Receive startup list
 		Socket socket = null;
 		ObjectInputStream ois = null;
 		ObjectOutputStream oos = null;
