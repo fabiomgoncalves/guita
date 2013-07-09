@@ -34,11 +34,11 @@ import org.eclipselabs.guita.variableanalyzer.service.VariableResolver;
 public class PaintCommand extends AbstractHandler{
 
 	private static final int PORT1 = 8080;
-	
+
 	private static class SWTControlFilter implements TypeFilter {
 
 		private Map<String, Boolean> cache = new HashMap<String,Boolean>();
-		
+
 		@Override
 		public boolean include(String type) {
 			if(cache.containsKey(type)) {
@@ -100,7 +100,7 @@ public class PaintCommand extends AbstractHandler{
 			catch (ClassNotFoundException e) {
 				MessageDialog.open(MessageDialog.ERROR, editor.getSite().getShell(), "Variable", "Variable must be a subtype of Control", SWT.NONE);
 			}
-			
+
 			if(isWidget) {
 				Request request = Request.newPaintRequest(loc, info, mapColor(color), text);
 
@@ -122,20 +122,18 @@ public class PaintCommand extends AbstractHandler{
 
 
 	public Color mapColor(String color){
-		if(color.equals("Red")){
+		if(color.equals("Red"))
 			return Color.RED;
-		}else if(color.equals("Blue")){
+		else if(color.equals("Blue"))
 			return Color.BLUE;
-		}else if(color.equals("Green")){
+		else if(color.equals("Green"))
 			return Color.GREEN;
-		}else if(color.equals("Yellow")){
+		else if(color.equals("Yellow"))
 			return Color.YELLOW;
-		}else if(color.equals("Pink")){
+		else if(color.equals("Pink"))
 			return Color.PINK;
-		}
-		else {
+		else
 			return Color.WHITE;
-		}
 	}
 
 	public void sendRequest(String text, VariableInfo info, String loc, String color, Request request){
