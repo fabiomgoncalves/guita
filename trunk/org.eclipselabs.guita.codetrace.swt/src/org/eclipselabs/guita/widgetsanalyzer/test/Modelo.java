@@ -24,6 +24,9 @@ public class Modelo {
 		final Label label1 = new Label(shell, SWT.NULL);
 		label1.setText("Algum texto !!!");
 		
+		Label label2 = label1;
+		label2.setText("SIM POIS");
+		
 		for(int i = 0; i != array.length; i++){
 			Button b = new Button(shell, SWT.PUSH);
 			array[i] = b;
