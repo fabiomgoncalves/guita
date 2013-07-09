@@ -72,8 +72,10 @@ public class TableWidgetReference {
 			colorRGB = new RGB(0, 255, 0);
 		}else if(color.equals("Yellow")){
 			colorRGB = new RGB(255, 255, 0);
-		}else{
+		}else if(color.equals("Pink")){
 			colorRGB = new RGB(255, 0, 255);
+		}else{
+			colorRGB = new RGB(255, 255, 255);
 		}
 	}
 }

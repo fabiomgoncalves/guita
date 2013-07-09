@@ -113,10 +113,10 @@ public class ViewTable extends ViewPart{
 					int number = (Integer) ois.readObject();
 					String location = (String) ois.readObject();
 					String type = (String) ois.readObject();
-					int order = (Integer) ois.readObject();
+					String name = (String) ois.readObject();
 
 					for(TableWidgetReference w: widgets){
-						if(w.getLocation().equals(location) && w.getType().equals(type) && w.getOrder() == order)
+						if(w.getLocation().equals(location) && w.getType().equals(type) && w.getName().equals(name))
 							w.setNumberPaintedWidgets(number);
 					}
 
@@ -126,7 +126,6 @@ public class ViewTable extends ViewPart{
 							refresh();
 						}
 					});
-
 
 				} catch (IOException e) {
 					e.printStackTrace();
@@ -189,17 +188,18 @@ public class ViewTable extends ViewPart{
 	}
 
 	public Color mapColor(String color){
-		if(color.equals("Red")){
+		if(color.equals("Red"))
 			return Color.RED;
-		}else if(color.equals("Blue")){
+		else if(color.equals("Blue"))
 			return Color.BLUE;
-		}else if(color.equals("Green")){
+		else if(color.equals("Green"))
 			return Color.GREEN;
-		}else if(color.equals("Yellow")){
+		else if(color.equals("Yellow"))
 			return Color.YELLOW;
-		}else{
+		else if(color.equals("Pink"))
 			return Color.PINK;
-		}
+		else
+			return Color.WHITE;
 	}
 
 	public void refresh(){
