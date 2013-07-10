@@ -19,8 +19,8 @@ import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IPersistable;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.FileEditorInput;
+import org.eclipselabs.guita.codetrace.common.VariableInfo;
 import org.eclipselabs.guita.variableanalyzer.service.TypeFilter;
-import org.eclipselabs.guita.variableanalyzer.service.VariableInfo;
 import org.eclipselabs.guita.variableanalyzer.service.VariableResolver;
 
 
