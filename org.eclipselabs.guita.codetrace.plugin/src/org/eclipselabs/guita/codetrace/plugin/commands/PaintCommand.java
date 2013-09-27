@@ -36,7 +36,6 @@ public class PaintCommand extends AbstractHandler{
 	private static final int PORT1 = 8080;
 
 	private static class SWTControlFilter implements TypeFilter {
-
 		private Map<String, Boolean> cache = new HashMap<String,Boolean>();
 
 		@Override
@@ -66,23 +65,29 @@ public class PaintCommand extends AbstractHandler{
 			int line =  s.getStartLine() + 1;
 			String text = s.getText();
 
-			IEditorPart editor = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().getActiveEditor();
-			IEditorInput input = editor.getEditorInput();
-			IPersistable pers = input.getPersistable();
+			String color = null;
+			try {
+				color = event.getCommand().getName();
+			} catch (NotDefinedException e) {
+				e.printStackTrace();
+			}
 
-			if(pers instanceof FileEditorInput) {
-				FileEditorInput fileInput = (FileEditorInput) pers;
-				VariableInfo info = VariableResolver.resolve(fileInput.getFile(), text, line, new SWTControlFilter());
-				String loc = fileInput.getPath().lastSegment() + ":" + line;
+			if(text.equals("NewElement")){
+				System.out.println(text);
+				handleClass(text, color);
+			}
+			else{
+				IEditorPart editor = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().getActiveEditor();
+				IEditorInput input = editor.getEditorInput();
+				IPersistable pers = input.getPersistable();
 
-				String color = null;
-				try {
-					color = event.getCommand().getName();
-				} catch (NotDefinedException e) {
-					e.printStackTrace();
+				if(pers instanceof FileEditorInput) {
+					FileEditorInput fileInput = (FileEditorInput) pers;
+					VariableInfo info = VariableResolver.resolve(fileInput.getFile(), text, line, new SWTControlFilter());
+					String loc = fileInput.getPath().lastSegment() + ":" + line;
+
+					handleVar(editor, info, text, loc, color);
 				}
-
-				handleVar(editor, info, text, loc, color);
 			}
 		}
 		return null;
@@ -90,34 +95,24 @@ public class PaintCommand extends AbstractHandler{
 
 	public void handleVar(IEditorPart editor, VariableInfo info, String text, String loc, String color){
 		if(info.getType() != null) {
-			String message = "\"" + text + "\"" + "\n" + info.getType() + "\"" + "\n" + loc;
+			Request request = Request.newPaintRequest(loc, info, mapColor(color), text);
 
-			boolean isWidget = false;
-			try {
-				Class<?> clazz = Class.forName("org.eclipse.swt.widgets." + info.getType());
-				isWidget = Control.class.isAssignableFrom(clazz);
-			} 
-			catch (ClassNotFoundException e) {
-				MessageDialog.open(MessageDialog.ERROR, editor.getSite().getShell(), "Variable", "Variable must be a subtype of Control", SWT.NONE);
-			}
-
-			if(isWidget) {
-				Request request = Request.newPaintRequest(loc, info, mapColor(color), text);
-
-				if(ViewTable.getInstance().alreadyPainted(text, loc)){
-					MessageBox messageDialog = new MessageBox(editor.getSite().getShell(), SWT.ICON_QUESTION | SWT.OK | SWT.CANCEL);
-					messageDialog.setText("Paint");
-					messageDialog.setMessage("This widget is already painted. Do you wish to change its color?");
-					if(messageDialog.open() == SWT.OK)
-						sendRequest(text, info, loc, color, request);
-				}else
+			if(ViewTable.getInstance().alreadyPainted(text, loc)){
+				MessageBox messageDialog = new MessageBox(editor.getSite().getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO);
+				messageDialog.setText("Paint");
+				messageDialog.setMessage("This widget is already painted. Do you wish to change its color?");
+				if(messageDialog.open() == SWT.YES)
 					sendRequest(text, info, loc, color, request);
-			}
-			else
-				MessageDialog.open(MessageDialog.INFORMATION, editor.getSite().getShell(), "Variable", message, SWT.NONE);
+			}else
+				sendRequest(text, info, loc, color, request);
 		}
 		else
-			MessageDialog.open(MessageDialog.ERROR, editor.getSite().getShell(), "Variable", "Variable Not found", SWT.NONE);
+			MessageDialog.open(MessageDialog.ERROR, editor.getSite().getShell(), "Variable", "Variable must be a subtype of Control", SWT.NONE);
+	}
+
+	public void handleClass(String name, String color){
+		Request request = Request.newPaintClassRequest(name, mapColor(color));
+		sendRequest(null, null, null, color, request);
 	}
 
 
@@ -145,14 +140,16 @@ public class PaintCommand extends AbstractHandler{
 			socket = new Socket("localhost", PORT1);
 			oos = new ObjectOutputStream(socket.getOutputStream());
 			oos.writeObject(request);
+			System.out.println("ENVIOU O PEDIDO");
+			oos.writeObject(null);
 
-			TableWidgetReference newWidget = new TableWidgetReference(text, info, loc, color, numberPaintedWidgets);
-			ViewTable.getInstance().addWidget(newWidget);
+			//TableWidgetReference newWidget = new TableWidgetReference(text, info, loc, color, numberPaintedWidgets);
+			//ViewTable.getInstance().addWidget(newWidget);
 
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		} finally {
 			if(oos != null){
 				try { oos.close(); } catch(IOException e){}
