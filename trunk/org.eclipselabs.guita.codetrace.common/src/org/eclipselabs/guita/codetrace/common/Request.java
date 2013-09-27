@@ -50,6 +50,10 @@ public class Request implements Serializable {
 	public static Request newUnpaintRequest(String location, VariableInfo info, String name) {
 		return new Request(location, info, null, name);
 	}
+	
+	public static Request newPaintClassRequest(String className, Color color) {
+		return new Request(className, null, color, null);
+	}
 		
 	private Request(String location, VariableInfo info, Color color, String name){
 		this.location = location;
@@ -93,4 +97,17 @@ public class Request implements Serializable {
 	public int getTotalVarsOfName(){
 		return info.getNumberOfVarsWithSameName();
 	}
+	
+	public boolean isVariableRequest() {
+		return info != null;
+	}
+	
+	public boolean isClassRequest() {
+		return info == null;
+	}
+	
+	public boolean isPaintRequest() {
+		return color != null;
+	}
+	
 }
