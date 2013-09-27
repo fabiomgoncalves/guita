@@ -186,6 +186,11 @@ public class ViewTable extends ViewPart{
 	public List<TableWidgetReference> getWidgetsTable(){
 		return widgets;
 	}
+	
+	public void clearAll() {
+		widgets.clear();
+		viewer.refresh();
+	}
 
 	public Color mapColor(String color){
 		if(color.equals("Red"))

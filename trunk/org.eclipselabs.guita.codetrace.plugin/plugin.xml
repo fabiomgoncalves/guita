@@ -10,11 +10,6 @@
                id="org.eclipselabs.guita.paintwidgets.MENU"
                label="Paint">
             <command
-                  commandId="org.eclipselabs.guita.paintwidgets.white"
-                  label="White"
-                  style="push">
-            </command>
-            <command
                   commandId="org.eclipselabs.guita.paintwidgets.red"
                   label="Red"
                   style="push">
@@ -39,6 +34,11 @@
                   label="Pink"
                   style="push">
             </command>
+            <command
+                  commandId="org.eclipselabs.guita.paintwidgets.white"
+                  label="White"
+                  style="push">
+            </command>
          </menu>
       </menuContribution>
       <menuContribution
@@ -47,18 +47,19 @@
          <command
                commandId="org.eclipselabs.guita.paintwidgets.remove"
                icon="icons/delete.gif"
-               label="Remove from Table"
+               label="Remove"
+               style="push">
+         </command>
+         <command
+               commandId="org.eclipselabs.guita.codetrace.plugin.removeAll"
+               icon="icons/deleteAll.gif"
+               label="Remove All"
                style="push">
          </command>
       </menuContribution>
    </extension>
    <extension
          point="org.eclipse.ui.commands">
-      <command
-            defaultHandler="org.eclipselabs.guita.codetrace.plugin.commands.PaintCommand"
-            id="org.eclipselabs.guita.paintwidgets.white"
-            name="White">
-      </command>
       <command
             defaultHandler="org.eclipselabs.guita.codetrace.plugin.commands.PaintCommand"
             id="org.eclipselabs.guita.paintwidgets.red"
@@ -85,9 +86,19 @@
             name="Pink">
       </command>
       <command
+            defaultHandler="org.eclipselabs.guita.codetrace.plugin.commands.PaintCommand"
+            id="org.eclipselabs.guita.paintwidgets.white"
+            name="White">
+      </command>
+      <command
             defaultHandler="org.eclipselabs.guita.codetrace.plugin.commands.UnpaintCommand"
             id="org.eclipselabs.guita.paintwidgets.remove"
             name="Remove">
+      </command>
+      <command
+            defaultHandler="org.eclipselabs.guita.codetrace.plugin.commands.UnpaintAllCommand"
+            id="org.eclipselabs.guita.codetrace.plugin.removeAll"
+            name="Remove All">
       </command>
    </extension>
    <extension
