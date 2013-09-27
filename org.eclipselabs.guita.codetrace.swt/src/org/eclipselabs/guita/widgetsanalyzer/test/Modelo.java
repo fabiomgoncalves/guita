@@ -4,6 +4,7 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
@@ -25,7 +26,7 @@ public class Modelo {
 		label1.setText("Algum texto !!!");
 		
 		Label label2 = label1;
-		label2.setText("SIM POIS");
+		label2.setText("Segunda Label");
 		
 		for(int i = 0; i != array.length; i++){
 			Button b = new Button(shell, SWT.PUSH);
@@ -78,6 +79,8 @@ public class Modelo {
 		text.setText("Introduzir algum texto aqui...");
 
 		label1.setText("Outro texto");
+		
+		Teste test = new Teste(shell, SWT.BORDER);
 
 		shell.pack ();
 		shell.open ();

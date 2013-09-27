@@ -29,15 +29,15 @@ import org.eclipselabs.guita.codetrace.common.Request;
 
 public privileged aspect CodeTracing {
 
-	private static final int PORT1 = 8080; // Receive paint and unpaint requests
+	private static final int PORT1 = 8080; // Receive paint and unpaint requestsList
 	private static final int PORT2 = 8090; // Send number of painted widgets
 	private ServerSocket serverSocket;
 
-	private Map<String , List<Control>> widgetsList = new HashMap<String, List<Control>>();
+	private Map<String , List<Control>> widgetsTable = new HashMap<String, List<Control>>();
 
-	private Map<Control, Color> paintedWidgets = new HashMap<Control, Color>();
+	private Map<Control, Color> paintedWidgetsTable = new HashMap<Control, Color>();
 
-	private List<Request> requests = new ArrayList<Request>();
+	private List<Request> requestsList = new ArrayList<Request>();
 
 	protected pointcut scope() : !within(CodeTracing);
 
@@ -50,7 +50,7 @@ public privileged aspect CodeTracing {
 			System.exit(1);
 		}
 
-		receiveStartupRequests();
+		receiveStartuprequestsList();
 
 		new RequestHandler().start();
 	}
@@ -65,13 +65,27 @@ public privileged aspect CodeTracing {
 				try {
 					socket = serverSocket.accept();
 					ois = new ObjectInputStream(socket.getInputStream());
-					Request request = (Request) ois.readObject();
+					boolean end = false;
+					while(!end) {
+						Object obj = ois.readObject();
 
-					if(search(request))
-						requests.add(request);
-					else
-						requests.remove(request);
+						if(obj == null)
+							end = true;
+						else {
+							Request request = (Request) obj;
 
+							System.out.println("RECEBEU PEDIDO SEM IF");
+							if(request.isClassRequest()){
+								System.out.println("RECEBEU PEDIDO");
+								searchClass(request);
+							}else{
+								if(search(request))
+									requestsList.add(request);
+								else
+									requestsList.remove(request);
+							}
+						}
+					}
 				}
 				catch(Exception e) {
 					e.printStackTrace();
@@ -90,11 +104,11 @@ public privileged aspect CodeTracing {
 	}
 
 	private boolean search(Request request){
-		int numberPaintedWidgets = 0;
+		int numberpaintedWidgetsTable = 0;
 		List<Control> aux = new ArrayList<Control>();
 
-		if(widgetsList.containsKey(request.getLocation())){
-			aux = widgetsList.get(request.getLocation());
+		if(widgetsTable.containsKey(request.getLocation())){
+			aux = widgetsTable.get(request.getLocation());
 			RGB color = request.isToRemove() ? null : getColor(request);
 
 			if(request.getTotalVarsOfType() == 1) {
@@ -103,23 +117,39 @@ public privileged aspect CodeTracing {
 					if(c.getClass().getSimpleName().equals(request.getType())) {
 						SearchRunnable runnable = new SearchRunnable(c, color);
 						c.getDisplay().syncExec(runnable);
-						numberPaintedWidgets++;
+						numberpaintedWidgetsTable++;
 					}
 			}
 			else {
 				Control g = aux.get(request.getOrder());
 				SearchRunnable runnable = new SearchRunnable(g, color);
 				g.getDisplay().syncExec(runnable);
-				numberPaintedWidgets = 1;
+				numberpaintedWidgetsTable = 1;
 			}
 		}
 
-		boolean addToRequests = !request.isToRemove();
+		boolean addTorequestsList = !request.isToRemove();
 
-		if(addToRequests)
-			sendNumberOfPaintedWidgets(numberPaintedWidgets, request);
+		if(addTorequestsList)
+			sendNumberOfpaintedWidgets(numberpaintedWidgetsTable, request);
 
-		return addToRequests;
+		return addTorequestsList;
+	}
+
+	private void searchClass(Request request){
+		System.out.println("ENTROU NO SEARCH");
+		Iterator<String> iterator = widgetsTable.keySet().iterator();
+		while(iterator.hasNext()){
+			String key = iterator.next();
+			Iterator<Control> iterator2 = widgetsTable.get(key).iterator();
+			while(iterator2.hasNext()){
+				Widget w = iterator2.next();
+				if(w.getClass().getSimpleName().equals(request.getLocation())){
+					SearchRunnable runnable = new SearchRunnable((Control) w, getColor(request));
+					w.getDisplay().syncExec(runnable);
+				}
+			}
+		}
 	}
 
 	private class SearchRunnable implements Runnable{
@@ -133,7 +163,7 @@ public privileged aspect CodeTracing {
 
 		@Override
 		public void run() {
-			if(paintedWidgets.containsKey(widget) && color == null)
+			if(paintedWidgetsTable.containsKey(widget) && color == null)
 				removePaint(widget);
 			else
 				paint(widget, color);
@@ -153,8 +183,8 @@ public privileged aspect CodeTracing {
 	private PaintListener listener = new PaintListener(){
 		@Override
 		public void paintControl(PaintEvent e) {
-			if(paintedWidgets.containsKey(e.widget)) {
-				e.gc.setForeground(paintedWidgets.get(e.widget));
+			if(paintedWidgetsTable.containsKey(e.widget)) {
+				e.gc.setForeground(paintedWidgetsTable.get(e.widget));
 				e.gc.setLineWidth(2);
 				e.gc.drawOval(0, 0, e.width-1, e.height-1);
 			}
@@ -163,18 +193,18 @@ public privileged aspect CodeTracing {
 
 	private void paint(Control g, RGB color){
 		if(algo(g)){
-			if(!paintedWidgets.containsKey(g))
-				paintedWidgets.put(g, g.getBackground());
+			if(!paintedWidgetsTable.containsKey(g))
+				paintedWidgetsTable.put(g, g.getBackground());
 
 			g.setBackground(new Color(g.getDisplay(), color));
 		}
 		else {
-			if(paintedWidgets.containsKey(g)){
+			if(paintedWidgetsTable.containsKey(g)){
 				g.removePaintListener(listener);
 				g.redraw();
 			}
-			
-			paintedWidgets.put(g, new Color(g.getDisplay(), color.red, color.green, color.blue));
+
+			paintedWidgetsTable.put(g, new Color(g.getDisplay(), color.red, color.green, color.blue)); //ou null
 
 			g.addPaintListener(listener);
 			g.redraw();
@@ -183,16 +213,16 @@ public privileged aspect CodeTracing {
 
 	private void removePaint(Control g){
 		if(algo(g))
-			g.setBackground(paintedWidgets.get(g));
+			g.setBackground(paintedWidgetsTable.get(g));
 		else {
 			g.removePaintListener(listener);
 			g.redraw();
 		}
 
-		paintedWidgets.remove(g);
+		paintedWidgetsTable.remove(g);
 	}
 
-	private void sendNumberOfPaintedWidgets(int number, Request request){
+	private void sendNumberOfpaintedWidgets(int number, Request request){
 		Socket socket = null;
 		ObjectOutputStream oos = null;
 		try {
@@ -219,7 +249,7 @@ public privileged aspect CodeTracing {
 		}
 	}
 
-	private void receiveStartupRequests(){
+	private void receiveStartuprequestsList(){
 		final int PORT3 = 8100; // Receive startup list
 		Socket socket = null;
 		ObjectInputStream ois = null;
@@ -232,12 +262,11 @@ public privileged aspect CodeTracing {
 
 			ois = new ObjectInputStream(socket.getInputStream());
 			@SuppressWarnings("unchecked")
-			final List<Request> startupRequests = (List<Request>) ois.readObject();
-			requests = startupRequests;
+			final List<Request> startuprequestsList = (List<Request>) ois.readObject();
+			requestsList = startuprequestsList;
 
 		}
 		catch(ConnectException ce) {
-
 		}
 		catch (UnknownHostException e) {
 			e.printStackTrace();
@@ -262,31 +291,31 @@ public privileged aspect CodeTracing {
 	}
 
 	private void captureObjects(Control g, SourceLocation loc, Object[] args){
-		String aux = loc.getFileName() + ":" + loc.getLine();
-		List<Control> list = widgetsList.get(aux);
+		String key = loc.getFileName() + ":" + loc.getLine();
+		List<Control> values = widgetsTable.get(key);
 
-		if(list == null) {
-			list = new ArrayList<Control>();
-			widgetsList.put(aux, list);
+		if(values == null) {
+			values = new ArrayList<Control>();
+			widgetsTable.put(key, values);
 		}
 
 		for(Object arg  : args)
 			if(arg != null && Control.class.isAssignableFrom(arg.getClass()))
-				list.add((Control) arg);
+				values.add((Control) arg);
 
 
-		if(!list.contains(g))
-			list.add(g);
+		if(!values.contains(g))
+			values.add(g);
 
-		if(!requests.isEmpty()){
-			for(Request r : requests) {
-				if(r.getLocation().equals(aux))
+		if(!requestsList.isEmpty()){
+			for(Request r : requestsList) {
+				if(r.getLocation().equals(key))
 					search(r);
 			}
 		}
 	}
 
-	after() returning (final Control g): call(Widget+.new(..)) && scope() {
+	after() returning (final Control g): call(Control+.new(..)) && scope() {
 		SourceLocation loc = thisJoinPoint.getSourceLocation();
 		Object[] args = thisJoinPoint.getArgs();
 		captureObjects(g, loc, args);
@@ -294,16 +323,16 @@ public privileged aspect CodeTracing {
 		g.addDisposeListener(new DisposeListener() {
 			public void widgetDisposed(DisposeEvent event) {
 
-				Iterator<String> iterator = widgetsList.keySet().iterator();
+				Iterator<String> iterator = widgetsTable.keySet().iterator();
 				while(iterator.hasNext()){
 					String key = iterator.next();
-					Iterator<Control> iterator2 = widgetsList.get(key).iterator();
+					Iterator<Control> iterator2 = widgetsTable.get(key).iterator();
 					while(iterator2.hasNext()){
 						Widget w = iterator2.next();
 						if(w.equals(g))
 							iterator2.remove();
 					}
-					if(widgetsList.get(key).isEmpty())
+					if(widgetsTable.get(key).isEmpty())
 						iterator.remove();
 				}
 
@@ -317,12 +346,4 @@ public privileged aspect CodeTracing {
 		Object[] args = thisJoinPoint.getArgs();
 		captureObjects(g, loc, args);
 	}
-
-	//	after(Widget w) : set(Widget+ *.*) && args(w) && scope() {
-	//		//		System.out.println(thisJoinPoint.getSourceLocation());
-	//	}
-	//
-	//	after() : get(Widget+ *.*) && scope() {
-	//		//		System.out.println("GET" + thisJoinPoint.getSourceLocation());
-	//	}
 }
