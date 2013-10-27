@@ -38,6 +38,7 @@ public class UnpaintCommand extends AbstractHandler{
 					socket = new Socket("localhost", PORT1);
 					oos = new ObjectOutputStream(socket.getOutputStream());
 					oos.writeObject(request);
+					oos.writeObject(null);
 
 					view.removeWidget(w);
 

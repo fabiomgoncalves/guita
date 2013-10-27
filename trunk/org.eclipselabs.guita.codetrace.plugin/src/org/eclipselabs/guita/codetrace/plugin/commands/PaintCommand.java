@@ -140,11 +140,10 @@ public class PaintCommand extends AbstractHandler{
 			socket = new Socket("localhost", PORT1);
 			oos = new ObjectOutputStream(socket.getOutputStream());
 			oos.writeObject(request);
-			System.out.println("ENVIOU O PEDIDO");
 			oos.writeObject(null);
 
-			//TableWidgetReference newWidget = new TableWidgetReference(text, info, loc, color, numberPaintedWidgets);
-			//ViewTable.getInstance().addWidget(newWidget);
+			TableWidgetReference newWidget = new TableWidgetReference(text, info, loc, color, numberPaintedWidgets);
+			ViewTable.getInstance().addWidget(newWidget);
 
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
