@@ -7,6 +7,7 @@ import java.net.ConnectException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.security.acl.Group;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -74,11 +75,9 @@ public privileged aspect CodeTracing {
 						else {
 							Request request = (Request) obj;
 
-							System.out.println("RECEBEU PEDIDO SEM IF");
-							if(request.isClassRequest()){
-								System.out.println("RECEBEU PEDIDO");
+							if(request.isClassRequest())
 								searchClass(request);
-							}else{
+							else{
 								if(search(request))
 									requestsList.add(request);
 								else
@@ -119,6 +118,7 @@ public privileged aspect CodeTracing {
 						c.getDisplay().syncExec(runnable);
 						numberpaintedWidgetsTable++;
 					}
+				
 			}
 			else {
 				Control g = aux.get(request.getOrder());
@@ -137,7 +137,6 @@ public privileged aspect CodeTracing {
 	}
 
 	private void searchClass(Request request){
-		System.out.println("ENTROU NO SEARCH");
 		Iterator<String> iterator = widgetsTable.keySet().iterator();
 		while(iterator.hasNext()){
 			String key = iterator.next();
@@ -176,8 +175,9 @@ public privileged aspect CodeTracing {
 		return new RGB(color.getR(), color.getG(), color.getB());
 	}
 
-	private boolean algo (Control g){
-		return g.getClass().equals(Shell.class) || Composite.class.isAssignableFrom(g.getClass());
+	private boolean isBackgroundPainting(Control g){
+		return g.getClass().equals(Shell.class) || Composite.class.isAssignableFrom(g.getClass()) 
+				|| Group.class.isAssignableFrom(g.getClass());
 	}
 
 	private PaintListener listener = new PaintListener(){
@@ -192,7 +192,7 @@ public privileged aspect CodeTracing {
 	};
 
 	private void paint(Control g, RGB color){
-		if(algo(g)){
+		if(isBackgroundPainting(g)){
 			if(!paintedWidgetsTable.containsKey(g))
 				paintedWidgetsTable.put(g, g.getBackground());
 
@@ -212,7 +212,7 @@ public privileged aspect CodeTracing {
 	}
 
 	private void removePaint(Control g){
-		if(algo(g))
+		if(isBackgroundPainting(g))
 			g.setBackground(paintedWidgetsTable.get(g));
 		else {
 			g.removePaintListener(listener);
