@@ -1,4 +1,4 @@
-package org.eclipselabs.guita.widgetsanalyzer.test;
+package org.eclipselabs.guita.codetrace.swt.test;
 
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.layout.FillLayout;
