@@ -19,7 +19,9 @@ import pt.iscte.dcti.umlviewer.network.util.ByteClassLoader;
 import pt.iscte.dcti.umlviewer.service.Service;
 import pt.iscte.dcti.umlviewer.service.ServiceHelper;
 
-public class SignalRequest extends AbstractHandler {
+public class SignalHandler extends AbstractHandler {
+	
+	//this Implementing Runnable?
 	
 	private static final boolean SHOW_REPORTS = true;
 
@@ -29,7 +31,7 @@ public class SignalRequest extends AbstractHandler {
 	
 	private ByteClassLoader class_loader;
 
-	public SignalRequest() {
+	public SignalHandler() {
 		service = ServiceHelper.getService();
 		class_loader = new ByteClassLoader(this.getClass().getClassLoader());
 		if(SHOW_REPORTS) {
@@ -38,7 +40,10 @@ public class SignalRequest extends AbstractHandler {
 	}
 
 	public Object execute(ExecutionEvent event) throws ExecutionException {
-		new RecordAgent().start();
+		if(SHOW_REPORTS) {
+			System.out.println("SIGNAL PRESSED");
+		}
+		new RecordAgent().start(); //Execute wraping on a thread?
 		return null;
 	}
 
@@ -61,7 +66,7 @@ public class SignalRequest extends AbstractHandler {
 				handleConnection();
 			}
 			catch (UnknownHostException e) { e.printStackTrace(); } 
-			catch (IOException e) { } 
+			catch (IOException e) { e.printStackTrace(); } 
 			finally {
 				if(input_stream != null) {
 					try {
