@@ -18,6 +18,8 @@ import pt.iscte.dcti.umlviewer.network.external.ClassDataTransferObject;
 import pt.iscte.dcti.umlviewer.tester.util.ClassesToBytes;
 
 public aspect Aspect1 {
+	
+	//Atenção, o aspecto deve saber quando a aplicação foi fechada, para fechar o servidor também.
 
 	private static final int DEFAULT_PORT = 8080;
 
