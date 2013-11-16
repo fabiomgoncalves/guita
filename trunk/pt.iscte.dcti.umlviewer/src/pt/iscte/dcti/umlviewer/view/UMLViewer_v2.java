@@ -18,6 +18,10 @@ import pt.iscte.dcti.umlviewer.service.Service_v2;
 
 public class UMLViewer_v2 extends ViewPart implements Service_v2 {
 	
+	//Queue com as classes recentemente adicionadas, a qual será consultada para efectuar as ligações.
+	//ou
+	//Adiciona uma classe, e cria as novas ligações. Irá proceder assim classe a classe.
+	
 	private static UMLViewer_v2 instance = null;
 	
 	public static UMLViewer_v2 getInstance() {
