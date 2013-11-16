@@ -4,5 +4,6 @@ import java.lang.reflect.Method;
 
 public interface MethodFilter {
 
-	boolean accept(Method m);
+	boolean accept(Method method);
+	
 }
