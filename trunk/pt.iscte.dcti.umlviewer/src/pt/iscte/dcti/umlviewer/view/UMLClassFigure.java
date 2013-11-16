@@ -25,6 +25,8 @@ import org.eclipse.swt.widgets.Display;
 public class UMLClassFigure extends Figure {
 
 	//TORNAR BUILDER!?
+	//Dar entrada das imagens no build.properties!!!
+	//Possivelmente, mudar as imagens para outra pasta. Tirá-las do source.
 
 	private static final Color CLASS_COLOR = new Color(null, 255, 255, 206);
 	private static final Font CLASS_FONT = new Font(null, "Arial", 12, SWT.BOLD);
