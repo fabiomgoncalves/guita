@@ -7,6 +7,8 @@ import pt.iscte.dcti.umlviewer.tester.model.Class3;
 
 public class Main {
 	
+	//Não termina por causa do aspecto que tem a outra thread ainda a correr.
+	
 	public static void main(String[] args) {
 		Class1 c1 = new Class1();
 		Class2 c2 = new Class2();
@@ -24,8 +26,6 @@ public class Main {
 		c2.method4();
 		Class3 c3 = new Class3();
 		c3.method3();
-		teclado = new Scanner(System.in);
-		teclado.nextLine();
 	}
 
 }
