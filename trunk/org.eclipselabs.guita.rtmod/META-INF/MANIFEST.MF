@@ -1,0 +1,15 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Dev
+Bundle-SymbolicName: org.eclipselabs.guita.rtmod;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Bundle-Activator: org.eclipselabs.guita.rtmod.Activator
+Require-Bundle: org.eclipse.ui,
+ org.eclipse.core.runtime,
+ org.eclipse.jdt.core,
+ org.eclipse.text,
+ org.eclipse.core.resources,
+ org.aspectj.runtime;bundle-version="1.7.3"
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-ActivationPolicy: lazy
+Export-Package: org.eclipselabs.guita.rtmod.data
