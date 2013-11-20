@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: ASTParseVisitor
+Bundle-SymbolicName: ASTParseVisitor;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Require-Bundle: org.eclipse.core.runtime;bundle-version="3.8.0",
+ org.eclipse.core.resources;bundle-version="3.8.1",
+ org.eclipse.jdt;bundle-version="3.8.0",
+ org.eclipse.jdt.core;bundle-version="3.8.2",
+ org.eclipse.text;bundle-version="3.5.200"
+Export-Package: fileparsing
