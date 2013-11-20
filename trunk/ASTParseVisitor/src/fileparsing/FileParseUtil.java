@@ -34,7 +34,6 @@ public class FileParseUtil {
 	public static String readFileToString(String filePath) throws IOException {
 		StringBuilder fileData = new StringBuilder(1000);
 		BufferedReader reader = new BufferedReader(new FileReader(filePath));
- 
 		char[] buf = new char[10];
 		int numRead = 0;
 		while ((numRead = reader.read(buf)) != -1) {
