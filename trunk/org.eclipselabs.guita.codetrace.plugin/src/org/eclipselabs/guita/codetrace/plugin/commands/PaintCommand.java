@@ -72,22 +72,16 @@ public class PaintCommand extends AbstractHandler{
 				e.printStackTrace();
 			}
 
-			if(text.equals("NewElement")){
-				System.out.println(text);
-				handleClass(text, color);
-			}
-			else{
-				IEditorPart editor = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().getActiveEditor();
-				IEditorInput input = editor.getEditorInput();
-				IPersistable pers = input.getPersistable();
+			IEditorPart editor = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().getActiveEditor();
+			IEditorInput input = editor.getEditorInput();
+			IPersistable pers = input.getPersistable();
 
-				if(pers instanceof FileEditorInput) {
-					FileEditorInput fileInput = (FileEditorInput) pers;
-					VariableInfo info = VariableResolver.resolve(fileInput.getFile(), text, line, new SWTControlFilter());
-					String loc = fileInput.getPath().lastSegment() + ":" + line;
+			if(pers instanceof FileEditorInput) {
+				FileEditorInput fileInput = (FileEditorInput) pers;
+				VariableInfo info = VariableResolver.resolve(fileInput.getFile(), text, line, new SWTControlFilter());
+				String loc = fileInput.getPath().lastSegment() + ":" + line;
 
-					handleVar(editor, info, text, loc, color);
-				}
+				handleVar(editor, info, text, loc, color);
 			}
 		}
 		return null;
@@ -110,7 +104,8 @@ public class PaintCommand extends AbstractHandler{
 			MessageDialog.open(MessageDialog.ERROR, editor.getSite().getShell(), "Variable", "Variable must be a subtype of Control", SWT.NONE);
 	}
 
-	public void handleClass(String name, String color){
+	// missing feature
+	private void handleClass(String name, String color){
 		Request request = Request.newPaintClassRequest(name, mapColor(color));
 		sendRequest(null, null, null, color, request);
 	}

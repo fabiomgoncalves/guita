@@ -7,35 +7,35 @@
             allPopups="false"
             locationURI="popup:org.eclipse.ui.popup.any?after=additions">
          <menu
-               id="org.eclipselabs.guita.paintwidgets.MENU"
+               id="org.eclipselabs.guita.codetrace.popup"
                label="Paint">
             <command
-                  commandId="org.eclipselabs.guita.paintwidgets.red"
+                  commandId="org.eclipselabs.guita.codetrace.red"
                   label="Red"
                   style="push">
             </command>
             <command
-                  commandId="org.eclipselabs.guita.paintwidgets.blue"
+                  commandId="org.eclipselabs.guita.codetrace.blue"
                   label="Blue"
                   style="push">
             </command>
             <command
-                  commandId="org.eclipselabs.guita.paintwidgets.green"
+                  commandId="org.eclipselabs.guita.codetrace.green"
                   label="Green"
                   style="push">
             </command>
             <command
-                  commandId="org.eclipselabs.guita.paintwidgets.yellow"
+                  commandId="org.eclipselabs.guita.codetrace.yellow"
                   label="Yellow"
                   style="push">
             </command>
             <command
-                  commandId="org.eclipselabs.guita.paintwidgets.pink"
+                  commandId="org.eclipselabs.guita.codetrace.pink"
                   label="Pink"
                   style="push">
             </command>
             <command
-                  commandId="org.eclipselabs.guita.paintwidgets.white"
+                  commandId="org.eclipselabs.guita.codetrace.white"
                   label="White"
                   style="push">
             </command>
@@ -43,15 +43,15 @@
       </menuContribution>
       <menuContribution
             allPopups="false"
-            locationURI="toolbar:org.eclipselabs.guita.paintwidgets.ViewTable">
+            locationURI="toolbar:org.eclipselabs.guita.codetrace.table">
          <command
-               commandId="org.eclipselabs.guita.paintwidgets.remove"
+               commandId="org.eclipselabs.guita.codetrace.remove"
                icon="icons/delete.gif"
                label="Remove"
                style="push">
          </command>
          <command
-               commandId="org.eclipselabs.guita.codetrace.plugin.removeAll"
+               commandId="org.eclipselabs.guita.codetrace.removeAll"
                icon="icons/deleteAll.gif"
                label="Remove All"
                style="push">
@@ -62,42 +62,42 @@
          point="org.eclipse.ui.commands">
       <command
             defaultHandler="org.eclipselabs.guita.codetrace.plugin.commands.PaintCommand"
-            id="org.eclipselabs.guita.paintwidgets.red"
+            id="org.eclipselabs.guita.codetrace.red"
             name="Red">
       </command>
       <command
             defaultHandler="org.eclipselabs.guita.codetrace.plugin.commands.PaintCommand"
-            id="org.eclipselabs.guita.paintwidgets.blue"
+            id="org.eclipselabs.guita.codetrace.blue"
             name="Blue">
       </command>
       <command
             defaultHandler="org.eclipselabs.guita.codetrace.plugin.commands.PaintCommand"
-            id="org.eclipselabs.guita.paintwidgets.green"
+            id="org.eclipselabs.guita.codetrace.green"
             name="Green">
       </command>
       <command
             defaultHandler="org.eclipselabs.guita.codetrace.plugin.commands.PaintCommand"
-            id="org.eclipselabs.guita.paintwidgets.yellow"
+            id="org.eclipselabs.guita.codetrace.yellow"
             name="Yellow">
       </command>
       <command
             defaultHandler="org.eclipselabs.guita.codetrace.plugin.commands.PaintCommand"
-            id="org.eclipselabs.guita.paintwidgets.pink"
+            id="org.eclipselabs.guita.codetrace.pink"
             name="Pink">
       </command>
       <command
             defaultHandler="org.eclipselabs.guita.codetrace.plugin.commands.PaintCommand"
-            id="org.eclipselabs.guita.paintwidgets.white"
+            id="org.eclipselabs.guita.codetrace.white"
             name="White">
       </command>
       <command
             defaultHandler="org.eclipselabs.guita.codetrace.plugin.commands.UnpaintCommand"
-            id="org.eclipselabs.guita.paintwidgets.remove"
+            id="org.eclipselabs.guita.codetrace.remove"
             name="Remove">
       </command>
       <command
             defaultHandler="org.eclipselabs.guita.codetrace.plugin.commands.UnpaintAllCommand"
-            id="org.eclipselabs.guita.codetrace.plugin.removeAll"
+            id="org.eclipselabs.guita.codetrace.removeAll"
             name="Remove All">
       </command>
    </extension>
@@ -107,7 +107,7 @@
             category="org.eclipselabs.guita.category"
             class="org.eclipselabs.guita.codetrace.plugin.view.ViewTable"
             icon="icons/icon.gif"
-            id="org.eclipselabs.guita.paintwidgets.ViewTable"
+            id="org.eclipselabs.guita.codetrace.table"
             name="Code Trace"
             restorable="true">
       </view>
