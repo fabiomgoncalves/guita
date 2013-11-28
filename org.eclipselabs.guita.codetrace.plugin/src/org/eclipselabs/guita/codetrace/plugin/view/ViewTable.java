@@ -33,7 +33,7 @@ import org.eclipselabs.guita.codetrace.common.Request.Color;
 
 public class ViewTable extends ViewPart{
 
-	private static final String ID = "org.eclipselabs.guita.paintwidgets.ViewTable";
+	private static final String ID = "org.eclipselabs.guita.codetrace.table";
 
 	private static final int PORT2 = 8090;
 	private static final int PORT3 = 8100;
