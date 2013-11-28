@@ -13,6 +13,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map.Entry;
 
 import org.aspectj.lang.reflect.SourceLocation;
 import org.eclipse.swt.events.DisposeEvent;
@@ -40,6 +41,8 @@ public privileged aspect CodeTracing {
 
 	private List<Request> requestsList = new ArrayList<Request>();
 
+	private Map<Control,Request> reqTable = new HashMap<Control,Request>();
+	
 	protected pointcut scope() : !within(CodeTracing);
 
 
@@ -76,7 +79,7 @@ public privileged aspect CodeTracing {
 							Request request = (Request) obj;
 
 							if(request.isClassRequest())
-								searchClass(request);
+								searchClass(request); // missing feature
 							else{
 								if(search(request))
 									requestsList.add(request);
@@ -104,26 +107,27 @@ public privileged aspect CodeTracing {
 
 	private boolean search(Request request){
 		int numberpaintedWidgetsTable = 0;
-		List<Control> aux = new ArrayList<Control>();
 
 		if(widgetsTable.containsKey(request.getLocation())){
-			aux = widgetsTable.get(request.getLocation());
+			List<Control> aux = widgetsTable.get(request.getLocation());
 			RGB color = request.isToRemove() ? null : getColor(request);
 
 			if(request.getTotalVarsOfType() == 1) {
 
 				for(Control c : aux)
 					if(c.getClass().getSimpleName().equals(request.getType())) {
-						SearchRunnable runnable = new SearchRunnable(c, color);
+						PaintRunnable runnable = new PaintRunnable(c, color);
 						c.getDisplay().syncExec(runnable);
+						reqTable.put(c, request);
 						numberpaintedWidgetsTable++;
 					}
 				
 			}
 			else {
 				Control g = aux.get(request.getOrder());
-				SearchRunnable runnable = new SearchRunnable(g, color);
+				PaintRunnable runnable = new PaintRunnable(g, color);
 				g.getDisplay().syncExec(runnable);
+				reqTable.put(g, request);
 				numberpaintedWidgetsTable = 1;
 			}
 		}
@@ -136,6 +140,9 @@ public privileged aspect CodeTracing {
 		return addTorequestsList;
 	}
 
+	
+	
+	// missing feature
 	private void searchClass(Request request){
 		Iterator<String> iterator = widgetsTable.keySet().iterator();
 		while(iterator.hasNext()){
@@ -144,18 +151,18 @@ public privileged aspect CodeTracing {
 			while(iterator2.hasNext()){
 				Widget w = iterator2.next();
 				if(w.getClass().getSimpleName().equals(request.getLocation())){
-					SearchRunnable runnable = new SearchRunnable((Control) w, getColor(request));
+					PaintRunnable runnable = new PaintRunnable((Control) w, getColor(request));
 					w.getDisplay().syncExec(runnable);
 				}
 			}
 		}
 	}
 
-	private class SearchRunnable implements Runnable{
+	private class PaintRunnable implements Runnable{
 		private Control widget;
 		private RGB color;
 
-		public SearchRunnable(Control widget, RGB color){
+		public PaintRunnable(Control widget, RGB color){
 			this.widget = widget;
 			this.color = color;
 		}
@@ -322,7 +329,7 @@ public privileged aspect CodeTracing {
 
 		g.addDisposeListener(new DisposeListener() {
 			public void widgetDisposed(DisposeEvent event) {
-
+				
 				Iterator<String> iterator = widgetsTable.keySet().iterator();
 				while(iterator.hasNext()){
 					String key = iterator.next();
@@ -335,7 +342,17 @@ public privileged aspect CodeTracing {
 					if(widgetsTable.get(key).isEmpty())
 						iterator.remove();
 				}
-
+				
+				if(reqTable.containsKey(g)) {
+					Request r = reqTable.get(g);
+					int c = 0;
+					for(Entry<Control,Request> e : reqTable.entrySet())
+						if(e.getValue().equals(r))
+							c++;
+					
+					sendNumberOfpaintedWidgets(c-1, r);
+					reqTable.remove(g);
+				}
 			}
 		});
 	}
