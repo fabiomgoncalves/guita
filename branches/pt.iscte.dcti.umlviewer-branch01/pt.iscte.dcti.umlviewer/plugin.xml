@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+   <extension
+         point="org.eclipse.ui.views">
+      <category
+            name="Produtor Fragmentos"
+            id="ProdutorFragmentos">
+      </category>
+      <view
+            allowMultiple="false"
+            category="ProdutorFragmentos"
+            class="pt.iscte.dcti.umlviewer.view.UMLViewer"
+            icon="icons/sample.gif"
+            id="pt.iscte.dcti.umlviewer.viewer"
+            name="UML Viewer">
+      </view>
+   </extension>
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            allPopups="false"
+            locationURI="toolbar:pt.iscte.dcti.umlviewer.viewer">
+         <command
+               commandId="pt.iscte.dcti.umlviewer.commands.ClearContentCommand"
+               icon="icons/Remove.png"
+               label="Clear Content UI"
+               style="push"
+               tooltip="Clear all content">
+         </command>
+         <command
+               commandId="pt.iscte.dcti.umlviewer.commands.TestsCommand"
+               icon="icons/sample.gif"
+               label="Tests UI"
+               style="push"
+               tooltip="Tests">
+         </command>
+      </menuContribution>
+   </extension>
+   <extension
+         point="org.eclipse.ui.commands">
+      <command
+            defaultHandler="pt.iscte.dcti.umlviewer.handlers.ClearContentHandler"
+            id="pt.iscte.dcti.umlviewer.commands.ClearContentCommand"
+            name="Clear Content">
+      </command>
+      <command
+            defaultHandler="pt.iscte.dcti.umlviewer.handlers.TestsHandler"
+            id="pt.iscte.dcti.umlviewer.commands.TestsCommand"
+            name="Tests">
+      </command>
+   </extension>
+
+</plugin>
