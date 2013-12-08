@@ -23,18 +23,18 @@
             allPopups="false"
             locationURI="toolbar:pt.iscte.dcti.umlviewer.viewer">
          <command
-               commandId="pt.iscte.dcti.umlviewer.commands.ClearContentCommand"
-               icon="icons/Remove.png"
-               label="Clear Content UI"
-               style="push"
-               tooltip="Clear all content">
-         </command>
-         <command
                commandId="pt.iscte.dcti.umlviewer.commands.TestsCommand"
                icon="icons/sample.gif"
                label="Tests UI"
                style="push"
                tooltip="Tests">
+         </command>
+         <command
+               commandId="pt.iscte.dcti.umlviewer.commands.ClearContentCommand"
+               icon="icons/Remove.png"
+               label="Clear Content UI"
+               style="push"
+               tooltip="Clear all content">
          </command>
       </menuContribution>
    </extension>
