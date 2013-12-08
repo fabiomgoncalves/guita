@@ -10,7 +10,11 @@
 //MODIFIED
 package pt.iscte.dcti.umlviewer.view;
 
+import java.lang.reflect.Method;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.eclipse.draw2d.ColorConstants;
 import org.eclipse.draw2d.Figure;
 import org.eclipse.draw2d.Label;
@@ -36,6 +40,8 @@ public class UMLClassFigure extends Figure {
 
 	//private CompartmentFigure attributeFigure = new CompartmentFigure();
 	private CompartmentFigure methodFigure = new CompartmentFigure();
+	
+	private Set<Method> methods;
 
 	protected UMLClassFigure(String class_name) {
 		ToolbarLayout layout = new ToolbarLayout();
@@ -57,19 +63,23 @@ public class UMLClassFigure extends Figure {
 		getAttributesCompartment().add(attribute1);*/
 
 		setSize();
+		
+		methods = new HashSet<Method>();
 	}
 	
 	private void setSize() {
 		setSize(-1, -1);
 	}
 
-	public void addMethods(Collection<String> class_methods) {
-		for(String str: class_methods) {
-			String aux = str + "()";
+	public void addMethods(Collection<Method> class_methods) {
+		for(Method m: class_methods) {
+			if(methods.contains(m)) continue;
+			String aux = m.getName() + "()";
 			Label method = new Label(aux, PUBLIC_IMG); //#1
 			System.out.println("ADDING METHOD: " + aux);
 			getMethodsCompartment().add(method);
 			System.out.println("METHOD ADDED: " + aux);
+			methods.add(m);
 		}
 		setSize();
 	}

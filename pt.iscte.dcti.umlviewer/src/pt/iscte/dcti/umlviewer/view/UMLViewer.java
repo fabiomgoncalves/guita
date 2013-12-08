@@ -1,6 +1,7 @@
 package pt.iscte.dcti.umlviewer.view;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,6 +28,12 @@ public class UMLViewer extends ViewPart implements Service {
 	//GREPCODE
 	//A classe deverá ter o nome completo (com o caminho),
 	//e os métodos têm de ter return type e parametros de entrada.
+	
+	//Queue com as classes recentemente adicionadas, a qual será consultada para efectuar as ligações.
+	//ou
+	//Adiciona uma classe, e cria as novas ligações. Irá proceder assim classe a classe.
+	
+	//Filtrar métodos públicos/protected/private? Possívelmente, não incluir o private.
 
 	private static final boolean SHOW_REPORTS = true;
 
@@ -60,8 +67,14 @@ public class UMLViewer extends ViewPart implements Service {
 		graph.setFocus();
 	}
 
-	public void showFragment(Map<Class<?>, Collection<String>> fragment_classes) {
+	public void showFragment(Map<Class<?>, Collection<Method>> fragment_classes) {
 		graph.getDisplay().syncExec(new Agent(fragment_classes));
+	}
+	
+	public void clear() {
+		if(SHOW_REPORTS) {
+			System.out.println("SERVICE CLEAR");
+		}
 	}
 
 	private boolean existsNode(Class<?> clazz) {
@@ -82,7 +95,7 @@ public class UMLViewer extends ViewPart implements Service {
 		}
 	}
 
-	private void addMethodsToNode(Class<?> clazz, Collection<String> class_methods) {
+	private void addMethodsToNode(Class<?> clazz, Collection<Method> class_methods) {
 		if(SHOW_REPORTS) {
 			System.out.println("ADDING METHODS TO: " + clazz.getSimpleName());
 			System.out.println("METHODS TO ADD: " + class_methods.toString());
@@ -90,29 +103,46 @@ public class UMLViewer extends ViewPart implements Service {
 
 		UMLNode node = nodes.get(clazz);
 		UMLClassFigure figure = (UMLClassFigure)node.getNodeFigure();
-		figure.addMethods(class_methods); //#1
+		figure.addMethods(class_methods);
 	}
 
-	//#1 - Não adicionar repetidos (mas atenção aos métodos com nome igual e parâmetros diferentes)
-
-	private int getNodesSize() {
-		return nodes.size();
-	}
-
-	private void setConnections() {
-		if(!graph.getConnections().isEmpty()) {
-			Object [] connections = graph.getConnections().toArray();
-			for(Object o: connections) {
-				GraphConnection conn = (GraphConnection)o;
-				conn.dispose();
-			}
-		}
+	//Problema de ligações duplicadas, quando a clazz tem uma referencia para si propria, em que irá ficar duplicado
+	private void setConnections(Class<?> clazz) {
 		//#2
-		for(Class<?> clazz: nodes.keySet()) {
+		//Quem liga a si
+		for(Entry<Class<?>, UMLNode> entry: nodes.entrySet()) {
+			Class<?> tmp = entry.getKey();
+			for(Field field: tmp.getDeclaredFields()) {
+				if(!field.isSynthetic()) {
+					if(field.getType() == clazz) {
+						new GraphConnection(graph, SWT.NONE, nodes.get(tmp), nodes.get(clazz));
+					}
+				}
+			}
+			
+			//A quem se liga
 			for(Field field: clazz.getDeclaredFields()) {
 				if(!field.isSynthetic()) {
-					if(existsNode(field.getType())) {
+					if(nodes.containsKey(field.getType())) {
 						new GraphConnection(graph, SWT.NONE, nodes.get(clazz), nodes.get(field.getType()));
+					}
+				}
+			}
+			
+			//Quem descende de si
+			for(Class<?> c: nodes.keySet()) {
+				if(c != clazz) {
+					if(clazz.isAssignableFrom(c)) {
+						new GraphConnection(graph, SWT.NONE, nodes.get(c), nodes.get(clazz));
+					}
+				}
+			}
+			
+			//De quem descende
+			for(Class<?> c: nodes.keySet()) {
+				if(c != clazz) {
+					if(c.isAssignableFrom(clazz)) {
+						new GraphConnection(graph, SWT.NONE, nodes.get(clazz), nodes.get(c));
 					}
 				}
 			}
@@ -127,23 +157,21 @@ public class UMLViewer extends ViewPart implements Service {
 
 	private class Agent implements Runnable {
 
-		Map<Class<?>, Collection<String>> fragment_classes;
+		Map<Class<?>, Collection<Method>> fragment_classes;
 
-		private Agent(Map<Class<?>, Collection<String>> fragment_classes) {
+		private Agent(Map<Class<?>, Collection<Method>> fragment_classes) {
 			this.fragment_classes = fragment_classes;
 		}
 
 		public void run() {
-			for(Entry<Class<?>, Collection<String>> entry: fragment_classes.entrySet()) {
+			for(Entry<Class<?>, Collection<Method>> entry: fragment_classes.entrySet()) {
 				if(entry.getValue() != null) {
 					if(!existsNode(entry.getKey())) {
 						createNode(entry.getKey());
 					}
 					addMethodsToNode(entry.getKey(), entry.getValue());
+					setConnections(entry.getKey());
 				}
-			}
-			if(getNodesSize() > 1) {
-				setConnections();
 			}
 			setLayout();
 		}

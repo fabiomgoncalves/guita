@@ -29,6 +29,13 @@
                style="push"
                tooltip="Clear all content">
          </command>
+         <command
+               commandId="pt.iscte.dcti.umlviewer.commands.TestsCommand"
+               icon="icons/sample.gif"
+               label="Tests UI"
+               style="push"
+               tooltip="Tests">
+         </command>
       </menuContribution>
    </extension>
    <extension
@@ -37,6 +44,11 @@
             defaultHandler="pt.iscte.dcti.umlviewer.handlers.ClearContentHandler"
             id="pt.iscte.dcti.umlviewer.commands.ClearContentCommand"
             name="Clear Content">
+      </command>
+      <command
+            defaultHandler="pt.iscte.dcti.umlviewer.handlers.TestsHandler"
+            id="pt.iscte.dcti.umlviewer.commands.TestsCommand"
+            name="Tests">
       </command>
    </extension>
 
