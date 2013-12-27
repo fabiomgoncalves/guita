@@ -8,6 +8,7 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.WeakHashMap;
@@ -19,6 +20,8 @@ import org.eclipse.jface.viewers.TableViewerColumn;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ArmEvent;
 import org.eclipse.swt.events.ArmListener;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.MouseEvent;
@@ -50,7 +53,6 @@ import com.google.common.collect.HashBiMap;
 import org.eclipselabs.guita.uitrace.common.*;
 
 
-
 public privileged aspect GUIEnhancer {
 
 	private Map<Widget, Trace> traceTable;
@@ -80,8 +82,8 @@ public privileged aspect GUIEnhancer {
 		this.portIn = Defaults.APPLICATION_PORT;
 		this.portOut = Defaults.ECLIPSE_PORT;
 
-		traceTable = new WeakHashMap<Widget, Trace>();
-		underTrace = new WeakHashMap<Widget, Widget>();
+		traceTable = new HashMap<Widget, Trace>();
+		underTrace = new HashMap<Widget, Widget>();
 		idTable = HashBiMap.create();
 
 		callees = new WeakHashMap<Integer, Widget>();
@@ -251,6 +253,18 @@ public privileged aspect GUIEnhancer {
 				}
 			});
 		}
+		
+		
+		widget.addDisposeListener(new DisposeListener() {
+			
+			@Override
+			public void widgetDisposed(DisposeEvent e) {
+				traceTable.remove(widget);
+				underTrace.remove(widget);
+			}
+		});
+		
+		
 	}
 
 
@@ -298,6 +312,7 @@ public privileged aspect GUIEnhancer {
 	}
 	
 	private void triggerNavigation(Widget widget, boolean parent) {
+		System.out.println("# " + traceTable.size());
 		if(widget instanceof TabFolder) {
 			TabFolder folder = (TabFolder) widget;
 			TabItem[] items = folder.getSelection();
@@ -305,7 +320,7 @@ public privileged aspect GUIEnhancer {
 				widget = items[0];
 		}
 
-		if(parent || widget instanceof Control && shiftOn) {
+		if(parent || widget instanceof Control && shiftOn) {  // && !widget.isDisposed()
 			GetParentRunnable runnable = new GetParentRunnable((Control) widget);
 			Display.getDefault().syncExec(runnable);
 			widget = runnable.parent; 
@@ -346,7 +361,6 @@ public privileged aspect GUIEnhancer {
 		catch (IOException ex) {
 			System.out.println("Accept failed: " + portOut);
 		} 
-
 	}
 
 	private static String sourceLocationToString(SourceLocation loc) {

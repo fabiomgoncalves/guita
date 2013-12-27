@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <aspectj>
     <aspects>
-        <aspect
-            name="org.eclipselabs.guita.uitracer.swt.GUIEnhancer" />
+    <!-- <concrete-aspect name="com.xyz.tracing.MyTracing" extends="org.eclipselabs.guita.uitracer.swt.GUIEnhancer"/> -->
+     <aspect name="org.eclipselabs.guita.uitracer.swt.GUIEnhancer" />
     </aspects>
+     <!--<weaver options="-debug"/>-->
 </aspectj>
