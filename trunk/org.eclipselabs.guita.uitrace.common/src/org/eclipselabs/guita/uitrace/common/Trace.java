@@ -3,6 +3,7 @@ package org.eclipselabs.guita.uitrace.common;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -11,31 +12,79 @@ import org.aspectj.lang.reflect.SourceLocation;
 public class Trace implements Serializable, Iterable<Location> {
 	private static final long serialVersionUID = 1L;
 
-	private final String widgetType;
-	private final boolean disposed;
-	private final List<Location> trace;
-	private final boolean parentAvailable;
+	private enum TraceType implements Serializable {
+		NORMAL(""), WIDGET_DISPOSED("Widget is disposed"), WIDGET_NOT_FOUND("Widget not found");
+		
+		private final String message;
+		
+		private TraceType(String message) {
+			this.message = message;
+		}
+	}
 	
-	public Trace(String widgetType, boolean disposed, SourceLocation createLocation, int id, boolean parentAvailable) {
+	public static final Trace WIDGET_DISPOSED = new Trace(TraceType.WIDGET_DISPOSED);
+
+	public static final Trace WIDGET_NOT_FOUND = new Trace(TraceType.WIDGET_NOT_FOUND);
+	
+//	private final transient Widget widget;
+	private final String widgetType;
+	private final List<Location> trace;
+	private final TraceType type;
+	
+	private boolean parentAvailable;
+	
+	private Trace(TraceType type) {
+//		widget = null;
+		widgetType = null;
+		trace = Collections.emptyList();
+		this.type = type;
+	}
+	
+	public Trace(String widgetType, SourceLocation createLocation, int id) {
+//		this.widget = widget;
 		this.widgetType = widgetType;
-		this.disposed = disposed;
 		trace = new ArrayList<Location>();
 		trace.add(new Location(createLocation, id));
-		this.parentAvailable = parentAvailable;
+		type = TraceType.NORMAL;
+		parentAvailable = false;
 	}
 
 	
-	private static String removeAnonymousClassTail(String type) {
-		return type.indexOf('$') != -1 ? 
-				type.substring(0, type.indexOf('$')) : type;
-	}
+//	private static String removeAnonymousClassTail(String type) {
+//		return type.indexOf('$') != -1 ? 
+//				type.substring(0, type.indexOf('$')) : type;
+//	}
+	
+//	public Widget getWidget() {
+//		return widget;
+//	}
 	
 	public String getWidgetName() {
 		return widgetType;
 	}
 	
+	public TraceType getType() {
+		return type;
+	}
+	
+	public boolean isNormalTrace() {
+		return type.equals(TraceType.NORMAL);
+	}
+	
 	public boolean isWidgetDisposed() {
-		return disposed;
+		return type.equals(TraceType.WIDGET_DISPOSED);
+	}
+	
+	public boolean isWidgetNotFound() {
+		return type.equals(TraceType.WIDGET_NOT_FOUND);
+	}
+	
+	public String getMessage() {
+		return type.message;
+	}
+	
+	public void setParentAvailable() {
+		parentAvailable = true;
 	}
 	
 	public boolean isParentAvailable() {
