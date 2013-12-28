@@ -8,5 +8,6 @@ Require-Bundle: org.aspectj.runtime;visibility:=reexport,
  org.eclipse.swt;bundle-version="3.6.2";visibility:=reexport,
  org.eclipselabs.guita.uitrace.common;bundle-version="1.0.0";visibility:=reexport,
  com.google.guava;bundle-version="0.0.0";visibility:=reexport,
- org.eclipse.jface;bundle-version="3.6.2";visibility:=reexport
+ org.eclipse.jface;bundle-version="3.6.2";visibility:=reexport,
+ org.eclipse.ui.workbench
 Export-Package: org.eclipselabs.guita.uitracer.swt

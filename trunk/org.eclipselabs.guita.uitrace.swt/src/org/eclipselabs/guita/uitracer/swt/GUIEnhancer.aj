@@ -11,10 +11,8 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.WeakHashMap;
 
 import org.aspectj.lang.reflect.SourceLocation;
-import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TableViewerColumn;
 import org.eclipse.swt.SWT;
@@ -22,12 +20,6 @@ import org.eclipse.swt.events.ArmEvent;
 import org.eclipse.swt.events.ArmListener;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
-import org.eclipse.swt.events.KeyEvent;
-import org.eclipse.swt.events.KeyListener;
-import org.eclipse.swt.events.MouseEvent;
-import org.eclipse.swt.events.MouseListener;
-import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
@@ -41,16 +33,19 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Item;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.MenuItem;
+import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.TabFolder;
 import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.Widget;
+import org.eclipse.ui.PlatformUI;
+import org.eclipselabs.guita.uitrace.common.Defaults;
+import org.eclipselabs.guita.uitrace.common.Location;
+import org.eclipselabs.guita.uitrace.common.Trace;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
-
-import org.eclipselabs.guita.uitrace.common.*;
 
 
 public privileged aspect GUIEnhancer {
@@ -59,19 +54,12 @@ public privileged aspect GUIEnhancer {
 	private Map<Widget, Widget> underTrace;
 	private BiMap<Widget, Integer> idTable;
 
-	private Map<Integer, Widget> callees;
-
 	private final int portOut;
 	private final int portIn;
 
-	private boolean firstTime;
-
 	private int nextId = 1;
 
-	private Widget armed;
-
-	private boolean altOn;
-	private boolean shiftOn;
+	//	private Widget armed;
 
 	private ServerSocket serverSocket = null;
 
@@ -86,9 +74,6 @@ public privileged aspect GUIEnhancer {
 		underTrace = new HashMap<Widget, Widget>();
 		idTable = HashBiMap.create();
 
-		callees = new WeakHashMap<Integer, Widget>();
-		firstTime = true;
-
 		try {
 			serverSocket = new ServerSocket(portIn);
 		} catch (IOException e) {
@@ -99,6 +84,15 @@ public privileged aspect GUIEnhancer {
 		new RequestHandler().start();
 	}
 
+
+	private static boolean altKeyPressed(Event e) {
+		return (e.stateMask & SWT.ALT) != 0;
+	}
+
+	private static boolean shiftKeyPressed(Event e) {
+		return (e.stateMask & SWT.SHIFT) != 0;
+	}
+
 	public class RequestHandler extends Thread {
 		@Override
 		public void run() {
@@ -106,21 +100,20 @@ public privileged aspect GUIEnhancer {
 			while(true) {
 				try {
 					sock = serverSocket.accept();
-
 					InputStream is = sock.getInputStream();  
 					ObjectInputStream ois = new ObjectInputStream(is);  
-
 					Location loc = (Location) ois.readObject();  
 
+					Widget widget = null;
 					for(Entry<Widget,Trace> entry : traceTable.entrySet()) {
 						if(entry.getValue().first().sameAs(loc)) {
-							Widget w = entry.getKey();
-							triggerNavigation(w, true);
+							widget = entry.getKey();
 						}
 					}
 					ois.close();
 					is.close();
-					sock.close();					
+					sock.close();
+					triggerNavigation(widget, true, true);
 				}
 				catch(Exception e) {
 					e.printStackTrace();
@@ -137,8 +130,9 @@ public privileged aspect GUIEnhancer {
 		item.addArmListener(new ArmListener() {			
 			@Override
 			public void widgetArmed(ArmEvent e) {
-				if(altOn)
-					shot = shotSurrounding();			
+				System.out.println("ARMED");
+				//				if(altKeyPressed(e.))
+				shot = shotSurrounding();			
 			}
 		});
 
@@ -150,15 +144,13 @@ public privileged aspect GUIEnhancer {
 		item.addListener(SWT.Selection, new Listener() {
 			@Override
 			public void handleEvent(Event event) {				
-				if(altOn) {
-					//					System.out.println("selected - " + item);
-					triggerNavigation(item, false);
-				}
+				if(altKeyPressed(event))
+					triggerNavigation(item, event);
 			}		
 		});				
 	}		
 
-	//	private final Cursor cursor = new Cursor(Display.getDefault(), SWT.CURSOR_HAND);
+	private Cursor cursor = null;
 
 	after(Widget control) : 
 		call(* *(..)) && target(control) && scope() {
@@ -166,27 +158,18 @@ public privileged aspect GUIEnhancer {
 		if(traceTable.containsKey(control)) {
 			SourceLocation loc = thisJoinPointStaticPart.getSourceLocation();
 
-			//			int size = traceTable.get(control).size();
+			int size = traceTable.get(control).size();
 			int id = idTable.get(control);
-			Location traceLoc = traceTable.get(control).addLocation(loc, id);
+			traceTable.get(control).addLocation(loc, id);
 
-			//			if(traceTable.get(control).size() > size && underTrace.containsKey(control))
-			//				triggerNavigation(control);
-
-			Object thisObj = thisJoinPoint.getThis();
-			if(thisObj instanceof Widget) {
-				callees.put(traceLoc.id(), (Widget) thisObj);
-				System.out.println(traceLoc.id() + " -> " + thisObj);
-			}
+			if(traceTable.get(control).size() > size && underTrace.containsKey(control))
+				triggerNavigation(control, false, false);
 		}
 	}
 
 	after() returning(final Widget control) :
 		call(Widget+.new(..)) && scope() {
-
-		if(firstTime)
-			addAltListener(control);
-
+		//		System.out.println("ADDED: " + control);
 		handleWidget(control, thisJoinPointStaticPart.getSourceLocation());
 	}
 
@@ -208,111 +191,102 @@ public privileged aspect GUIEnhancer {
 
 		idTable.put(widget, id);
 
-		boolean parentAvailable = 
-				widget instanceof Control &&
-				traceTable.containsKey(((Control) widget).getParent());
-		
-		traceTable.put(widget, new Trace(widget.getClass().getSimpleName(), false, loc, id, parentAvailable));
+
+		traceTable.put(widget, new Trace(widget.getClass().getSimpleName(), loc, id));
 
 		nextId++;
 
 		if(widget instanceof Shell) {			
-			((Shell) widget).addListener(SWT.MouseDown, new Listener() {
+			widget.addListener(SWT.MouseDown, new Listener() {
 
 				@Override
 				public void handleEvent(Event event) {
-					if(altOn)
-						triggerNavigation(widget, false);
+					if(altKeyPressed(event))
+						triggerNavigation(widget, event);
 				}
 			});
 
 
 		}
 		else if(widget instanceof TableColumn) {
-			((TableColumn) widget).addSelectionListener(new SelectionListener() {
-
-				@Override
-				public void widgetSelected(SelectionEvent e) {
-					if(altOn)
-						triggerNavigation(widget, false);
-				}
-
-				@Override
-				public void widgetDefaultSelected(SelectionEvent e) {
-
-				}
-			});
-		}
-		else if(widget instanceof Control) {
 			widget.addListener(SWT.MouseDown, new Listener() {
 
 				@Override
 				public void handleEvent(Event event) {
-					if(altOn)
-						triggerNavigation(widget, false);
+					if(altKeyPressed(event))
+						triggerNavigation(widget, event);
 				}
 			});
+
+			//			((TableColumn) widget).addSelectionListener(new SelectionAdapter() {
+			//				@Override
+			//				public void widgetSelected(SelectionEvent e) {
+			//					if(altKeyPressed(e))
+			//						triggerNavigation(widget, false);
+			//				}
+			//			});
 		}
-		
-		
+		else if(widget instanceof Control) {
+			final Control control = (Control) widget;
+			widget.addListener(SWT.MouseDown, new Listener() {
+
+				@Override
+				public void handleEvent(Event event) {
+					if(altKeyPressed(event))
+						triggerNavigation(widget, event);
+				}
+			});
+			if(cursor == null)
+				cursor = new Cursor(Display.getDefault(), SWT.CURSOR_HAND);
+
+			control.setCursor(cursor);
+		}
+
 		widget.addDisposeListener(new DisposeListener() {
-			
 			@Override
 			public void widgetDisposed(DisposeEvent e) {
 				traceTable.remove(widget);
 				underTrace.remove(widget);
 			}
 		});
-		
-		
 	}
 
 
 
 
 
-	private void addAltListener(final Widget control) {
-		final Display display = control.getDisplay();
-		display.addFilter(SWT.KeyDown, new Listener() {
 
-			@Override
-			public void handleEvent(Event event) {
-				if(event.keyCode == SWT.ALT) {
-					altOn = true;
-					if((event.stateMask & SWT.SHIFT) != 0)
-						shiftOn = true;
-				}
-			}				
-		});
-
-		display.addFilter(SWT.KeyUp, new Listener() {
-
-			@Override
-			public void handleEvent(Event event) {
-				if(event.keyCode == SWT.ALT) {
-					altOn = false;
-					shiftOn = false;
-				}
-			}
-		});
-
-		firstTime = false;
-	}
 
 	private static class GetParentRunnable implements Runnable {
 		Control control;
 		Composite parent;
-		
+
 		GetParentRunnable(Control control) {
 			this.control = control;
 		}
 		public void run() {
-			parent = control.getParent();
+			if(control != null && !control.isDisposed())
+				parent = control.getParent();
+		}
+	}
+
+	private void checkIfParentAvailable(Control control, Trace trace) {
+		GetParentRunnable runnable = new GetParentRunnable(control);
+		Display.getDefault().syncExec(runnable);
+		Widget parentWidget = runnable.parent;
+
+		if(parentWidget != null && traceTable.containsKey(parentWidget)) {
+			trace.setParentAvailable();
 		}
 	}
 	
-	private void triggerNavigation(Widget widget, boolean parent) {
-		System.out.println("# " + traceTable.size());
+	private void triggerNavigation(Widget widget, Event event) {
+		triggerNavigation(widget, shiftKeyPressed(event), false);
+	}
+	
+	private void triggerNavigation(Widget widget, boolean parent, boolean fromIDE) {
+		//		System.out.println("trace request - " + widget + (parent ? "(parent)" : ""));
+
 		if(widget instanceof TabFolder) {
 			TabFolder folder = (TabFolder) widget;
 			TabItem[] items = folder.getSelection();
@@ -320,17 +294,38 @@ public privileged aspect GUIEnhancer {
 				widget = items[0];
 		}
 
-		if(parent || widget instanceof Control && shiftOn) {  // && !widget.isDisposed()
+		Trace trace = null;
+
+		if(parent) {
 			GetParentRunnable runnable = new GetParentRunnable((Control) widget);
 			Display.getDefault().syncExec(runnable);
-			widget = runnable.parent; 
+			Widget parentWidget = runnable.parent;
+
+			if(parentWidget != null)
+				trace = traceTable.get(parentWidget);
+
+			if(trace == null) {
+				trace = Trace.WIDGET_DISPOSED;
+				if(!fromIDE)
+					showMessage(SWT.ICON_INFORMATION, "Not Available", "Parent widget not available");
+			}
+			else {
+				widget = parentWidget;
+			}
+		}
+		else {
+			trace = traceTable.get(widget);
 		}
 
-		Trace trace = traceTable.get(widget);
 		if(trace == null) {
-			System.err.println("Control not found");
-			return;
+			showMessage(SWT.ICON_INFORMATION, "Not Available", "Control is disposed");
+			trace = Trace.WIDGET_DISPOSED;
 		}
+
+		if(trace.isNormalTrace())
+			checkIfParentAvailable((Control) widget, trace);
+		else if(!fromIDE)
+			return;
 
 		Socket clientSocket = null;
 		try {
@@ -342,25 +337,39 @@ public privileged aspect GUIEnhancer {
 			os.close();
 			clientSocket.close();
 
-			Image image = makeScreenshot(widget);			
+			if(trace.isNormalTrace()){
+				Image image = makeScreenshot(widget);			
 
-			ImageData data = image.getImageData();
-			ImageLoader loader = new ImageLoader();
-			loader.data = new ImageData[] {data};	
+				ImageData data = image.getImageData();
+				ImageLoader loader = new ImageLoader(	);
+				loader.data = new ImageData[] {data};	
 
-			clientSocket = new Socket("localhost", portOut);
-			os = clientSocket.getOutputStream();  
-			loader.save(os, SWT.IMAGE_PNG);
-			os.close();
-			clientSocket.close();
-			image.dispose();
+				clientSocket = new Socket("localhost", portOut);
+				os = clientSocket.getOutputStream();  
+				loader.save(os, SWT.IMAGE_PNG);
+				os.close();
+				clientSocket.close();
+				image.dispose();
 
-			if(!underTrace.containsKey(widget))
-				underTrace.put(widget, widget);
+				if(!underTrace.containsKey(widget))
+					underTrace.put(widget, widget);
+			}
 		} 
 		catch (IOException ex) {
-			System.out.println("Accept failed: " + portOut);
+			showMessage(SWT.ICON_ERROR, "Connection Error", "Could not connect to Eclipse on port: " + portOut);
+			//			System.out.println("Accept failed: " + portOut);
 		} 
+	}
+
+	private void showMessage(final int icon, final String title, final String text) {
+		PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
+			public void run() {
+				MessageBox message = new MessageBox(new Shell(Display.getDefault()), icon);
+				message.setText(title);
+				message.setMessage(text);
+				message.open();
+			}
+		});
 	}
 
 	private static String sourceLocationToString(SourceLocation loc) {
@@ -378,11 +387,11 @@ public privileged aspect GUIEnhancer {
 	private static class MakeShotRunnable implements Runnable {
 		Control control;
 		Image image;
-		
+
 		MakeShotRunnable(Control control) {
 			this.control = control;
 		}
-		
+
 		public void run() {
 			if(!control.isDisposed()) {
 				GC gc = new GC((Control) control);
@@ -393,7 +402,7 @@ public privileged aspect GUIEnhancer {
 				gc.dispose();
 			}
 		}
-		
+
 	}
 
 
@@ -428,8 +437,39 @@ public privileged aspect GUIEnhancer {
 		GC gc = new GC(Display.getDefault());
 		Image image = new Image(Display.getDefault(), SHOT_WIDTH, SHOT_HEIGHT);
 		Point loc = Display.getDefault().getCursorLocation();
-		int quarter = SHOT_WIDTH/4;
 		gc.copyArea(image, loc.x - SHOT_WIDTH/4, loc.y - SHOT_HEIGHT/2);
 		return image;
 	}
+
+	//	private void addAltListener(final Widget control) {
+	//		System.out.println("add ALT");
+	//		final Display display = control.getDisplay();
+	//		display.addFilter(SWT.KeyDown, new Listener() {
+	//
+	//			@Override
+	//			public void handleEvent(Event event) {
+	//				System.out.println(event.keyCode);
+	//				if(event.keyCode == SWT.ALT) {
+	//					System.out.println("ALT pressed");
+	//					altOn = true;
+	//					if((event.stateMask & SWT.SHIFT) != 0)
+	//						shiftOn = true;
+	//				}
+	//			}				
+	//		});
+	//
+	//		display.addFilter(SWT.KeyUp, new Listener() {
+	//
+	//			@Override
+	//			public void handleEvent(Event event) {
+	//				if(event.keyCode == SWT.ALT) {
+	//					System.out.println("ALT released");
+	//					altOn = false;
+	//					shiftOn = false;
+	//				}
+	//			}
+	//		});
+	//
+	//		firstTime = false;
+	//	}
 }
