@@ -39,7 +39,7 @@ class FileVisitor implements IResourceVisitor {
 						for (ICompilationUnit unit : mypackage.getCompilationUnits()) {
 							if (unit.getElementName().equals(fileName)) {
 								this.unit = unit;
-							//printCompilationUnitDetails(unit);
+							printCompilationUnitDetails(unit);
 							}
 						}
 					}
@@ -52,7 +52,6 @@ class FileVisitor implements IResourceVisitor {
 
 		return true; 
 	}
-
 
 	private void printCompilationUnitDetails(ICompilationUnit unit)
 			throws JavaModelException {

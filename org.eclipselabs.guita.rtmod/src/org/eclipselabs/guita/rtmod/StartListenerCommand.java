@@ -78,7 +78,7 @@ public class StartListenerCommand extends AbstractHandler {
 			}
 
 			CompilationUnit unit = file.getCompilationUnit();				
-			RewriteVisitor rewriteVisitor = new RewriteVisitor(unit, request.getValor(), request.getLocation().lineNumber());
+			RewriteVisitor rewriteVisitor = new RewriteVisitor(unit, request.getParametros(), request.getLocation().lineNumber());
 
 			file.parse(rewriteVisitor);		
 			
