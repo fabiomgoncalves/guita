@@ -89,7 +89,7 @@ public class RewriteVisitor extends ASTVisitor {
 	private Object createNewObject(Object parameter) {
 		AST ast = rewrite.getAST();
 		Object literal = null;
-		System.out.println(parameter.toString() + " > " + parameter.getClass().getName());
+		//System.out.println(parameter.toString() + " > " + parameter.getClass().getName());
 		
 		switch (parameter.getClass().getName()) {
 		case "int":
