@@ -1,19 +1,18 @@
 package org.eclipselabs.guita.rtmod.data;
 
 import java.io.Serializable;
-import java.util.LinkedList;
 
 public class Request implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	private Location location;
-	private LinkedList<String> parametros;
-	private String metodo;
+	private Object[] parameters;
+	private String name;
 	
-	public Request(Location location, LinkedList<String> parametros, String metodo) {
+	public Request(Location location, Object[] parameters, String name) {
 		this.location = location;
-		this.setParametros(parametros);
-		this.metodo = metodo;
+		this.parameters = parameters;
+		this.name = name;
 	}
 
 	public Location getLocation() {
@@ -22,21 +21,21 @@ public class Request implements Serializable {
 
 	public void setLocation(Location location) {
 		this.location = location;
-	}
-
-	public String getMetodo() {
-		return metodo;
-	}
-
-	public void setMetodo(String metodo) {
-		this.metodo = metodo;
-	}
-
-	public LinkedList<String> getParametros() {
-		return parametros;
-	}
-
-	public void setParametros(LinkedList<String> parametros) {
-		this.parametros = parametros;
 	}	
+	
+	public Object[] getParameters() {
+		return parameters;
+	}
+
+	public void setParameters(Object[] parameters) {
+		this.parameters = parameters;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
 }

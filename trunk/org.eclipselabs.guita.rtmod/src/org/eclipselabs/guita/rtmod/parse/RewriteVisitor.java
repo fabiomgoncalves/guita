@@ -1,22 +1,16 @@
 package org.eclipselabs.guita.rtmod.parse;
 
-import java.util.LinkedList;
-
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
+import org.eclipse.jdt.core.dom.CharacterLiteral;
 import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.core.dom.ExpressionStatement;
-import org.eclipse.jdt.core.dom.InfixExpression;
-import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
-import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.StringLiteral;
-import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jface.text.Document;
 import org.eclipse.text.edits.TextEdit;
@@ -27,9 +21,9 @@ public class RewriteVisitor extends ASTVisitor {
 	private final ASTRewrite rewrite;
 	private final CompilationUnit unit;
 	private int linha;
-	private LinkedList<String> replace;
+	private Object[] replace;
 
-	public RewriteVisitor(CompilationUnit unit, LinkedList<String> replace, int linha) {
+	public RewriteVisitor(CompilationUnit unit, Object[] replace, int linha) {
 		this.unit = unit;
 		this.replace = replace;
 		this.linha = linha;
@@ -67,10 +61,8 @@ public class RewriteVisitor extends ASTVisitor {
 			SimpleName name = ast.newSimpleName(node.getName().toString());			
 			methodInvocation.setName(name);				
 			
-			for (String o : replace) {
-				StringLiteral textParam = ast.newStringLiteral();
-				textParam.setLiteralValue(o);		
-				methodInvocation.arguments().add(textParam);
+			for (Object o : replace) {
+				methodInvocation.arguments().add(createNewObject(o));
 			}
 
 			rewrite.replace(node, methodInvocation, null);
@@ -92,5 +84,41 @@ public class RewriteVisitor extends ASTVisitor {
 //		}
 
 		return true;
+	}
+	
+	private Object createNewObject(Object parameter) {
+		AST ast = rewrite.getAST();
+		Object literal = null;
+		System.out.println(parameter.toString() + " > " + parameter.getClass().getName());
+		
+		switch (parameter.getClass().getName()) {
+		case "int":
+		case "java.lang.Integer":
+		case "short":
+		case "java.lang.Short":
+		case "float":
+		case "java.lang.Float":
+		case "double":
+		case "java.lang.Double":
+		case "long":
+		case "java.lang.Long":
+			literal = ast.newNumberLiteral(parameter.toString());
+			break;
+		case "String":
+		case "java.lang.String":
+			literal = ast.newStringLiteral();
+			((StringLiteral) literal).setLiteralValue((String) parameter);	
+			break;
+		case "boolean":
+		case "java.lang.Boolean":
+			literal = ast.newBooleanLiteral((boolean) parameter);
+			break;
+		case "char":
+		case "java.lang.Character":
+			literal = ast.newCharacterLiteral();
+			((CharacterLiteral) literal).setCharValue((char) parameter);
+			break;
+		}
+		return literal;
 	}
 }
