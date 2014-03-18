@@ -35,7 +35,7 @@ class FileVisitor implements IResourceVisitor {
 				IPackageFragment[] packages = javaProject.getPackageFragments();
 				for (IPackageFragment mypackage : packages) {
 					if (mypackage.getKind() == IPackageFragmentRoot.K_SOURCE) {
-						System.out.println("Package " + mypackage.getElementName());
+						//System.out.println("Package " + mypackage.getElementName());
 						for (ICompilationUnit unit : mypackage.getCompilationUnits()) {
 							if (unit.getElementName().equals(fileName)) {
 								this.unit = unit;
@@ -55,8 +55,8 @@ class FileVisitor implements IResourceVisitor {
 
 	private void printCompilationUnitDetails(ICompilationUnit unit)
 			throws JavaModelException {
-		System.out.println("Source file " + unit.getElementName());
+		//System.out.println("Source file " + unit.getElementName());
 		Document doc = new Document(unit.getSource());
-		System.out.println("Has number of lines: " + doc.getNumberOfLines());
+		//System.out.println("Has number of lines: " + doc.getNumberOfLines());
 	}
 }
