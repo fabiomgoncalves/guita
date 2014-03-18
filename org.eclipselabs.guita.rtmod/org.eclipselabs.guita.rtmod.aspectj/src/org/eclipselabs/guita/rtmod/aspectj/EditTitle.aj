@@ -25,7 +25,7 @@ import com.thoughtworks.paranamer.AdaptiveParanamer;
 
 public aspect EditTitle {
 	private static final Set<Class<?>> ALLOWED_TYPES = getAllowedTypes();
-	private Map<Control, SourceLocation> map = new HashMap<>();	
+	private Map<Map<Control, String>, SourceLocation> map = new HashMap<>();	
 
 	private static Set<Class<?>> getAllowedTypes() {
 		Set<Class<?>> allowedTypes = new HashSet<Class<?>>();
@@ -110,12 +110,15 @@ public aspect EditTitle {
 			menuItem.addSelectionListener(new SelectionAdapter() {
 				public void widgetSelected(SelectionEvent e) {
 					MethodDialog dialog = new MethodDialog(method);					
-					Object[] parameters = dialog.open();					
+					Object[] parameters = dialog.open();		
+					HashMap<Control, String> slm = new HashMap<>();	
+					slm.put(control, method.getName());
+					System.out.println();
 					try {
 						Socket socket = new Socket("127.0.0.1", 7777);
 						OutputStream outputstream = (OutputStream) socket.getOutputStream();  
 						ObjectOutputStream objectstream = new ObjectOutputStream(outputstream);
-						Location location = new Location(map.get(control), 7777);
+						Location location = new Location(map.get(slm), 7777);
 						Request request = new Request(location, parameters, method.getName());
 						objectstream.writeObject(request);  
 						objectstream.close();  
@@ -139,12 +142,12 @@ public aspect EditTitle {
 		control.setMenu(contextMenu);
 	}
 
-	after(String s) : call(void *.set*(String)) && args(s) && within(Window) {		
+	after(): call(void *.set*(..)) && within(Window) {		
 		if (isInstanceOf(thisJoinPoint.getTarget().getClass(), Control.class)) {
 			SourceLocation source = thisJoinPoint.getSourceLocation();
-			map.put((Control) thisJoinPoint.getTarget(), source);
-			System.out.println(s);
-			System.out.println(thisJoinPoint.getTarget());
+			HashMap<Control, String> slm = new HashMap<>();	
+			slm.put((Control) thisJoinPoint.getTarget(), thisJoinPoint.getSignature().getName());
+			map.put(slm, source);
 		}
 	}
 }

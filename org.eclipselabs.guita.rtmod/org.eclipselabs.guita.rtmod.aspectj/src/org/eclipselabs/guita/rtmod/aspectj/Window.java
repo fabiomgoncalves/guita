@@ -43,7 +43,7 @@ public class Window {
 		shell.setSize(248, 104);
 	
 		Button button = new Button(shell, SWT.NONE);
-		button.setBounds(10, 10, 216, 48);		
+		button.setBounds(30, 30, 200, 30);		
 		button.setText("OK");	
 	}
 }
