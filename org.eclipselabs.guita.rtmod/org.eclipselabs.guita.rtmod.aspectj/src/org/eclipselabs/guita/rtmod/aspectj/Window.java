@@ -41,9 +41,9 @@ public class Window {
 		display = Display.getDefault();
 		shell = new Shell(display, SWT.CLOSE | SWT.MIN | SWT.MAX | SWT.RESIZE);
 		shell.setSize(248, 104);
-
+	
 		Button button = new Button(shell, SWT.NONE);
 		button.setBounds(10, 10, 216, 48);		
-		button.setText("lololol");		
+		button.setText("OK");	
 	}
 }
