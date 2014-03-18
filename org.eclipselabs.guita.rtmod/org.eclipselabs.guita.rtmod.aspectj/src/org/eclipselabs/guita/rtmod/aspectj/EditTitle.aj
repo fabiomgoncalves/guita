@@ -5,8 +5,10 @@ import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Set;
 
 import org.aspectj.lang.reflect.SourceLocation;
 import org.eclipse.swt.events.MouseEvent;
@@ -27,42 +29,54 @@ import com.thoughtworks.paranamer.AdaptiveParanamer;
 
 public aspect EditTitle {
 	private Map<Control, SourceLocation> map = new HashMap<>();	
-	private Shell shell = null;
 
-	after() returning(final Control b) : call(*.new(..)) {	
-		if (isInstanceOf(b.getClass(), Shell.class)) {
-			shell = (Shell) b;
-		}
+	after() returning(final Control control) : call(*.new(..)) && !within(EditTitle) {	
 
 		LinkedList<MethodAbstract> methodAbstracts = new LinkedList<MethodAbstract>();
-		Method[] controlMethodArray = b.getClass().getMethods();
+		Method[] controlMethodArray = control.getClass().getMethods();
 		AdaptiveParanamer paranamer = new AdaptiveParanamer();
 
 		for (Method method : controlMethodArray) {
 			String methodName = method.getName();
-			if (methodName.startsWith("set")) {				
-				LinkedList<String> parameterTypesList = new LinkedList<String>();
-				Class<?>[] methodParameterTypes = method.getParameterTypes();
-				for (Class<?> parameterType : methodParameterTypes) {
-					String parameterTypeName = parameterType.getName();
-
-					if (parameterTypeName.indexOf(".") != -1) {
-						parameterTypeName = parameterTypeName.substring(parameterTypeName.lastIndexOf(".") + 1);
+			if (methodName.startsWith("set")) {					
+				boolean yes = true;
+				if (method.getParameterTypes().length == 0) {
+					yes = false;
+				} else {
+					for (Class<?> type : method.getParameterTypes()) {
+						if (!isWrapperType(type)) {
+							System.out.println(methodName);
+							System.out.println(type.toString());
+							yes = false;
+							break;
+						}
 					}
-					parameterTypesList.add(parameterTypeName);
 				}
 
-				LinkedList<String> parameterNamesList = new LinkedList<String>();
-				String[] parameterNamesArray = paranamer.lookupParameterNames(method, false);
-				for (String parameterName : parameterNamesArray) {
-					parameterNamesList.add(parameterName);
-				}
+				if (yes) {
+					LinkedList<String> parameterTypesList = new LinkedList<String>();
+					Class<?>[] methodParameterTypes = method.getParameterTypes();
+					for (Class<?> parameterType : methodParameterTypes) {
+						String parameterTypeName = parameterType.getName();
 
-				methodAbstracts.add(new MethodAbstract(methodName, parameterTypesList, parameterNamesList));
+						if (parameterTypeName.indexOf(".") != -1) {
+							parameterTypeName = parameterTypeName.substring(parameterTypeName.lastIndexOf(".") + 1);
+						}
+						parameterTypesList.add(parameterTypeName);
+					}
+
+					LinkedList<String> parameterNamesList = new LinkedList<String>();
+					String[] parameterNamesArray = paranamer.lookupParameterNames(method, false);
+					for (String parameterName : parameterNamesArray) {
+						parameterNamesList.add(parameterName);
+					}
+
+					methodAbstracts.add(new MethodAbstract(methodName, parameterTypesList, parameterNamesList));
+				}
 			}
 		}
 
-		Menu contextMenu = new Menu(b);
+		Menu contextMenu = new Menu(control);
 		for (final MethodAbstract methodAbstract : methodAbstracts) {
 			MenuItem menuItem = new MenuItem(contextMenu, SWT.NONE);
 			menuItem.setText(methodAbstract.getMethodName() + "(" + methodAbstract.getFormatedParameters() + ")");
@@ -74,7 +88,7 @@ public aspect EditTitle {
 						Socket socket = new Socket("127.0.0.1", 7777);
 						OutputStream outputstream = (OutputStream) socket.getOutputStream();  
 						ObjectOutputStream objectstream = new ObjectOutputStream(outputstream);
-						Location location = new Location(map.get(b), 7777);
+						Location location = new Location(map.get(control), 7777);
 						Request request = new Request(location, result, methodAbstract.getMethodName());
 						objectstream.writeObject(request);  
 						objectstream.close();  
@@ -83,46 +97,46 @@ public aspect EditTitle {
 						//por a classe com linkedlist de objectos ja com os tipos certos
 						//converter lista pra obkect[]
 						//invocar o metodo
-						Method met = b.getClass().getMethod(methodAbstract.getMethodName(), String.class);
-						met.invoke(b, result.get(0));		
+						Method met = control.getClass().getMethod(methodAbstract.getMethodName(), String.class);
+						met.invoke(control, result.get(0));		
 					} catch (IOException ee) {
 						ee.printStackTrace();
 					} catch (Exception eee) {
-						
+
 					}
 				}
 			});
 		}
-		b.setMenu(contextMenu);
+		control.setMenu(contextMenu);
 
-//		b.addMouseListener(new MouseListener() {
-//			@Override
-//			public void mouseDoubleClick(MouseEvent arg0) {
-//			}
-//
-//			@Override
-//			public void mouseDown(MouseEvent arg0) {	
-//			}
-//
-//			@Override
-//			public void mouseUp(MouseEvent arg0) {
-//				try {
-//					Socket socket = new Socket("127.0.0.1", 7777);
-//					OutputStream outputstream = (OutputStream) socket.getOutputStream();  
-//					ObjectOutputStream objectstream = new ObjectOutputStream(outputstream);
-//					//b.setText("Novo Texto");
-//					System.out.println(map.get(b));
-//					Location location = new Location(map.get(b), 7777);
-//					Request request = new Request(location, "Novo Texto", "setText");
-//					objectstream.writeObject(request);  
-//					objectstream.close();  
-//					outputstream.close();  
-//					socket.close();  
-//				} catch (IOException e) {
-//					e.printStackTrace();
-//				}
-//			}			
-//		});
+		//		b.addMouseListener(new MouseListener() {
+		//			@Override
+		//			public void mouseDoubleClick(MouseEvent arg0) {
+		//			}
+		//
+		//			@Override
+		//			public void mouseDown(MouseEvent arg0) {	
+		//			}
+		//
+		//			@Override
+		//			public void mouseUp(MouseEvent arg0) {
+		//				try {
+		//					Socket socket = new Socket("127.0.0.1", 7777);
+		//					OutputStream outputstream = (OutputStream) socket.getOutputStream();  
+		//					ObjectOutputStream objectstream = new ObjectOutputStream(outputstream);
+		//					//b.setText("Novo Texto");
+		//					System.out.println(map.get(b));
+		//					Location location = new Location(map.get(b), 7777);
+		//					Request request = new Request(location, "Novo Texto", "setText");
+		//					objectstream.writeObject(request);  
+		//					objectstream.close();  
+		//					outputstream.close();  
+		//					socket.close();  
+		//				} catch (IOException e) {
+		//					e.printStackTrace();
+		//				}
+		//			}			
+		//		});
 	}
 	//
 	//	after(String s) : call(void Button.set*(*)) && args(s) && !within(EditTitle) {
@@ -139,5 +153,33 @@ public aspect EditTitle {
 
 	private boolean isInstanceOf(Class<?> child, Class<?> parent) {
 		return parent.isAssignableFrom(child);
+	}
+
+	private static final Set<Class<?>> WRAPPER_TYPES = getWrapperTypes();
+
+	public static boolean isWrapperType(Class<?> clazz)
+	{
+		return WRAPPER_TYPES.contains(clazz);
+	}
+
+	private static Set<Class<?>> getWrapperTypes()
+	{
+		Set<Class<?>> ret = new HashSet<Class<?>>();
+		ret.add(Boolean.class);
+		ret.add(Character.class);
+		ret.add(Short.class);
+		ret.add(Integer.class);
+		ret.add(Long.class);
+		ret.add(Float.class);
+		ret.add(Double.class);		
+		ret.add(String.class);
+		ret.add(boolean.class);
+		ret.add(char.class);
+		ret.add(short.class);
+		ret.add(int.class);
+		ret.add(long.class);
+		ret.add(float.class);
+		ret.add(double.class);
+		return ret;
 	}
 }
