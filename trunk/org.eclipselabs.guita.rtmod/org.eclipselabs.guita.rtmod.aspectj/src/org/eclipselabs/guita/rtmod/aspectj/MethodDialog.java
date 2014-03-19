@@ -1,6 +1,7 @@
-package teste;
+package org.eclipselabs.guita.rtmod.aspectj;
 
 import java.util.LinkedList;
+import java.util.List;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionEvent;
@@ -12,6 +13,8 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+
+import com.google.common.collect.Lists;
 
 
 public class MethodDialog {
@@ -29,7 +32,7 @@ public class MethodDialog {
 
 	public Object[] open () {
 		this.vals = new LinkedList<Object>();
-		final LinkedList<String> cc = new LinkedList<String>();
+		final List<String> cc = Lists.newLinkedList();
 
 		int width = 200;
 		int height = 30;

@@ -1,4 +1,4 @@
-package teste;
+package org.eclipselabs.guita.rtmod.aspectj;
 
 import java.util.LinkedList;
 
