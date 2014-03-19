@@ -49,6 +49,7 @@ public class RewriteVisitor extends ASTVisitor {
 		return unit.getLineNumber(node.getStartPosition());
 	}
 
+	@Override
 	@SuppressWarnings("unchecked")
 	public boolean visit(MethodInvocation node) {
 		int line = getLine(node);

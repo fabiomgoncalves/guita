@@ -45,7 +45,7 @@ public class StartListenerCommand extends AbstractHandler {
 			while(true) {
 				try {
 					sock = serverSocket.accept();
-					InputStream is = (InputStream) sock.getInputStream();  
+					InputStream is = sock.getInputStream();  
 					ObjectInputStream ois = new ObjectInputStream(is);  
 					Request request = (Request) ois.readObject();  
 					handleRequest(request);
