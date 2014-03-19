@@ -23,7 +23,6 @@ import com.google.common.collect.Table;
 import com.thoughtworks.paranamer.AdaptiveParanamer;
 import org.apache.commons.lang3.reflect.MethodUtils;
 
-
 public aspect EditTitle {
 	private static final Set<Class<?>> ALLOWED_TYPES = getAllowedTypes();
 	private Table <Control, String, SourceLocation> controlMethodsLocation = HashBasedTable.create();
@@ -107,13 +106,14 @@ public aspect EditTitle {
 			menuItem.setText(method.getMethodExpression());		
 			menuItem.addSelectionListener(new SelectionAdapter() {
 
+				@Override
 				public void widgetSelected(SelectionEvent e) {
 					MethodDialog dialog = new MethodDialog(method);					
 					Object[] parameters = dialog.open();
 
 					try {
 						Socket socket = new Socket("127.0.0.1", 7777);
-						OutputStream outputStream = (OutputStream) socket.getOutputStream();  
+						OutputStream outputStream = socket.getOutputStream();  
 						ObjectOutputStream objectStream = new ObjectOutputStream(outputStream);	
 
 						Location location = new Location(controlMethodsLocation.get(control, method.getName()), 7777);
