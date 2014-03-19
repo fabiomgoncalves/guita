@@ -39,7 +39,7 @@ class FileVisitor implements IResourceVisitor {
 						for (ICompilationUnit unit : mypackage.getCompilationUnits()) {
 							if (unit.getElementName().equals(fileName)) {
 								this.unit = unit;
-							printCompilationUnitDetails(unit);
+							printCompilationUnitDetails(unit, false);
 							}
 						}
 					}
@@ -53,10 +53,12 @@ class FileVisitor implements IResourceVisitor {
 		return true; 
 	}
 
-	private void printCompilationUnitDetails(ICompilationUnit unit)
+	private void printCompilationUnitDetails(ICompilationUnit unit, boolean print)
 			throws JavaModelException {
-		//System.out.println("Source file " + unit.getElementName());
-		Document doc = new Document(unit.getSource());
-		//System.out.println("Has number of lines: " + doc.getNumberOfLines());
+		if (print) {
+			System.out.println("Source file " + unit.getElementName());
+			Document doc = new Document(unit.getSource());
+			System.out.println("Has number of lines: " + doc.getNumberOfLines());
+		}
 	}
 }

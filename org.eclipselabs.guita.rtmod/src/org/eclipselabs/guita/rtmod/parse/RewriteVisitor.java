@@ -1,7 +1,6 @@
 package org.eclipselabs.guita.rtmod.parse;
 
 import org.eclipse.jdt.core.ICompilationUnit;
-import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
@@ -69,23 +68,7 @@ public class RewriteVisitor extends ASTVisitor {
 		}
 		return true;		
 	}
-	
-	public boolean visit(IMethod node) {
-		return false;
-		
-	}
 
-	public boolean visit(StringLiteral node) {
-//		int line = getLine(node);
-//		if (line == linha) {
-//			StringLiteral newLiteral = rewrite.getAST().newStringLiteral();
-//			newLiteral.setLiteralValue(replace);
-//			rewrite.replace(node, newLiteral, null);			
-//		}
-
-		return true;
-	}
-	
 	private Object createNewObject(Object parameter) {
 		AST ast = rewrite.getAST();
 		Object literal = null;
