@@ -39,7 +39,7 @@ public class Window {
 	public Window() {	
 		display = Display.getDefault();
 		shell = new Shell(display, SWT.CLOSE | SWT.MIN | SWT.MAX | SWT.RESIZE);
-		shell.setSize(286, 111);
+		shell.setSize(286, 111); 
 	
 		Button button = new Button(shell, SWT.NONE);
 		button.setBounds(10, 10, 200, 53);		
