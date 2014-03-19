@@ -1,4 +1,4 @@
-package teste;
+package org.eclipselabs.guita.rtmod.aspectj;
 
 public class ParameterContainer {
 	String name;

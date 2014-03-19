@@ -1,13 +1,10 @@
-package teste;
-import java.io.IOException;
+package org.eclipselabs.guita.rtmod.aspectj;
+
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.net.Socket;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.Map;
 import java.util.Set;
 
 import org.aspectj.lang.reflect.SourceLocation;
@@ -20,15 +17,19 @@ import org.eclipse.swt.SWT;
 import org.eclipselabs.guita.rtmod.data.Location;
 import org.eclipselabs.guita.rtmod.data.Request;
 
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Sets;
+import com.google.common.collect.Table;
 import com.thoughtworks.paranamer.AdaptiveParanamer;
+import org.apache.commons.lang3.reflect.MethodUtils;
 
 
 public aspect EditTitle {
 	private static final Set<Class<?>> ALLOWED_TYPES = getAllowedTypes();
-	private Map<Map<Control, String>, SourceLocation> map = new HashMap<>();	
+	private Table <Control, String, SourceLocation> controlMethodsLocation = HashBasedTable.create();
 
 	private static Set<Class<?>> getAllowedTypes() {
-		Set<Class<?>> allowedTypes = new HashSet<Class<?>>();
+		Set<Class<?>> allowedTypes = Sets.newHashSet();
 
 		allowedTypes.add(Boolean.class);
 		allowedTypes.add(Character.class);
@@ -49,15 +50,11 @@ public aspect EditTitle {
 
 		return allowedTypes;
 	}
-	
-	public static boolean isAllowedType(Class<?> _class) {
-		return ALLOWED_TYPES.contains(_class);
+
+	public static boolean isAllowedType(Class<?> clazz) {
+		return ALLOWED_TYPES.contains(clazz);
 	}
-	
-	private boolean isInstanceOf(Class<?> child, Class<?> parent) {
-		return parent.isAssignableFrom(child);
-	}
-	
+
 	after() returning(final Control control) : call(*.new(..)) && within(Window) {	
 		Method[] controlMethodArray = control.getClass().getMethods();
 		LinkedList<MethodContainer> methodList = new LinkedList<MethodContainer>();
@@ -95,6 +92,7 @@ public aspect EditTitle {
 						if (parameterNames.length > 0) {
 							parameterName = parameterNames[i];
 						}
+
 						addMethod.addParameter(parameterName, parameterType);
 					}
 
@@ -108,46 +106,39 @@ public aspect EditTitle {
 			MenuItem menuItem = new MenuItem(contextMenu, SWT.NONE);
 			menuItem.setText(method.getMethodExpression());		
 			menuItem.addSelectionListener(new SelectionAdapter() {
+
 				public void widgetSelected(SelectionEvent e) {
 					MethodDialog dialog = new MethodDialog(method);					
-					Object[] parameters = dialog.open();		
-					HashMap<Control, String> slm = new HashMap<>();	
-					slm.put(control, method.getName());
-					System.out.println();
+					Object[] parameters = dialog.open();
+
 					try {
 						Socket socket = new Socket("127.0.0.1", 7777);
-						OutputStream outputstream = (OutputStream) socket.getOutputStream();  
-						ObjectOutputStream objectstream = new ObjectOutputStream(outputstream);
-						Location location = new Location(map.get(slm), 7777);
-						Request request = new Request(location, parameters, method.getName());
-						objectstream.writeObject(request);  
-						objectstream.close();  
-						outputstream.close();  
-						socket.close();  
-						Class<?>[] _c = new Class<?>[parameters.length];
-						for (int i = 0, j = parameters.length; i < j; i++) {
-							_c[i] = parameters[i].getClass();
-						}
-						Method met = control.getClass().getMethod(method.getName(), _c);
-						met.invoke(control, parameters);		
-					} catch (IOException ee) {
-						ee.printStackTrace();
-					} catch (Exception eee) {
+						OutputStream outputStream = (OutputStream) socket.getOutputStream();  
+						ObjectOutputStream objectStream = new ObjectOutputStream(outputStream);	
 
+						Location location = new Location(controlMethodsLocation.get(control, method.getName()), 7777);
+						Request request = new Request(location, parameters, method.getName());						
+						objectStream.writeObject(request);  
+
+						objectStream.close();  
+						outputStream.close();  
+						socket.close();  
+
+						MethodUtils.invokeMethod(control, method.getName(), parameters);
+					} catch (Exception exception) {
+						System.out.println(method.getName());
+						exception.printStackTrace();
 					}
 				}
 			});
 
 		}
+
 		control.setMenu(contextMenu);
 	}
 
-	after(): call(void *.set*(..)) && within(Window) {		
-		if (isInstanceOf(thisJoinPoint.getTarget().getClass(), Control.class)) {
-			SourceLocation source = thisJoinPoint.getSourceLocation();
-			HashMap<Control, String> slm = new HashMap<>();	
-			slm.put((Control) thisJoinPoint.getTarget(), thisJoinPoint.getSignature().getName());
-			map.put(slm, source);
-		}
+	after(): call(void *.set*(..)) && within(Window) && target(Control) {		
+		SourceLocation source = thisJoinPoint.getSourceLocation();
+		controlMethodsLocation.put((Control) thisJoinPoint.getTarget(), thisJoinPoint.getSignature().getName(), source);
 	}
 }

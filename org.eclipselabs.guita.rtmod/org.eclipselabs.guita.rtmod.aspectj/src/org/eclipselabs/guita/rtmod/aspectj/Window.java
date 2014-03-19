@@ -1,4 +1,4 @@
-package teste;
+package org.eclipselabs.guita.rtmod.aspectj;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.SWT;
@@ -13,7 +13,6 @@ public class Window {
 
 	private Shell shell;
 	private Display display;
-
 	public static void main(String args[]) {
 		Window main = new Window();
 		main.run();
@@ -40,10 +39,10 @@ public class Window {
 	public Window() {	
 		display = Display.getDefault();
 		shell = new Shell(display, SWT.CLOSE | SWT.MIN | SWT.MAX | SWT.RESIZE);
-		shell.setSize(248, 104);
+		shell.setSize(286, 111);
 	
 		Button button = new Button(shell, SWT.NONE);
-		button.setBounds(30, 30, 200, 30);		
-		button.setText("OK");	
+		button.setBounds(10, 10, 200, 53);		
+		button.setText("lolol");	
 	}
 }
