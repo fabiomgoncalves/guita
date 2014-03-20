@@ -7,6 +7,7 @@ import java.net.Socket;
 import java.util.LinkedList;
 import java.util.Set;
 
+import org.apache.commons.lang3.reflect.MethodUtils;
 import org.aspectj.lang.reflect.SourceLocation;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -21,7 +22,6 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 import com.thoughtworks.paranamer.AdaptiveParanamer;
-import org.apache.commons.lang3.reflect.MethodUtils;
 
 public aspect EditTitle {
 	private static final Set<Class<?>> ALLOWED_TYPES = getAllowedTypes();
