@@ -5,8 +5,8 @@ import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.net.Socket;
 import java.util.LinkedList;
-import java.util.Set;
 
+import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.reflect.MethodUtils;
 import org.aspectj.lang.reflect.SourceLocation;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -19,44 +19,24 @@ import org.eclipselabs.guita.rtmod.data.Location;
 import org.eclipselabs.guita.rtmod.data.Request;
 
 import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Sets;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Table;
 import com.thoughtworks.paranamer.AdaptiveParanamer;
 
-public aspect EditTitle {
-	private static final Set<Class<?>> ALLOWED_TYPES = getAllowedTypes();
-	private Table <Control, String, SourceLocation> controlMethodsLocation = HashBasedTable.create();
+public aspect EditControl {
+	private Table <Control, String, SourceLocation> controlMethodsLocation;
 
-	private static Set<Class<?>> getAllowedTypes() {
-		Set<Class<?>> allowedTypes = Sets.newHashSet();
-
-		allowedTypes.add(Boolean.class);
-		allowedTypes.add(Character.class);
-		allowedTypes.add(Short.class);
-		allowedTypes.add(Integer.class);
-		allowedTypes.add(Long.class);
-		allowedTypes.add(Float.class);
-		allowedTypes.add(Double.class);		
-		allowedTypes.add(String.class);
-
-		allowedTypes.add(boolean.class);
-		allowedTypes.add(char.class);
-		allowedTypes.add(short.class);
-		allowedTypes.add(int.class);
-		allowedTypes.add(long.class);
-		allowedTypes.add(float.class);
-		allowedTypes.add(double.class);
-
-		return allowedTypes;
+	public EditControl() {
+		this.controlMethodsLocation = HashBasedTable.create();
 	}
 
 	public static boolean isAllowedType(Class<?> clazz) {
-		return ALLOWED_TYPES.contains(clazz);
+		return ClassUtils.isPrimitiveOrWrapper(clazz) || clazz == String.class;
 	}
 
 	after() returning(final Control control) : call(*.new(..)) && within(Window) {	
 		Method[] controlMethodArray = control.getClass().getMethods();
-		LinkedList<MethodContainer> methodList = new LinkedList<MethodContainer>();
+		LinkedList<MethodContainer> methodList = Lists.newLinkedList();
 		AdaptiveParanamer paranamer = new AdaptiveParanamer();
 
 		for (Method method : controlMethodArray) {
@@ -137,7 +117,7 @@ public aspect EditTitle {
 		control.setMenu(contextMenu);
 	}
 
-	after(): call(void *.set*(..)) && within(Window) && target(Control) {		
+	after(): call(void *.set*(..)) && within(Window) && target(Control)  {		
 		SourceLocation source = thisJoinPoint.getSourceLocation();
 		controlMethodsLocation.put((Control) thisJoinPoint.getTarget(), thisJoinPoint.getSignature().getName(), source);
 	}
