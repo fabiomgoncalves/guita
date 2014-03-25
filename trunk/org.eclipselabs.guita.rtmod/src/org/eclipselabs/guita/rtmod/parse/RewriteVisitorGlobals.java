@@ -59,15 +59,19 @@ public class RewriteVisitorGlobals extends ASTVisitor {
 	
 	@Override
 	public boolean visit(VariableDeclarationFragment node) {
-		for (Map.Entry<String, Object> entry : replaceVariablesMap.entrySet()) {			
+		for (Map.Entry<String, Object> entry : replaceVariablesMap.entrySet()) {	
 			String key = entry.getKey();
 			Object value = entry.getValue();
+			
+			//System.out.println(key + " > " + value);
+			//System.out.println();
 			
 			if (variablesMap.containsKey(key) && variablesMap.get(key) == getLine(node)) {
 				AST ast = rewrite.getAST();
 				VariableDeclarationFragment frag = ast.newVariableDeclarationFragment();
 				frag.setName(ast.newSimpleName(key));
 				frag.setInitializer(createNewObject(replaceVariablesMap.get(key)));
+				rewrite.replace(node, frag, null);
 			}
 		}
 		

@@ -82,13 +82,14 @@ public class StartListenerCommand extends AbstractHandler {
 			RewriteVisitor rewriteVisitor = new RewriteVisitor(unit, request.getParameters(), request.getLocation().lineNumber());
 			file.parse(rewriteVisitor);		
 			
-			//RewriteVisitorGlobals globalsVisitor = new RewriteVisitorGlobals(unit, rewriteVisitor.getVariablesMap(), rewriteVisitor.getReplaceVariablesMap());
-			//file.parse(globalsVisitor);	
+			RewriteVisitorGlobals globalsVisitor = new RewriteVisitorGlobals(unit, rewriteVisitor.getVariablesMap(), rewriteVisitor.getReplaceVariablesMap());
+			file.parse(globalsVisitor);	
 			
 			Document document = null;
 			try {
 				document = new Document(visitor.unit.getSource());
 				rewriteVisitor.applyChanges(document, visitor.unit);
+				globalsVisitor.applyChanges(document, visitor.unit);
 			}
 			catch (Exception e) {
 				e.printStackTrace();
