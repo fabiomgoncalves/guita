@@ -11,6 +11,7 @@ import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.CharacterLiteral;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.SimpleName;
@@ -21,22 +22,21 @@ import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jface.text.Document;
 import org.eclipse.text.edits.TextEdit;
 
-public class RewriteVisitor extends ASTVisitor {
+import com.google.common.collect.Maps;
+
+
+public class RewriteVisitorGlobals extends ASTVisitor {
 
 	private final CompilationUnit compilationUnit;
 	private ASTRewrite rewrite;
-	private int lineToReplace;
-	private Object[] replaceParameters;
 	private Map<String, Integer> variablesMap;
 	private Map<String, Object> replaceVariablesMap;
 
-	public RewriteVisitor(CompilationUnit compilationUnit, Object[] replaceParameters, int lineToReplace) {
+	public RewriteVisitorGlobals(CompilationUnit compilationUnit, Map<String, Integer> variablesMap, Map<String, Object> replaceVariablesMap) {
 		this.compilationUnit = compilationUnit;
-		this.replaceParameters = replaceParameters;
-		this.lineToReplace = lineToReplace;
 		this.rewrite = ASTRewrite.create(compilationUnit.getAST());
-		this.variablesMap = new HashMap<>();
-		this.replaceVariablesMap = new HashMap<>();
+		this.variablesMap = variablesMap;
+		this.replaceVariablesMap = replaceVariablesMap;
 	}
 
 	public void applyChanges(Document document, ICompilationUnit compUnit) throws JavaModelException {
@@ -56,59 +56,27 @@ public class RewriteVisitor extends ASTVisitor {
 	private int getLine(ASTNode node) {
 		return compilationUnit.getLineNumber(node.getStartPosition());
 	}
-
-	@SuppressWarnings("unchecked")
+	
 	@Override
-	public boolean visit(MethodInvocation node) {
-		int currentLine = getLine(node);
-
-		if (currentLine == lineToReplace) {			
-			AST ast = rewrite.getAST();
-			MethodInvocation methodInvocation = ast.newMethodInvocation();
-			SimpleName exp = ast.newSimpleName(node.getExpression().toString());			
-			methodInvocation.setExpression(exp);
-			SimpleName name = ast.newSimpleName(node.getName().toString());			
-			methodInvocation.setName(name);				
-
-			int i = 0;
-			for (Object o : replaceParameters) {	
-				//				System.out.println("arg " + node.arguments().get(i));
-				//				System.out.println(node.arguments().get(i).getClass().getName());
-				//				System.out.println();
-				if (node.arguments().get(i).getClass() == org.eclipse.jdt.core.dom.SimpleName.class) {	
-					System.out.println(((SimpleName)node.arguments().get(i)).getIdentifier());
-					SimpleName simple = ast.newSimpleName(((SimpleName)node.arguments().get(i)).getIdentifier());
-					methodInvocation.arguments().add(simple);
-					replaceVariablesMap.put(simple.toString(), o);
-				} else {
-					methodInvocation.arguments().add(createNewObject(o));
-				}
-				i++;
-			}
-			rewrite.replace(node, methodInvocation, null);
-		}
-
-		return true;		
-	}	
-
-	@Override
-	public boolean visit(FieldDeclaration node) {
-		int modifiers = node.getModifiers();
-
-		if (Modifier.isFinal(modifiers) && Modifier.isStatic(modifiers)) {
-			for(int i = 0; i < node.fragments().size(); ++i) {
-				VariableDeclarationFragment frag = (VariableDeclarationFragment)node.fragments().get(i);
-				variablesMap.put(frag.getName().toString(), getLine(node));
-				//System.out.println("Fragment: " + node.getType() + " " + frag.getName());
+	public boolean visit(VariableDeclarationFragment node) {
+		for (Map.Entry<String, Object> entry : replaceVariablesMap.entrySet()) {			
+			String key = entry.getKey();
+			Object value = entry.getValue();
+			
+			if (variablesMap.containsKey(key) && variablesMap.get(key) == getLine(node)) {
+				AST ast = rewrite.getAST();
+				VariableDeclarationFragment frag = ast.newVariableDeclarationFragment();
+				frag.setName(ast.newSimpleName(key));
+				frag.setInitializer(createNewObject(replaceVariablesMap.get(key)));
 			}
 		}
-
+		
 		return true;
 	}
 
-	private Object createNewObject(Object parameter) {
+	private Expression createNewObject(Object parameter) {
 		AST ast = rewrite.getAST();
-		Object literal = null;
+		Expression literal = null;
 
 		switch (parameter.getClass().getName()) {
 		case "int":
@@ -140,13 +108,5 @@ public class RewriteVisitor extends ASTVisitor {
 		}
 
 		return literal;
-	}	
-	
-	public Map<String, Integer> getVariablesMap() {
-		return variablesMap;
-	}
-
-	public Map<String, Object> getReplaceVariablesMap() {
-		return replaceVariablesMap;
 	}
 }

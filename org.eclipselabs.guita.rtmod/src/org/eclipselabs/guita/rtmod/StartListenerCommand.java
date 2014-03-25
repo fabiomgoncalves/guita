@@ -17,6 +17,7 @@ import org.eclipse.jface.text.Document;
 import org.eclipselabs.guita.rtmod.data.Request;
 import org.eclipselabs.guita.rtmod.parse.FileParseUtil;
 import org.eclipselabs.guita.rtmod.parse.RewriteVisitor;
+import org.eclipselabs.guita.rtmod.parse.RewriteVisitorGlobals;
 
 public class StartListenerCommand extends AbstractHandler {
 
@@ -77,10 +78,12 @@ public class StartListenerCommand extends AbstractHandler {
 				e.printStackTrace();
 			}
 
-			CompilationUnit unit = file.getCompilationUnit();				
+			CompilationUnit unit = file.getCompilationUnit();			
 			RewriteVisitor rewriteVisitor = new RewriteVisitor(unit, request.getParameters(), request.getLocation().lineNumber());
-
 			file.parse(rewriteVisitor);		
+			
+			//RewriteVisitorGlobals globalsVisitor = new RewriteVisitorGlobals(unit, rewriteVisitor.getVariablesMap(), rewriteVisitor.getReplaceVariablesMap());
+			//file.parse(globalsVisitor);	
 			
 			Document document = null;
 			try {
