@@ -76,7 +76,7 @@ public class RewriteVisitor extends ASTVisitor {
 				//				System.out.println(node.arguments().get(i).getClass().getName());
 				//				System.out.println();
 				if (node.arguments().get(i).getClass() == org.eclipse.jdt.core.dom.SimpleName.class) {	
-					System.out.println(((SimpleName)node.arguments().get(i)).getIdentifier());
+					//System.out.println(((SimpleName)node.arguments().get(i)).getIdentifier());
 					SimpleName simple = ast.newSimpleName(((SimpleName)node.arguments().get(i)).getIdentifier());
 					methodInvocation.arguments().add(simple);
 					replaceVariablesMap.put(simple.toString(), o);
