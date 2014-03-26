@@ -11,14 +11,14 @@ import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 
-public class RewriteVisitor extends Visitor {
+public class FirstPassVisitor extends Visitor {
 
 	private int lineToReplace;
 	private Object[] replaceParameters;
 	private Map<String, Integer> variablesMap;
 	private Map<String, Object> replaceVariablesMap;
 
-	public RewriteVisitor(CompilationUnit compilationUnit, Object[] replaceParameters, int lineToReplace) {
+	public FirstPassVisitor(CompilationUnit compilationUnit, Object[] replaceParameters, int lineToReplace) {
 		super(compilationUnit);
 		this.replaceParameters = replaceParameters;
 		this.lineToReplace = lineToReplace;
