@@ -16,8 +16,8 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jface.text.Document;
 import org.eclipselabs.guita.rtmod.data.Request;
 import org.eclipselabs.guita.rtmod.parse.FileParseUtil;
-import org.eclipselabs.guita.rtmod.parse.RewriteVisitor;
-import org.eclipselabs.guita.rtmod.parse.RewriteVisitorGlobals;
+import org.eclipselabs.guita.rtmod.parse.FirstPassVisitor;
+import org.eclipselabs.guita.rtmod.parse.SecondPassVisitor;
 
 public class StartListenerCommand extends AbstractHandler {
 
@@ -79,17 +79,17 @@ public class StartListenerCommand extends AbstractHandler {
 			}
 
 			CompilationUnit unit = file.getCompilationUnit();			
-			RewriteVisitor rewriteVisitor = new RewriteVisitor(unit, request.getParameters(), request.getLocation().lineNumber());
-			file.parse(rewriteVisitor);		
+			FirstPassVisitor firstVisitor = new FirstPassVisitor(unit, request.getParameters(), request.getLocation().lineNumber());
+			file.parse(firstVisitor);		
 			
-			RewriteVisitorGlobals globalsVisitor = new RewriteVisitorGlobals(unit, rewriteVisitor.getVariablesMap(), rewriteVisitor.getReplaceVariablesMap());
-			file.parse(globalsVisitor);	
+			SecondPassVisitor secondVisitor = new SecondPassVisitor(unit, firstVisitor.getVariablesMap(), firstVisitor.getReplaceVariablesMap());
+			file.parse(secondVisitor);	
 			
 			Document document = null;
 			try {
 				document = new Document(visitor.unit.getSource());
-				rewriteVisitor.applyChanges(document, visitor.unit);
-				globalsVisitor.applyChanges(document, visitor.unit);
+				firstVisitor.applyChanges(document, visitor.unit);
+				secondVisitor.applyChanges(document, visitor.unit);
 			}
 			catch (Exception e) {
 				e.printStackTrace();

@@ -6,12 +6,12 @@ import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 
-public class RewriteVisitorGlobals extends Visitor {
+public class SecondPassVisitor extends Visitor {
 
 	private Map<String, Integer> variablesMap;
 	private Map<String, Object> replaceVariablesMap;
 
-	public RewriteVisitorGlobals(CompilationUnit compilationUnit, Map<String, Integer> variablesMap, Map<String, Object> replaceVariablesMap) {
+	public SecondPassVisitor(CompilationUnit compilationUnit, Map<String, Integer> variablesMap, Map<String, Object> replaceVariablesMap) {
 		super(compilationUnit);
 		this.variablesMap = variablesMap;
 		this.replaceVariablesMap = replaceVariablesMap;
