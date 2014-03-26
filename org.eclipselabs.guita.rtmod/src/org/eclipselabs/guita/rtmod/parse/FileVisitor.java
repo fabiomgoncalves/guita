@@ -1,6 +1,5 @@
-package org.eclipselabs.guita.rtmod;
+package org.eclipselabs.guita.rtmod.parse;
 
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceVisitor;
@@ -13,52 +12,50 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jface.text.Document;
 
-class FileVisitor implements IResourceVisitor {
+public class FileVisitor implements IResourceVisitor {
 
-	ICompilationUnit unit;
-	IFile file;
-	String fileName;
+	private ICompilationUnit unit;
+	private String fileName;
 
-	FileVisitor(String fileName) {
+	public FileVisitor(String fileName) {
 		this.fileName = fileName;
 	}
 
 	@Override
 	public boolean visit(IResource resource) throws JavaModelException, CoreException { 
-
 		if(resource.getType() == IResource.PROJECT) {
 			IProject project = (IProject) resource;
-
-			if (project.isNatureEnabled("org.eclipse.jdt.core.javanature")) { // mudar constante
-
+			
+			if (project.isNatureEnabled("org.eclipse.jdt.core.javanature")) {
 				IJavaProject javaProject = JavaCore.create(project);
 				IPackageFragment[] packages = javaProject.getPackageFragments();
 				for (IPackageFragment mypackage : packages) {
 					if (mypackage.getKind() == IPackageFragmentRoot.K_SOURCE) {
-						//System.out.println("Package " + mypackage.getElementName());
 						for (ICompilationUnit unit : mypackage.getCompilationUnits()) {
 							if (unit.getElementName().equals(fileName)) {
 								this.unit = unit;
-							printCompilationUnitDetails(unit, false);
+								printCompilationUnitDetails(unit, false);
 							}
 						}
 					}
-
 				}
-
 			}
+			
 			return false;
 		}
-
+		
 		return true; 
 	}
 
-	private void printCompilationUnitDetails(ICompilationUnit unit, boolean print)
-			throws JavaModelException {
+	private void printCompilationUnitDetails(ICompilationUnit unit, boolean print) throws JavaModelException {
 		if (print) {
 			System.out.println("Source file " + unit.getElementName());
 			Document doc = new Document(unit.getSource());
 			System.out.println("Has number of lines: " + doc.getNumberOfLines());
 		}
+	}
+
+	public ICompilationUnit getICompilationUnit() {
+		return this.unit;
 	}
 }

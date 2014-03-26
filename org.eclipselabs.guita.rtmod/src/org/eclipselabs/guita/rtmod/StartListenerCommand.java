@@ -16,6 +16,7 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jface.text.Document;
 import org.eclipselabs.guita.rtmod.data.Request;
 import org.eclipselabs.guita.rtmod.parse.FileParseUtil;
+import org.eclipselabs.guita.rtmod.parse.FileVisitor;
 import org.eclipselabs.guita.rtmod.parse.FirstPassVisitor;
 import org.eclipselabs.guita.rtmod.parse.SecondPassVisitor;
 
@@ -73,7 +74,7 @@ public class StartListenerCommand extends AbstractHandler {
 
 			FileParseUtil file = null;
 			try {
-				file = new FileParseUtil(visitor.unit);
+				file = new FileParseUtil(visitor.getICompilationUnit());
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -87,9 +88,9 @@ public class StartListenerCommand extends AbstractHandler {
 			
 			Document document = null;
 			try {
-				document = new Document(visitor.unit.getSource());
-				firstVisitor.applyChanges(document, visitor.unit);
-				secondVisitor.applyChanges(document, visitor.unit);
+				document = new Document(visitor.getICompilationUnit().getSource());
+				firstVisitor.applyChanges(document, visitor.getICompilationUnit());
+				secondVisitor.applyChanges(document, visitor.getICompilationUnit());
 			}
 			catch (Exception e) {
 				e.printStackTrace();
