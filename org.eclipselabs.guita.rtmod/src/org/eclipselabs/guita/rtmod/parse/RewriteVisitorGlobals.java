@@ -15,8 +15,6 @@ public class RewriteVisitorGlobals extends Visitor {
 		super(compilationUnit);
 		this.variablesMap = variablesMap;
 		this.replaceVariablesMap = replaceVariablesMap;
-		System.out.println("vmap " + variablesMap.size());
-		System.out.println("rmap " + replaceVariablesMap.size());
 	}
 	
 	@Override
