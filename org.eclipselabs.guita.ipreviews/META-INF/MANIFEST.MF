@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: GUITA Instant Previews
+Bundle-SymbolicName: org.eclipselabs.guita.ipreviews;singleton:=true
+Bundle-Version: 0.1
+Bundle-Activator: org.eclipselabs.guita.ipreviews.astsimple.Activator
+Require-Bundle: org.eclipse.ui,
+ org.eclipse.core.runtime,
+ org.eclipse.core.resources;bundle-version="3.7.100",
+ org.eclipse.jdt.ui;bundle-version="3.7.1",
+ org.eclipse.jdt.core;bundle-version="3.7.1"
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
