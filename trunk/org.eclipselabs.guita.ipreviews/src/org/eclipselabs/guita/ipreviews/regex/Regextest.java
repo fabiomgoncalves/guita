@@ -1,5 +1,7 @@
 package org.eclipselabs.guita.ipreviews.regex;
 
+import org.eclipse.swt.widgets.Button;
+
 public class Regextest {
 
 	/**
@@ -7,7 +9,6 @@ public class Regextest {
 	 */
 	public static void main(String[] args) {
 		//teste acceptedArguments
-		
 		System.out.println("New Declarations");
 		String teste1 = "new FillLayout()";
 		String teste2 = "new FillLayout(aaaa, new blablabla())";

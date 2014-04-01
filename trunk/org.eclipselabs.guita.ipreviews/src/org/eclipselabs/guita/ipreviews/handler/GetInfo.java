@@ -33,72 +33,80 @@ import org.eclipselabs.guita.ipreviews.view.PreviewView;
 
 public class GetInfo extends AbstractHandler {
 
-  private static final String JDT_NATURE = "org.eclipse.jdt.core.javanature";
+	private static final String JDT_NATURE = "org.eclipse.jdt.core.javanature";
 
-  @Override
-  public Object execute(ExecutionEvent event) throws ExecutionException {
-    IWorkspace workspace = ResourcesPlugin.getWorkspace();
-    IWorkspaceRoot root = workspace.getRoot();
-    // Get all projects in the workspace
-    IProject[] projects = root.getProjects();
-    // Loop over all projects
-    for (IProject project : projects) {
-      try {
-        if (project.isNatureEnabled(JDT_NATURE)) {
-          analyseMethods(project);
-        }
-      } catch (CoreException e) {
-        e.printStackTrace();
-      }
-    }
-    return null;
-  }
+	@Override
+	public Object execute(ExecutionEvent event) throws ExecutionException {
+		IWorkspace workspace = ResourcesPlugin.getWorkspace();
+		IWorkspaceRoot root = workspace.getRoot();
+		// Get all projects in the workspace
+		IProject[] projects = root.getProjects();
+		// Loop over all projects
+		for (IProject project : projects) {
+			try {
+				if (project.isNatureEnabled(JDT_NATURE)) {
+					analyseMethods(project);
+				}
+			} catch (CoreException e) {
+				e.printStackTrace();
+			}
+		}
+		return null;
+	}
 
-  private void analyseMethods(IProject project) throws JavaModelException {
-    IPackageFragment[] packages = JavaCore.create(project)
-        .getPackageFragments();
-    // parse(JavaCore.create(project));
-    for (IPackageFragment mypackage : packages) {
-      if (mypackage.getKind() == IPackageFragmentRoot.K_SOURCE) {
-        createAST(mypackage);
-      }
+	private void analyseMethods(IProject project) throws JavaModelException {
+		IPackageFragment[] packages = JavaCore.create(project)
+				.getPackageFragments();
+		// parse(JavaCore.create(project));
+		for (IPackageFragment mypackage : packages) {
+			if (mypackage.getKind() == IPackageFragmentRoot.K_SOURCE) {
+				createAST(mypackage);
+			}
 
-    }
-  }
+		}
+	}
 
-  private void createAST(IPackageFragment mypackage)
-      throws JavaModelException {
-    for (ICompilationUnit unit : mypackage.getCompilationUnits()) {
-      // Now create the AST for the ICompilationUnits
-      CompilationUnit parse = parse(unit);
-      MethodVisitor visitor = new MethodVisitor();
+	private void createAST(IPackageFragment mypackage)
+			throws JavaModelException {
+		for (ICompilationUnit unit : mypackage.getCompilationUnits()) {
+			// Now create the AST for the ICompilationUnits
+			CompilationUnit parse = parse(unit);
+			VObtainerVisitor visitor = new VObtainerVisitor();
+			parse.accept(visitor);
+			VResolverVisitor visitor2 = new VResolverVisitor(visitor.getNodes());
+			parse.accept(visitor2);
+			for(int i = 0; i != visitor2.getSwt_nodes().size(); i++){
+				System.out.println("Variables " + (i+1) + ": " + visitor2.getSwt_nodes().get(i));
+				System.out.println("Classes: " + (i+1) + ": " + visitor2.getSwt_nodes_classes().get(i));
+			}
+			/*MethodVisitor visitor = new MethodVisitor();
       parse.accept(visitor);
       for(VariableDeclarationStatement v : visitor.getSwt_declarations()){
     	  System.out.println("SWT Declaration Statement: " + v.toString());
       }
       for(MethodInvocation m : visitor.getSwt_methods()){
           System.out.println("SWT Method used : " + m); 
-      }
-      try {
-    	System.out.println(visitor.getVariables_used());
-		PreviewView view = (PreviewView)PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().showView("guidesign.previewview");
-		view.constructPreview(visitor.getSwt_declarations(), visitor.getSwt_methods());
-	} catch (PartInitException e) {
-		e.printStackTrace();
+      }*/
+			try {
+				PreviewView view = (PreviewView)PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().showView("guidesign.previewview");
+				view.constructPreview(visitor2.getSwt_nodes(), visitor2.getSwt_nodes_classes());
+			} catch (PartInitException e) {
+				e.printStackTrace();
+			}
+
+
+		}
 	}
 
-    }
-  }
 
-  
-/** * Reads a ICompilationUnit and creates the AST DOM for manipulating the * Java source file * * @param unit * @return */
+	/** * Reads a ICompilationUnit and creates the AST DOM for manipulating the * Java source file * * @param unit * @return */
 
 
-  private static CompilationUnit parse(ICompilationUnit unit) {
-    ASTParser parser = ASTParser.newParser(AST.JLS4	);
-    parser.setKind(ASTParser.K_COMPILATION_UNIT);
-    parser.setSource(unit);
-    parser.setResolveBindings(true);
-    return (CompilationUnit) parser.createAST(null); // parse
-  }
+	private static CompilationUnit parse(ICompilationUnit unit) {
+		ASTParser parser = ASTParser.newParser(AST.JLS4	);
+		parser.setKind(ASTParser.K_COMPILATION_UNIT);
+		parser.setSource(unit);
+		parser.setResolveBindings(true);
+		return (CompilationUnit) parser.createAST(null); // parse
+	}
 } 
