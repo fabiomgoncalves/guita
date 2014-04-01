@@ -40,8 +40,10 @@ public class PreviewView extends ViewPart {
 	private final Map<Class<?>, Class<?>> equivalent_classes = new HashMap<Class<?>, Class<?>>();
 	private final Map<Class<?>, Class<?>> primitive_classes = new HashMap<Class<?>, Class<?>>();
 	private final Map<Class<?>, Class<?>> primitive_classes_inverse = new HashMap<Class<?>, Class<?>>();
+	private final static boolean devMode = true;
 
-	private HashMap<String, Composite> composites = new HashMap<String, Composite>();
+	private HashMap<String, Control> controls = new HashMap<String, Control>();
+	private HashMap<String, Class<?>> controls_classes = new HashMap<String, Class<?>>();
 	private HashMap<String, Widget> widgets = new HashMap<String, Widget>();
 	private	HashMap<String, Class<?>> widgets_classes = new HashMap<String, Class<?>>();
 
@@ -96,7 +98,7 @@ public class PreviewView extends ViewPart {
 				VariableDeclarationFragment node = (VariableDeclarationFragment) nodes.get(i);
 				try {
 					Class<?> variable_class = Class.forName(node.resolveBinding().getType().getQualifiedName());
-					if(Widget.class.isAssignableFrom(variable_class) || Composite.class.isAssignableFrom(variable_class) || variable_class.equals(Shell.class)){
+					if(Widget.class.isAssignableFrom(variable_class) || Control.class.isAssignableFrom(variable_class) || variable_class.equals(Shell.class)){
 						resolveDeclarationSWT(node, variable_class);
 					}
 					else {
@@ -104,7 +106,8 @@ public class PreviewView extends ViewPart {
 					}
 				} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException e) {
 					System.out.println("Falhei aqui - " + node);
-					e.printStackTrace();
+					if(devMode)
+						e.printStackTrace();
 				}
 			}
 			else if(node_class.equals(MethodInvocation.class)){
@@ -114,11 +117,13 @@ public class PreviewView extends ViewPart {
 					resolveMethod(node, objectName, node.getName().toString());
 				} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | SecurityException | ClassNotFoundException | InstantiationException e) {
 					// TODO Auto-generated catch block
+					if(devMode)
 					e.printStackTrace();
 				}
 				catch (NoSuchMethodException e){
 					if(!shells.contains(objectName)){
 						System.out.println("Falhei aqui - " + node);
+						if(devMode)
 						e.printStackTrace();
 					}
 				}
@@ -130,6 +135,7 @@ public class PreviewView extends ViewPart {
 					resolveAssignment(node, variable_class);
 				} catch (InstantiationException | ClassNotFoundException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
 					System.out.println("Falhei aqui - " + node);
+					if(devMode)
 					e.printStackTrace();
 				}
 			}
@@ -150,7 +156,7 @@ public class PreviewView extends ViewPart {
 		//		}
 
 
-		System.out.println("COMPOSITES: " + composites);
+		System.out.println("COMPOSITES: " + controls);
 		System.out.println("WIDGETS: " + widgets);
 		System.out.println("WIDGETS_CLASSES: " + widgets_classes);
 
@@ -186,8 +192,8 @@ public class PreviewView extends ViewPart {
 				Constructor<?> constr = getConstructor(variable_class, class_args);
 				variable = constr.newInstance(objects);
 			}
-			if(Composite.class.isAssignableFrom(variable_class)){
-				Object o = composites.get(objectName);
+			if(Control.class.isAssignableFrom(variable_class)){
+				Object o = controls.get(objectName);
 				o = variable;
 			}
 			else if(Widget.class.isAssignableFrom(variable_class)){
@@ -205,8 +211,8 @@ public class PreviewView extends ViewPart {
 			MethodInvocation m_node = method_visitor.getNode();
 			String objectMethodName = m_node.toString().substring(0, m_node.toString().indexOf("."));
 			System.out.println("OLAAAAAAAAAA " + objectMethodName + " -- " + method_visitor.getNode());
-			if(Composite.class.isAssignableFrom(variable_class)){
-				Object o = composites.get(objectName);
+			if(Control.class.isAssignableFrom(variable_class)){
+				Object o = controls.get(objectName);
 				o = getObjectMethod(m_node, objectMethodName, m_node.getName().toString());
 			}
 			else if(Widget.class.isAssignableFrom(variable_class)){
@@ -224,8 +230,8 @@ public class PreviewView extends ViewPart {
 			node.accept(visitor);
 			if(visitor.getObjects_map().containsKey(expression.toString())){
 				Object variable = visitor.getObjects_map().get(expression.toString());
-				if(Composite.class.isAssignableFrom(variable_class)){
-					Object o = composites.get(objectName);
+				if(Control.class.isAssignableFrom(variable_class)){
+					Object o = controls.get(objectName);
 					o = variable;
 				}
 				else if(Widget.class.isAssignableFrom(variable_class)){
@@ -244,9 +250,9 @@ public class PreviewView extends ViewPart {
 				Object o = variables.get(objectName);
 				o = variable;
 			}
-			else if(composites.containsKey(expression.toString())){
-				Object variable = composites.get(expression.toString());
-				Object o = composites.get(objectName);
+			else if(controls.containsKey(expression.toString())){
+				Object variable = controls.get(expression.toString());
+				Object o = controls.get(objectName);
 				o = variable;
 			}
 			else if(widgets.containsKey(expression.toString())){
@@ -332,7 +338,8 @@ public class PreviewView extends ViewPart {
 		vf.accept(variable_visitor);
 		ClassInstanceCreation node = variable_visitor.getNode();
 		if(node.arguments().size() == 1 && variable_class.equals(Shell.class)){
-			composites.put(getNameDeclaration(vf), composite);
+			controls.put(getNameDeclaration(vf), composite);
+			controls_classes.put(getNameDeclaration(vf), Composite.class);
 			shells.add(getNameDeclaration(vf));
 		}
 		else {
@@ -344,21 +351,22 @@ public class PreviewView extends ViewPart {
 					int_aux = c_visitor.getObjects_map().get(((Expression)node.arguments().get(1)).toString());
 				}
 				else int_aux = getConstructor(Integer.class, String.class).newInstance(((Expression)node.arguments().get(1)).toString());
-				if(Composite.class.isAssignableFrom(variable_class)){
-					Composite aux_composite;
+				if(Control.class.isAssignableFrom(variable_class) && !Widget.class.isAssignableFrom(variable_class)){
+					Control aux_control;
 					Constructor<?> constr = getConstructor(variable_class, Composite.class, int.class);
-					if(composites.containsKey(node.arguments().get(0).toString())){
-						Composite aux = composites.get(node.arguments().get(0).toString());
-						aux_composite = (Composite) constr.newInstance(aux, int_aux);
+					if(controls.containsKey(node.arguments().get(0).toString())){
+						Composite aux = (Composite) controls.get(node.arguments().get(0).toString());
+						aux_control = (Control) constr.newInstance(aux, int_aux);
 					}
-					else aux_composite = (Composite) constr.newInstance(composite, int_aux);
-					composites.put(getNameDeclaration(vf), aux_composite);
+					else aux_control = (Control) constr.newInstance(composite, int_aux);
+					controls.put(getNameDeclaration(vf), aux_control);
+					controls_classes.put(getNameDeclaration(vf), variable_class);
 				}
 				else {
 					Constructor<?> constr = getConstructor(variable_class, Composite.class, int.class);
 					Widget widget;
-					if(composites.containsKey(node.arguments().get(0).toString())){
-						Composite aux = composites.get(node.arguments().get(0).toString());
+					if(controls.containsKey(node.arguments().get(0).toString())){
+						Composite aux = (Composite) controls.get(node.arguments().get(0).toString());
 						widget = (Widget) constr.newInstance(aux, int_aux);
 					}
 					else widget = (Widget) constr.newInstance(composite, int_aux);
@@ -378,8 +386,8 @@ public class PreviewView extends ViewPart {
 		Class<?> methodClass = null;
 		if(widgets.containsKey(objectName))
 			methodClass = widgets_classes.get(objectName);
-		else if(composites.containsKey(objectName)){
-			methodClass = Composite.class;
+		else if(controls.containsKey(objectName)){
+			methodClass = controls_classes.get(objectName);
 		}
 		else if(variables.containsKey(objectName)){
 			methodClass = variables_classes.get(objectName);
@@ -398,8 +406,8 @@ public class PreviewView extends ViewPart {
 		}
 		if(widgets.containsKey(objectName))
 			m.invoke(widgets.get(objectName), objects);
-		else if(composites.containsKey(objectName)){
-			m.invoke(composites.get(objectName), objects);
+		else if(controls.containsKey(objectName)){
+			m.invoke(controls.get(objectName), objects);
 		}
 		else if(variables.containsKey(objectName)){
 			m.invoke(variables.get(objectName), objects);
@@ -418,8 +426,8 @@ public class PreviewView extends ViewPart {
 		Class<?> methodClass = null;
 		if(widgets.containsKey(objectName))
 			methodClass = widgets_classes.get(objectName);
-		else if(composites.containsKey(objectName)){
-			methodClass = Composite.class;
+		else if(controls.containsKey(objectName)){
+			methodClass = controls_classes.get(objectName);
 		}
 		else if(variables.containsKey(objectName)){
 			methodClass = variables_classes.get(objectName);
@@ -437,8 +445,8 @@ public class PreviewView extends ViewPart {
 		}
 		if(widgets.containsKey(objectName))
 			return m.invoke(widgets.get(objectName), objects);
-		else if(composites.containsKey(objectName)){
-			return m.invoke(composites.get(objectName), objects);
+		else if(controls.containsKey(objectName)){
+			return m.invoke(controls.get(objectName), objects);
 		}
 		else if(variables.containsKey(objectName)){
 			return m.invoke(variables.get(objectName), objects);
@@ -475,8 +483,8 @@ public class PreviewView extends ViewPart {
 					String objectName = argument_expression.toString();
 					if(widgets.containsKey(objectName))
 						return widgets.get(objectName);
-					else if(composites.containsKey(objectName)){
-						return composites.get(objectName);
+					else if(controls.containsKey(objectName)){
+						return controls.get(objectName);
 					}
 					else if(variables.containsKey(objectName)){
 						return variables.get(objectName);
@@ -541,9 +549,11 @@ public class PreviewView extends ViewPart {
 		try {
 			return c.getConstructor(params_aux);
 		} catch (NoSuchMethodException e) {
+			if(devMode)
 			e.printStackTrace();
 			return null;
 		} catch (SecurityException e) {
+			if(devMode)
 			e.printStackTrace();
 			return null;
 		}
@@ -561,6 +571,7 @@ public class PreviewView extends ViewPart {
 		try {
 			return Class.forName(classpath);
 		} catch (ClassNotFoundException e) {
+			if(devMode)
 			e.printStackTrace();
 			return null;
 		}
