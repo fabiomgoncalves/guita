@@ -16,6 +16,7 @@ import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Widget;
 import org.eclipselabs.guita.ipreviews.regex.Regex;
@@ -63,7 +64,7 @@ public class VObtainerVisitor extends ASTVisitor {
 				variables_methods.remove(name);
 				variables_assigns.remove(name);
 			}
-			if(Composite.class.isAssignableFrom(variable_class) || Widget.class.isAssignableFrom(variable_class)){
+			if(Control.class.isAssignableFrom(variable_class) || Widget.class.isAssignableFrom(variable_class)){
 				nodes.put(name, vf);
 				variables.remove(name);
 				String full_args = node.toString().substring(node.toString().indexOf("=") + 1).trim().replaceAll(";", "");
