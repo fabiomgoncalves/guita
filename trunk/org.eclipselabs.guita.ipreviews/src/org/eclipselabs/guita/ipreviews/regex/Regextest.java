@@ -1,5 +1,7 @@
 package org.eclipselabs.guita.ipreviews.regex;
 
+import java.util.Arrays;
+
 import org.eclipse.swt.widgets.Button;
 
 public class Regextest {
@@ -28,6 +30,18 @@ public class Regextest {
 		System.out.println(teste6.matches(Regex.constantDeclarations));
 		System.out.println(teste7.matches(Regex.constantDeclarations));
 		System.out.println(teste8.matches(Regex.constantDeclarations));
+		
+		System.out.println("Array Declarations");
+		String teste9 = "x[0]";
+		String teste10 = "new String[1]";
+		System.out.println(teste9.matches(Regex.arrayAccess));
+		System.out.println(teste10.matches(Regex.newArgumentsArray));
+		
+		String ola = "ola.teste()";
+		String adeus = "ola[2.0].teste()";
+		ola.split(Regex.arrayAccess);
+		System.out.println(Arrays.toString(ola.split(Regex.arrayAccess)));
+		System.out.println(adeus.split(Regex.arrayAccess).length);
 	}
 
 }

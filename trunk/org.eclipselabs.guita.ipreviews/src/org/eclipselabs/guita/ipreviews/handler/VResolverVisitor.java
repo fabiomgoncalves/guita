@@ -13,6 +13,7 @@ import org.eclipse.jdt.core.dom.ExpressionStatement;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
+import org.eclipselabs.guita.ipreviews.regex.Regex;
 
 public class VResolverVisitor extends ASTVisitor{
 
@@ -29,7 +30,11 @@ public class VResolverVisitor extends ASTVisitor{
 
 	@Override
 	public boolean visit(Assignment node) {
-		String objectName = node.toString().replaceAll(" ", "").substring(0, node.toString().indexOf("="));
+		String objectName;
+		if(node.getLeftHandSide().toString().matches(Regex.arrayAccess)){
+			objectName = node.toString().substring(0,node.toString().indexOf("["));
+		}
+		else objectName = node.toString().replaceAll(" ", "").substring(0, node.toString().indexOf("="));
 		if(nodes.containsKey(objectName)){
 			swt_nodes.add(node);
 			swt_nodes_classes.add(Assignment.class);
@@ -39,7 +44,7 @@ public class VResolverVisitor extends ASTVisitor{
 
 	@Override
 	public boolean visit(VariableDeclarationStatement node) {
-		String objectName = node.fragments().get(0).toString().replaceAll(" ", "").substring(0, node.fragments().get(0).toString().indexOf("="));
+		String objectName = ((VariableDeclarationFragment)node.fragments().get(0)).getName().toString();
 		if(nodes.containsKey(objectName)){
 			swt_nodes.add((VariableDeclarationFragment)node.fragments().get(0));
 			swt_nodes_classes.add(VariableDeclarationFragment.class);
@@ -50,7 +55,11 @@ public class VResolverVisitor extends ASTVisitor{
 	@Override
 	public boolean visit(MethodInvocation node) {
 		if((node.getParent() instanceof ExpressionStatement)){
-			String objectName = node.toString().replaceAll(" ", "").substring(0, node.toString().indexOf("."));
+			String objectName;
+			if(node.toString().matches(Regex.methodArrayDeclarations)){
+				objectName = node.toString().substring(0,node.toString().indexOf("["));
+			}
+			else objectName = node.toString().replaceAll(" ", "").substring(0, node.toString().indexOf("."));
 			if(nodes.containsKey(objectName)){
 				swt_nodes.add(node);
 				swt_nodes_classes.add(MethodInvocation.class);
