@@ -8,4 +8,5 @@ public class Regex {
 	public static final String constantArrayDeclarations = "([A-Z]|[a-z]|[0-9]|_)+(\\[(.)*\\])(\\.)([A-Z]|[a-z]|[0-9]|_)+";
 	public static final String methodDeclarations = "([A-Z]|[a-z]|[0-9]|_)+(\\.)([A-Z]|[a-z]|[0-9]|_)+\\((.)*\\)";
 	public static final String methodArrayDeclarations = "([A-Z]|[a-z]|[0-9]|_)+(\\[(.)*\\])(\\.)([A-Z]|[a-z]|[0-9]|_)+\\((.)*\\)";
+	public static final String operatorsDeclarations = "(.)+(\\||&)(.)+((.)+(\\||&)(.)+)*";
 }
