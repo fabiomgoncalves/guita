@@ -71,8 +71,8 @@ public class GetInfo extends AbstractHandler {
 		for (ICompilationUnit unit : mypackage.getCompilationUnits()) {
 			// Now create the AST for the ICompilationUnits
 			CompilationUnit parse = parse(unit);
-////			ArrayInitVisitor a_visitor = new ArrayInitVisitor();
-//			parse.accept(a_visitor);
+			////			ArrayInitVisitor a_visitor = new ArrayInitVisitor();
+			//			parse.accept(a_visitor);
 			VObtainerVisitor visitor = new VObtainerVisitor();
 			parse.accept(visitor);
 			VResolverVisitor visitor2 = new VResolverVisitor(visitor.getNodes());
@@ -84,7 +84,7 @@ public class GetInfo extends AbstractHandler {
 			/*MethodVisitor visitor = new MethodVisitor();
       parse.accept(visitor);
       for(VariableDeclarationStatement v : visitor.getSwt_declarations()){
-    	  System.out.println("SWT Declaration Statement: " + v.toString());
+    	  System.out.println("SWT Declaratiaon Statement: " + v.toString());
       }
       for(MethodInvocation m : visitor.getSwt_methods()){
           System.out.println("SWT Method used : " + m); 

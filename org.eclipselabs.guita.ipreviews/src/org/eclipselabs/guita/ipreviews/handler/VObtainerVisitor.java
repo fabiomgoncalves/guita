@@ -13,9 +13,11 @@ import org.eclipse.jdt.core.dom.Assignment;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
 import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.InfixExpression;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
+import org.eclipse.jdt.core.dom.InfixExpression.Operator;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
@@ -29,7 +31,7 @@ public class VObtainerVisitor extends ASTVisitor {
 	Map<String, ASTNode> variables = new HashMap<String, ASTNode>();
 	Map<String, List<ASTNode>> variables_methods = new HashMap<String, List<ASTNode>>();
 	Map<String, List<ASTNode>> variables_assigns = new HashMap<String, List<ASTNode>>();
-	
+
 	Map<String, Class<?>> primitive_classes = new SupportClasses().primitive_classes_string;
 
 	Map<String, ASTNode> nodes = new HashMap<String, ASTNode>();
@@ -120,11 +122,29 @@ public class VObtainerVisitor extends ASTVisitor {
 				analyseVariable(aux);
 			}
 		}
+		else if(full_args.matches(Regex.operatorsDeclarations)){
+			analyseOperations(an);
+		}
 		else if(variables.containsKey(full_args)){
 			nodes.put(full_args, variables.get(full_args));
 			variables.remove(full_args);
 			analyseVariable(full_args);
 		}
+	}
+
+	private void analyseOperations(ASTNode an) {
+		InfixVisitor visitor = new InfixVisitor();
+		an.accept(visitor);
+		InfixExpression node = visitor.getNode();
+		resolveType(node.getLeftOperand(), node.getLeftOperand().toString());
+		resolveType(node.getRightOperand(), node.getRightOperand().toString());
+		if(node.hasExtendedOperands()){
+			for(Object o : node.extendedOperands()){
+				Expression exp = (Expression) o;
+				resolveType(exp, exp.toString());
+			}
+		}
+
 	}
 
 	private void analyseStringConstant(ASTNode an) {

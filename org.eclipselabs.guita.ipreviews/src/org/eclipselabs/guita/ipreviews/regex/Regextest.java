@@ -37,11 +37,13 @@ public class Regextest {
 		System.out.println(teste9.matches(Regex.arrayAccess));
 		System.out.println(teste10.matches(Regex.newArgumentsArray));
 		
-		String ola = "ola.teste()";
-		String adeus = "ola[2.0].teste()";
-		ola.split(Regex.arrayAccess);
-		System.out.println(Arrays.toString(ola.split(Regex.arrayAccess)));
-		System.out.println(adeus.split(Regex.arrayAccess).length);
+		System.out.println("Operators");
+		String teste11 = "SWT.NONE | SWT.SHADOW";
+		String teste12 = "2 | SWT.NONE | teste.getInt(teste)";
+		String teste13 = "teste.getInt(int)";
+		System.out.println(teste11.matches(Regex.operatorsDeclarations));
+		System.out.println(teste12.matches(Regex.operatorsDeclarations));
+		System.out.println(teste13.matches(Regex.operatorsDeclarations));
 	}
 
 }
