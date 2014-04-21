@@ -7,7 +7,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,19 +22,19 @@ import org.eclipse.jdt.core.dom.InfixExpression.Operator;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
-import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
+import org.eclipse.jface.text.ITextSelection;
+import org.eclipse.jface.text.TextSelection;
+import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.FillLayout;
-import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Layout;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Widget;
+import org.eclipse.ui.ISelectionListener;
+import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.ui.handlers.IHandlerService;
 import org.eclipse.ui.part.ViewPart;
 import org.eclipselabs.guita.ipreviews.handler.ArrayAccessVisitor;
 import org.eclipselabs.guita.ipreviews.handler.ArrayInitVisitor;
@@ -53,7 +52,7 @@ public class PreviewView extends ViewPart {
 	private final Map<Class<?>, Class<?>> primitive_classes_inverse = SupportClasses.primitive_classes_inverse;
 	public final static boolean devMode = false;
 	private boolean error = false;
-	private String error_string = "Não foi possível tratar as seguintes instruções:";
+	private String error_string = "Nï¿½o foi possï¿½vel tratar as seguintes instruï¿½ï¿½es:";
 
 	private HashMap<String, Control> controls = new HashMap<String, Control>();
 	private HashMap<String, Class<?>> controls_classes = new HashMap<String, Class<?>>();
@@ -67,7 +66,7 @@ public class PreviewView extends ViewPart {
 
 	public static final String ID = "guidesign.previewview";
 
-	Composite composite;
+	private Composite composite;
 
 	public PreviewView(){
 
@@ -78,8 +77,29 @@ public class PreviewView extends ViewPart {
 	public void createPartControl(Composite parent) {
 		composite = new Composite(parent, SWT.NONE);
 		composite.setLayout(new FillLayout());
+
+		// andre
+		getSite().getWorkbenchWindow().getSelectionService().addSelectionListener(new ISelectionListener() {
+
+			@Override
+			public void selectionChanged(IWorkbenchPart part, ISelection selection) {
+				if(selection instanceof ITextSelection) {
+					ITextSelection textSelection = (TextSelection) selection;
+
+					if(textSelection.getEndLine() - textSelection.getStartLine() > 0) {
+						IHandlerService handlerService = (IHandlerService) getSite().getService(IHandlerService.class);
+						try {
+							handlerService.executeCommand("ipreviews.preview", null);
+						} catch (Exception ex) {
+							ex.printStackTrace();
+						}
+					} 
+				}
+			}
+		});
 	}
 
+	
 	@Override
 	public void setFocus() {
 		// TODO Auto-generated method stub
@@ -87,6 +107,9 @@ public class PreviewView extends ViewPart {
 	}
 
 	public void constructPreview(List<ASTNode> nodes, List<Class<?>> nodes_classes) {
+		// andre
+		for(Control c : composite.getChildren())
+			c.dispose();
 
 		for(int i = 0; i != nodes.size(); i++){
 			Class<?> node_class = nodes_classes.get(i);
@@ -155,7 +178,7 @@ public class PreviewView extends ViewPart {
 				}
 			}
 		}
-		
+
 		if(error){
 			MessageBox messageBox = new MessageBox(composite.getShell(), SWT.OK);
 			messageBox.setMessage(error_string);
@@ -178,6 +201,10 @@ public class PreviewView extends ViewPart {
 		//			}
 		//		}
 
+
+		// andre
+		composite.redraw();
+		composite.layout();
 
 		System.out.println("COMPOSITES: " + controls);
 		System.out.println("WIDGETS: " + widgets);
@@ -306,12 +333,12 @@ public class PreviewView extends ViewPart {
 					Class<?>[] aux_array = new Class<?>[1];
 					aux_array[0] = Integer.class;
 					int_aux = resolveType(aux_array, (Expression) node.arguments().get(1), 0);
-//					if(((Expression)node.arguments().get(1)).toString().matches(Regex.constantDeclarations)){
-//						ConstantStatementVisitor constant_visitor = new ConstantStatementVisitor();
-//						((Expression)node.arguments().get(1)).accept(constant_visitor);
-//						int_aux = getConstantObject(constant_visitor.getQualifiedName());
-//					}
-//					else int_aux = getConstructor(Integer.class, String.class).newInstance(((Expression)node.arguments().get(1)).toString());
+					//					if(((Expression)node.arguments().get(1)).toString().matches(Regex.constantDeclarations)){
+					//						ConstantStatementVisitor constant_visitor = new ConstantStatementVisitor();
+					//						((Expression)node.arguments().get(1)).accept(constant_visitor);
+					//						int_aux = getConstantObject(constant_visitor.getQualifiedName());
+					//					}
+					//					else int_aux = getConstructor(Integer.class, String.class).newInstance(((Expression)node.arguments().get(1)).toString());
 					if(Composite.class.isAssignableFrom(variable_class)){
 						Control aux_control;
 						Constructor<?> constr = getConstructor(variable_class, Composite.class, int.class);

@@ -29,9 +29,9 @@
    <extension
          point="org.eclipse.ui.commands">
       <command
-            defaultHandler="org.eclipselabs.guita.ipreviews.handler.GetInfo"
-            id="de.vogella.jdt.astsimple.GetInfo"
-            name="GetInfo">
+            defaultHandler="org.eclipselabs.guita.ipreviews.actions.PreviewCommand"
+            id="ipreviews.preview"
+            name="Preview">
       </command>
    </extension>
    <extension
@@ -48,6 +48,15 @@
                   style="push">
             </command>
          </menu>
+      </menuContribution>
+      <menuContribution
+            allPopups="false"
+            locationURI="toolbar:guidesign.previewview">
+         <command
+               commandId="ipreviews.preview"
+               label="PREV"
+               style="push">
+         </command>
       </menuContribution>
    </extension>
    <extension
