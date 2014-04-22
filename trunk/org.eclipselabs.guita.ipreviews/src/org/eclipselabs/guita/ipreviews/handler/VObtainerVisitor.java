@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
+import org.eclipse.jdt.core.dom.ArrayAccess;
 import org.eclipse.jdt.core.dom.ArrayCreation;
 import org.eclipse.jdt.core.dom.Assignment;
 import org.eclipse.jdt.core.dom.Expression;
@@ -75,6 +76,89 @@ public class VObtainerVisitor extends ASTVisitor {
 		return super.visit(node);
 	}
 
+	@Override
+	public boolean visit(Assignment node) {
+		boolean arrayAccess = false;
+		String objectName;
+		if(node.getLeftHandSide().toString().matches(Regex.arrayAccess)){
+			objectName = node.toString().substring(0, node.toString().indexOf("["));
+			if(nodes.containsKey(objectName)){
+				ArrayAccessVisitor visitor = new ArrayAccessVisitor();
+				node.accept(visitor);
+				ArrayAccess aux_node = visitor.getNode();
+				resolveType(aux_node.getIndex(), aux_node.getIndex().toString());
+			}
+			arrayAccess = true;
+		}
+		else objectName = node.getLeftHandSide().toString();
+		if(variables.containsKey(objectName)){
+			variables_assigns.get(objectName).add(node);
+		}
+		else if(nodes.containsKey(objectName)){
+			if(node.getLeftHandSide().toString().matches(Regex.arrayAccess)){
+				arrayAnalyse(node.getLeftHandSide());
+			}
+			resolveType(node, node.getRightHandSide().toString());
+		}
+		else {
+			if(!arrayAccess){
+				ITypeBinding binding = node.resolveTypeBinding();
+				Class<?> variable_class = null;
+				try {
+					String class_name = binding.getQualifiedName();
+					if(binding.getQualifiedName().contains("[]") && !primitive_classes.containsKey(binding.getQualifiedName()))
+						class_name = "[L" + class_name.replace("[]","") + ";";
+					if(primitive_classes.containsKey(class_name)){
+						variable_class = primitive_classes.get(class_name);
+					}
+					else variable_class = Class.forName(class_name);
+					variables.put(objectName, node);
+					variables_methods.put(objectName, new ArrayList<ASTNode>());
+					variables_assigns.put(objectName, new ArrayList<ASTNode>());
+					if(variable_class.equals(Display.class)){
+						variables.remove(objectName);
+						variables_methods.remove(objectName);
+						variables_assigns.remove(objectName);
+					}
+					if(Control.class.isAssignableFrom(variable_class) || Control[].class.isAssignableFrom(variable_class)|| Widget.class.isAssignableFrom(variable_class) || Widget[].class.isAssignableFrom(variable_class)){
+						nodes.put(objectName, node);
+						variables.remove(objectName);
+						if(node.toString().contains("=")){
+							String full_args = node.toString().substring(node.toString().indexOf("=") + 1).trim().replaceAll(";", "");
+							resolveType(node, full_args);
+						}
+					}
+				}catch (ClassNotFoundException e){
+					if(PreviewView.devMode)
+						e.printStackTrace();
+				}
+			}
+		}
+		return super.visit(node);
+	}
+
+	@Override
+	public boolean visit(MethodInvocation node) {
+		if(node.toString().matches(Regex.methodDeclarations) || node.toString().matches(Regex.methodArrayDeclarations)){
+			if(node.getParent().getClass().equals(ExpressionStatement.class)){
+				String objectName;
+				if(node.toString().matches(Regex.methodArrayDeclarations))
+					objectName = node.toString().substring(0, node.toString().indexOf("["));
+				else objectName = node.toString().substring(0, node.toString().indexOf("."));
+				if(variables_methods.containsKey(objectName)){
+					variables_methods.get(objectName).add(node);
+				}
+				if(nodes.containsKey(objectName)){
+					if(node.toString().matches(Regex.methodArrayDeclarations)){
+						arrayAnalyse(node.getExpression());
+					}
+					resolveType(node, node.toString());
+				}
+			}
+		}
+		return super.visit(node);
+	}
+
 	private void analyseVariable(String variable_name) {
 		String args;
 		if(nodes.get(variable_name).toString().contains("=")){
@@ -94,7 +178,14 @@ public class VObtainerVisitor extends ASTVisitor {
 			List<ASTNode> assigns = variables_assigns.get(variable_name);
 			variables_assigns.remove(variable_name);
 			for(ASTNode an : assigns){
-				String full_args = ((Assignment)an).getRightHandSide().toString();
+				Assignment aux = ((Assignment) an);
+				if(aux.getLeftHandSide().toString().matches(Regex.arrayAccess)){
+					ArrayAccessVisitor visitor = new ArrayAccessVisitor();
+					an.accept(visitor);
+					ArrayAccess aux_node = visitor.getNode();
+					resolveType(aux_node.getIndex(), aux_node.getIndex().toString());
+				}
+				String full_args = aux.getRightHandSide().toString();
 				resolveType(an, full_args);
 			}
 		}
@@ -159,46 +250,6 @@ public class VObtainerVisitor extends ASTVisitor {
 		List<String> newVariables = new ArrayList<String>();
 		Iterator<String> it = variables.keySet().iterator();
 		analyseValue2(newVariables, it, objectName);
-	}
-
-	@Override
-	public boolean visit(MethodInvocation node) {
-		if(node.toString().matches(Regex.methodDeclarations) || node.toString().matches(Regex.methodArrayDeclarations)){
-			if(node.getParent().getClass().equals(ExpressionStatement.class)){
-				String objectName;
-				if(node.toString().matches(Regex.methodArrayDeclarations))
-					objectName = node.toString().substring(0, node.toString().indexOf("["));
-				else objectName = node.toString().substring(0, node.toString().indexOf("."));
-				if(variables_methods.containsKey(objectName)){
-					variables_methods.get(objectName).add(node);
-				}
-				if(nodes.containsKey(objectName)){
-					if(node.toString().matches(Regex.methodArrayDeclarations)){
-						arrayAnalyse(node.getExpression());
-					}
-					resolveType(node, node.toString());
-				}
-			}
-		}
-		return super.visit(node);
-	}
-
-	@Override
-	public boolean visit(Assignment node) {
-		String objectName;
-		if(node.getLeftHandSide().toString().matches(Regex.arrayAccess))
-			objectName = node.toString().substring(0, node.toString().indexOf("["));
-		else objectName = node.getLeftHandSide().toString();
-		if(variables_assigns.containsKey(objectName)){
-			variables_assigns.get(objectName).add(node);
-		}
-		if(nodes.containsKey(objectName)){
-			if(node.getLeftHandSide().toString().matches(Regex.arrayAccess)){
-				arrayAnalyse(node.getLeftHandSide());
-			}
-			resolveType(node, node.getRightHandSide().toString());
-		}
-		return super.visit(node);
 	}
 
 	private void arrayAnalyse(Expression exp){
