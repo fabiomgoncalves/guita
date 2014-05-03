@@ -73,30 +73,30 @@ public class GetInfo extends AbstractHandler {
 			CompilationUnit parse = parse(unit);
 			////			ArrayInitVisitor a_visitor = new ArrayInitVisitor();
 			//			parse.accept(a_visitor);
-			VObtainerVisitor visitor = new VObtainerVisitor();
-			parse.accept(visitor);
-			VResolverVisitor visitor2 = new VResolverVisitor(visitor.getNodes());
-			parse.accept(visitor2);
-			for(int i = 0; i != visitor2.getSwt_nodes().size(); i++){
-				System.out.println("Variables " + (i+1) + ": " + visitor2.getSwt_nodes().get(i));
-				System.out.println("Classes: " + (i+1) + ": " + visitor2.getSwt_nodes_classes().get(i));
-			}
-			/*MethodVisitor visitor = new MethodVisitor();
-      parse.accept(visitor);
-      for(VariableDeclarationStatement v : visitor.getSwt_declarations()){
-    	  System.out.println("SWT Declaratiaon Statement: " + v.toString());
-      }
-      for(MethodInvocation m : visitor.getSwt_methods()){
-          System.out.println("SWT Method used : " + m); 
-      }*/
-			try {
-				PreviewView view = (PreviewView)PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().showView("guidesign.previewview");
-				view.constructPreview(visitor2.getSwt_nodes(), visitor2.getSwt_nodes_classes());
-			} catch (PartInitException e) {
-				e.printStackTrace();
-			}
+//			VObtainerVisitor visitor = new VObtainerVisitor();
+//			parse.accept(visitor);
+//			VResolverVisitor visitor2 = new VResolverVisitor(visitor.getNodes());
+//			parse.accept(visitor2);
+//			for(int i = 0; i != visitor2.getSwt_nodes().size(); i++){
+//				System.out.println("Variables " + (i+1) + ": " + visitor2.getSwt_nodes().get(i));
+//				System.out.println("Classes: " + (i+1) + ": " + visitor2.getSwt_nodes_classes().get(i));
+//			}
+//			/*MethodVisitor visitor = new MethodVisitor();
+//      parse.accept(visitor);
+//      for(VariableDeclarationStatement v : visitor.getSwt_declarations()){
+//    	  System.out.println("SWT Declaratiaon Statement: " + v.toString());
+//      }
+//      for(MethodInvocation m : visitor.getSwt_methods()){
+//          System.out.println("SWT Method used : " + m); 
+//      }*/
+//			try {
+//				PreviewView view = (PreviewView)PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().showView("guidesign.previewview");
+//				view.constructPreview(visitor2.getSwt_nodes(), visitor2.getSwt_nodes_classes());
+//			} catch (PartInitException e) {
+//				e.printStackTrace();
+//			}
 
-
+			return;
 		}
 	}
 
