@@ -502,7 +502,7 @@ public class VObtainerVisitor extends ASTVisitor {
 		try {
 			return Class.forName(classpath);
 		} catch (ClassNotFoundException e) {
-			Class<?> clazz = ResourcesPlugin.getWorkspace().getRoot().getProjects()[1].getClass().getClassLoader().loadClass(classpath);
+			Class<?> clazz = ClassLoading.getInstance().getClass(classpath);
 			if(clazz == null){
 				throw new ClassNotFoundException(classpath);
 			}

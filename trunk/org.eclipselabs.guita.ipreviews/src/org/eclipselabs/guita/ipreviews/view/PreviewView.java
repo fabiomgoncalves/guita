@@ -57,7 +57,7 @@ public class PreviewView extends ViewPart {
 
 	private final Map<Class<?>, Class<?>> primitive_classes = SupportClasses.primitive_classes;
 	private final Map<Class<?>, Class<?>> primitive_classes_inverse = SupportClasses.primitive_classes_inverse;
-	public final static boolean devMode = true;
+	public final static boolean devMode = false;
 	private boolean error = false;
 	private final String error_string_initial = "Não foi possível tratar as seguintes instruções:";
 	private String error_string = error_string_initial;
@@ -684,7 +684,15 @@ public class PreviewView extends ViewPart {
 			Expression exp = (Expression)mi.arguments().get(i);
 			objects[i] = resolveType(class_args, exp, i); 
 		}
-		m.invoke(object, objects);
+		if(m == null){
+			m = methodClass.getDeclaredMethod(methodName, class_args);
+		}
+		try{
+			m.invoke(object, objects);
+		}
+		catch(Error | Exception e){
+			throw new NoSuchMethodException(methodName);
+		}
 	}
 
 	private Method findCompatibleMethod(String methodName, Class<?> methodClass,
@@ -787,7 +795,12 @@ public class PreviewView extends ViewPart {
 		if(m == null){
 			m = methodClass.getDeclaredMethod(methodName, class_args);
 		}
-		return m.invoke(object, objects);
+		try {
+			return m.invoke(object, objects);
+		}
+		catch(Error | Exception e){
+			throw new NoSuchMethodException(methodName);
+		}
 	}
 
 	private Object resolveNewArgumentsArray(ASTNode node,
