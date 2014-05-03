@@ -6,11 +6,15 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ArrayAccess;
 import org.eclipse.jdt.core.dom.ArrayCreation;
@@ -21,14 +25,18 @@ import org.eclipse.jdt.core.dom.InfixExpression;
 import org.eclipse.jdt.core.dom.InfixExpression.Operator;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.QualifiedName;
+import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.text.TextSelection;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.FillLayout;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Item;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Widget;
@@ -47,12 +55,12 @@ import org.eclipselabs.guita.ipreviews.regex.Regex;
 
 public class PreviewView extends ViewPart {
 
-	private final Map<Class<?>, Class<?>> equivalent_classes = SupportClasses.equivalent_classes;
 	private final Map<Class<?>, Class<?>> primitive_classes = SupportClasses.primitive_classes;
 	private final Map<Class<?>, Class<?>> primitive_classes_inverse = SupportClasses.primitive_classes_inverse;
-	public final static boolean devMode = false;
+	public final static boolean devMode = true;
 	private boolean error = false;
-	private String error_string = "N�o foi poss�vel tratar as seguintes instru��es:";
+	private final String error_string_initial = "Não foi possível tratar as seguintes instruções:";
+	private String error_string = error_string_initial;
 
 	private HashMap<String, Control> controls = new HashMap<String, Control>();
 	private HashMap<String, Class<?>> controls_classes = new HashMap<String, Class<?>>();
@@ -70,36 +78,35 @@ public class PreviewView extends ViewPart {
 
 	public PreviewView(){
 
-
 	}
 
 	@Override
 	public void createPartControl(Composite parent) {
 		composite = new Composite(parent, SWT.NONE);
-		composite.setLayout(new FillLayout());
+		composite.setLayout(new GridLayout());
 
 		// andre
-		getSite().getWorkbenchWindow().getSelectionService().addSelectionListener(new ISelectionListener() {
-
-			@Override
-			public void selectionChanged(IWorkbenchPart part, ISelection selection) {
-				if(selection instanceof ITextSelection) {
-					ITextSelection textSelection = (TextSelection) selection;
-
-					if(textSelection.getEndLine() - textSelection.getStartLine() > 0) {
-						IHandlerService handlerService = (IHandlerService) getSite().getService(IHandlerService.class);
-						try {
-							handlerService.executeCommand("ipreviews.preview", null);
-						} catch (Exception ex) {
-							ex.printStackTrace();
-						}
-					} 
-				}
-			}
-		});
+		//		getSite().getWorkbenchWindow().getSelectionService().addSelectionListener(new ISelectionListener() {
+		//
+		//			@Override
+		//			public void selectionChanged(IWorkbenchPart part, ISelection selection) {
+		//				if(selection instanceof ITextSelection) {
+		//					ITextSelection textSelection = (TextSelection) selection;
+		//
+		//					if(textSelection.getEndLine() - textSelection.getStartLine() > 0) {
+		//						IHandlerService handlerService = (IHandlerService) getSite().getService(IHandlerService.class);
+		//						try {
+		//							handlerService.executeCommand("ipreviews.preview", null);
+		//						} catch (Exception ex) {
+		//							ex.printStackTrace();
+		//						}
+		//					} 
+		//				}
+		//			}
+		//		});
 	}
 
-	
+
 	@Override
 	public void setFocus() {
 		// TODO Auto-generated method stub
@@ -110,7 +117,8 @@ public class PreviewView extends ViewPart {
 		// andre
 		for(Control c : composite.getChildren())
 			c.dispose();
-		
+		cleanAllVariables();
+
 		// clean();
 
 		for(int i = 0; i != nodes.size(); i++){
@@ -126,7 +134,7 @@ public class PreviewView extends ViewPart {
 					else {
 						if(class_name.contains("[]") && !SupportClasses.primitive_classes_string.containsKey(class_name))
 							class_name = "[L" + class_name.replace("[]","") + ";";
-						variable_class = Class.forName(class_name);
+						variable_class = resolveClass(class_name);
 					}
 					if(Widget.class.isAssignableFrom(variable_class) || Control.class.isAssignableFrom(variable_class) || variable_class.equals(Shell.class)){
 						resolveDeclarationSWT(node, variable_class);
@@ -170,7 +178,7 @@ public class PreviewView extends ViewPart {
 						variable_class = SupportClasses.primitive_classes_string.get(node.resolveTypeBinding().getQualifiedName());
 						variable_class = primitive_classes.get(variable_class);
 					}
-					else variable_class = Class.forName(node.resolveTypeBinding().getQualifiedName());
+					else variable_class = resolveClass(node.resolveTypeBinding().getQualifiedName());
 					resolveAssignment(node, variable_class);
 				} catch (Exception e) {
 					error_string += "\n--- " + node.toString();
@@ -208,11 +216,24 @@ public class PreviewView extends ViewPart {
 		composite.redraw();
 		composite.layout();
 		// refresh()
-		
+
 		System.out.println("COMPOSITES: " + controls);
 		System.out.println("WIDGETS: " + widgets);
 		System.out.println("WIDGETS_CLASSES: " + widgets_classes);
 
+	}
+
+	private void cleanAllVariables() {
+		//		Composite parent = composite.getParent();
+		//		composite = new Composite(parent, SWT.NONE);
+		error = false;
+		error_string = error_string_initial;
+		controls.clear();
+		controls_classes.clear();
+		widgets.clear();
+		widgets_classes.clear();
+		variables.clear();
+		variables_classes.clear();
 	}
 
 	private void resolveDeclaration(VariableDeclarationFragment node, Class<?> variable_class) throws ClassNotFoundException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ArrayIndexOutOfBoundsException, NoSuchFieldException, SecurityException, IllegalArgumentException {
@@ -229,11 +250,7 @@ public class PreviewView extends ViewPart {
 				Object o = c_node.arguments().get(i);
 				class_args[i] = resolveClass(((Expression)o).resolveTypeBinding().getQualifiedName());
 			}
-			Class<?> [] class_args2 = class_args.clone();
-			for(int i = 0; i != class_args2.length; i++) {
-				if(equivalent_classes.containsKey(class_args2[i]))
-					class_args2[i] = equivalent_classes.get(class_args2[i]);
-			}	
+
 			Object[] objects = new Object[c_node.arguments().size()];
 			for(int i = 0; i != class_args.length; i++){
 				Expression exp = (Expression)c_node.arguments().get(i);
@@ -244,7 +261,7 @@ public class PreviewView extends ViewPart {
 				variable = variable_class.newInstance();
 			}
 			else { 
-				Constructor<?> constr = getConstructor(variable_class, class_args);
+				Constructor<?> constr = findCompatibleConstructor(variable_class, class_args);
 				variable = constr.newInstance(objects);
 			}
 			resolveNewVariable(variable_class, node.getName().toString(), variable);
@@ -296,7 +313,7 @@ public class PreviewView extends ViewPart {
 				resolveNewVariable(variable_class, node.getName().toString(), variable);
 			}
 			else {
-				Object variable = getConstructor(variable_class, String.class).newInstance(expression.toString().replaceAll("\"", ""));
+				Object variable = findCompatibleConstructor(variable_class, String.class).newInstance(expression.toString().replaceAll("\"", ""));
 				resolveNewVariable(variable_class, node.getName().toString(), variable);
 			}
 		}
@@ -304,14 +321,7 @@ public class PreviewView extends ViewPart {
 
 	private void resolveDeclarationSWT(VariableDeclarationFragment vf, Class<?> variable_class) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ArrayIndexOutOfBoundsException, ClassNotFoundException, NoSuchFieldException {
 		if(!vf.toString().contains("=")){
-			if(Control.class.isAssignableFrom(variable_class) && !Widget.class.isAssignableFrom(variable_class)){
-				controls.put(getNameDeclaration(vf), null);
-				controls_classes.put(getNameDeclaration(vf), variable_class);
-			}
-			else {
-				widgets.put(getNameDeclaration(vf), null);
-				widgets_classes.put(getNameDeclaration(vf), variable_class);
-			}
+			resolveNewVariable(variable_class, getNameDeclaration(vf), null);
 		}
 		else{
 			VariableDeclarationStatementVisitor variable_visitor = new VariableDeclarationStatementVisitor();
@@ -328,32 +338,51 @@ public class PreviewView extends ViewPart {
 					Class<?>[] aux_array = new Class<?>[1];
 					aux_array[0] = Integer.class;
 					int_aux = resolveType(aux_array, (Expression) node.arguments().get(1), 0);
-					//					if(((Expression)node.arguments().get(1)).toString().matches(Regex.constantDeclarations)){
-					//						ConstantStatementVisitor constant_visitor = new ConstantStatementVisitor();
-					//						((Expression)node.arguments().get(1)).accept(constant_visitor);
-					//						int_aux = getConstantObject(constant_visitor.getQualifiedName());
-					//					}
-					//					else int_aux = getConstructor(Integer.class, String.class).newInstance(((Expression)node.arguments().get(1)).toString());
 					if(Composite.class.isAssignableFrom(variable_class)){
 						Control aux_control;
-						Constructor<?> constr = getConstructor(variable_class, Composite.class, int.class);
+						Constructor<?> constr = findCompatibleConstructor(variable_class, Composite.class, int.class);
 						if(controls.containsKey(node.arguments().get(0).toString())){
 							Composite aux = (Composite) controls.get(node.arguments().get(0).toString());
 							aux_control = (Control) constr.newInstance(aux, int_aux);
 						}
-						else aux_control = (Control) constr.newInstance(composite, int_aux);
+						else{
+							Class<?> variable_class2 = resolveClass(((Expression)node.arguments().get(0)).resolveTypeBinding().getQualifiedName());
+							if(variable_class2.equals(Shell.class))
+								variable_class2 = Composite.class;
+							Constructor<?> constr2 = findCompatibleConstructor(variable_class2, Composite.class, int.class);
+							Composite aux_composite = (Composite)constr2.newInstance(composite, SWT.NONE);
+							((Composite)aux_composite).setLayout(new GridLayout());
+							controls.put(node.arguments().get(0).toString(), aux_composite);
+							controls_classes.put(node.arguments().get(0).toString(), variable_class2);
+
+							aux_control = (Control) constr.newInstance(aux_composite, int_aux);
+						}
 						controls.put(getNameDeclaration(vf), aux_control);
 						controls_classes.put(getNameDeclaration(vf), variable_class);
 					}
 					else {
-						System.out.println("NAHHHHHHHHHHHHHHHHH " + node.arguments().get(0).toString());
-						Constructor<?> constr = getConstructor(variable_class, Composite.class, int.class);
+						Constructor<?> constr;
+						Class<?> variable_class2 = resolveClass(((Expression)node.arguments().get(0)).resolveTypeBinding().getQualifiedName());
+						if(variable_class2.equals(Shell.class))
+							variable_class2 = Composite.class;
+						if(Item.class.isAssignableFrom(variable_class)){
+							constr = findCompatibleConstructor(variable_class, variable_class2, int.class);
+						} 
+						else constr = findCompatibleConstructor(variable_class, Composite.class, int.class);
 						Widget widget;
 						if(controls.containsKey(node.arguments().get(0).toString())){
 							Composite aux = (Composite) controls.get(node.arguments().get(0).toString());
 							widget = (Widget) constr.newInstance(aux, int_aux);
 						}
-						else widget = (Widget) constr.newInstance(composite, int_aux);
+						else{
+							Constructor<?> constr2 = findCompatibleConstructor(variable_class2, Composite.class, int.class);
+							Composite aux_composite = (Composite)constr2.newInstance(composite, SWT.NONE);
+							((Composite)aux_composite).setLayout(new GridLayout());
+							controls.put(node.arguments().get(0).toString(), aux_composite);
+							controls_classes.put(node.arguments().get(0).toString(), variable_class2);
+
+							widget = (Widget) constr.newInstance(aux_composite, int_aux);
+						}
 						widgets.put(getNameDeclaration(vf), widget);
 						widgets_classes.put(getNameDeclaration(vf), variable_class);
 					}
@@ -378,12 +407,12 @@ public class PreviewView extends ViewPart {
 			Class<?>[] aux = new Class<?>[1];
 			aux[0] = Integer.class;
 			index = (int) resolveType(aux, aac_visitor.getNode().getIndex(), 0);
-			object = variables.get(aux_name);
+			name = aux_name;
 			if(!variables.containsKey(aux_name)){
 				throw new IllegalAccessException(aux_name);
 			}
 		}
-		else if(controls.containsKey(name)){
+		if(controls.containsKey(name)){
 			object = controls.get(name);
 		}
 		else if(widgets.containsKey(name)){
@@ -393,7 +422,10 @@ public class PreviewView extends ViewPart {
 			object = variables.get(name);
 		}
 		else{
-			resolveNewVariable(variable_class, name, null);
+			if(!node.toString().contains("="))
+				resolveNewVariable(variable_class, name, null);
+			else
+				resolveNewVariableAssignment(variable_class, name, null);
 		}
 		if(expression.matches(Regex.newArguments)){
 			VariableDeclarationStatementVisitor variable_visitor = new VariableDeclarationStatementVisitor();
@@ -404,11 +436,7 @@ public class PreviewView extends ViewPart {
 				Object o = c_node.arguments().get(i);
 				class_args[i] = resolveClass(((Expression)o).resolveTypeBinding().getQualifiedName());
 			}
-			Class<?> [] class_args2 = class_args.clone();
-			for(int i = 0; i != class_args2.length; i++) {
-				if(equivalent_classes.containsKey(class_args2[i]))
-					class_args2[i] = equivalent_classes.get(class_args2[i]);
-			}	
+
 			Object[] objects = new Object[c_node.arguments().size()];
 			for(int i = 0; i != class_args.length; i++){
 				Expression exp = (Expression)c_node.arguments().get(i);
@@ -419,23 +447,16 @@ public class PreviewView extends ViewPart {
 				variable = variable_class.newInstance();
 			}
 			else {
-				if(Control.class.isAssignableFrom(variable_class)){
-					for(int i = 0; i != class_args.length; i++){
-						if(Composite.class.isAssignableFrom(class_args[i])){
-							class_args[i] = Composite.class;
-						}
-					}
-				}
-				Constructor<?> constr = getConstructor(variable_class, class_args);
+				Constructor<?> constr = findCompatibleConstructor(variable_class, class_args);
 				variable = constr.newInstance(objects);
 			}
 			if(object == null){
 				resolveAssignmentNull(name, variable);
 			}
-			else if(name.matches(Regex.arrayAccess)){
-				Array.set(object, index, variable_class.cast(variable));
+			else if(index != -1){
+				Array.set(getObject(name), index, variable_class.cast(variable));
 			}
-			else object = variable;
+			else setObject(name, variable);
 		}
 		else if(expression.matches(Regex.methodDeclarations) || expression.matches(Regex.methodArrayDeclarations)){
 			MethodInvocationVisitor method_visitor = new MethodInvocationVisitor();
@@ -453,19 +474,19 @@ public class PreviewView extends ViewPart {
 				if(object == null){
 					resolveAssignmentNull(name, getObjectMethod(m_node, aux_name, m_node.getName().toString()));
 				}
-				else if(name.matches(Regex.arrayAccess)){
-					Array.set(object, index, variable_class.cast(getObjectMethod(m_node, objectMethodName, m_node.getName().toString())));
+				else if(index != -1){
+					Array.set(getObject(name), index, variable_class.cast(getObjectMethod(m_node, objectMethodName, m_node.getName().toString())));
 				}
-				else object = getObjectMethod(m_node, aux_name, m_node.getName().toString());
+				else setObject(name,getObjectMethod(m_node, aux_name, m_node.getName().toString()));
 			}
 			else{
 				if(object == null){
 					resolveAssignmentNull(name, getObjectMethod(m_node, objectMethodName, m_node.getName().toString()));
 				}
-				else if(name.matches(Regex.arrayAccess)){
-					Array.set(object, index, variable_class.cast(getObjectMethod(m_node, objectMethodName, m_node.getName().toString())));
+				else if(index != -1){
+					Array.set(getObject(name), index, variable_class.cast(getObjectMethod(m_node, objectMethodName, m_node.getName().toString())));
 				}
-				else object = getObjectMethod(m_node, objectMethodName, m_node.getName().toString());
+				else setObject(name, getObjectMethod(m_node, objectMethodName, m_node.getName().toString()));
 			}
 		}
 		else if(expression.matches(Regex.constantDeclarations) || expression.matches(Regex.constantArrayDeclarations)){
@@ -476,17 +497,17 @@ public class PreviewView extends ViewPart {
 			if(object == null){
 				resolveAssignmentNull(name, variable);
 			}
-			else if(name.matches(Regex.arrayAccess)){
-				Array.set(object, index, variable_class.cast(variable));
+			else if(index != -1){
+				Array.set(getObject(name), index, variable_class.cast(variable));
 			}
-			else object = variable;
+			else setObject(name,variable);
 		}
 		else if(expression.matches(Regex.newArgumentsArray)){
 			Object variable = resolveNewArgumentsArray(node, variable_class);
 			if(object == null){
 				resolveAssignmentNull(name, variable);
 			}
-			else object = variable;
+			else setObject(name,variable);
 		}
 		else {
 			if(expression.matches(Regex.arrayAccess)){
@@ -500,65 +521,108 @@ public class PreviewView extends ViewPart {
 				if(object == null){
 					resolveAssignmentNull(name, Array.get(variables.get(aux_name), (int) index));
 				}
-				else if(name.matches(Regex.arrayAccess)){
-					Array.set(object, index, variable_class.cast(Array.get(variables.get(aux_name), (int) index)));
+				else if(index != -1){
+					Array.set(getObject(name), index, variable_class.cast(Array.get(variables.get(aux_name), (int) index)));
 				}
-				else object = Array.get(variables.get(aux_name), (int) index);
+				else setObject(name,Array.get(variables.get(aux_name), (int) index));
 			}
 			else if(variables.containsKey(expression.toString())){
 				Object variable = variables.get(expression.toString());
 				if(object == null){
 					resolveAssignmentNull(name, variable);
 				}
-				else if(name.matches(Regex.arrayAccess)){
-					Array.set(object, index, variable_class.cast(variable));
+				else if(index != -1){
+					Array.set(getObject(name), index, variable_class.cast(variable));
 				}
-				else object = variable;
+				else setObject(name,variable);
 			}
 			else if(controls.containsKey(expression.toString())){
 				Object variable = controls.get(expression.toString());
 				if(object == null){
 					resolveAssignmentNull(name, variable);
 				}
-				else if(name.matches(Regex.arrayAccess)){
-					Array.set(object, index, variable_class.cast(variable));
+				else if(index != -1){
+					Array.set(getObject(name), index, variable_class.cast(variable));
 				}
-				else object = variable;
+				else setObject(name, variable);
 			}
 			else if(widgets.containsKey(expression.toString())){
 				Object variable = widgets.get(expression.toString());
 				if(object == null){
 					resolveAssignmentNull(name, variable);
 				}
-				else if(name.matches(Regex.arrayAccess)){
-					Array.set(object, index, variable_class.cast(variable));
+				else if(index != -1){
+					Array.set(getObject(name), index, variable_class.cast(variable));
 				}
-				else object = variable;
+				else setObject(name, variable);
 			}
 			else {
-				Object variable = getConstructor(variable_class, String.class).newInstance(expression.toString().replaceAll("\"", ""));
+				Object variable = findCompatibleConstructor(variable_class, String.class).newInstance(expression.toString().replaceAll("\"", ""));
 				if(object == null){
 					resolveAssignmentNull(name, variable);
 				}
-				else if(name.matches(Regex.arrayAccess)){
-					System.out.println(object  + " --- " +  index + " --- " + variable_class);
-					Array.set(object, index, variable_class.cast(variable));
+				else if(index != -1){
+					Array.set(getObject(name), index, variable_class.cast(variable));
 				}
-				else object = variable;
+				else setObject(name,variable);
+				System.out.println("ENTREI * 2 " + name + " --- " + variables.get(name) + " --- " +  expression.toString() + " --- " + variable);
 			}
 		}
 	}
 
+	private void setObject(String name, Object new_object){
+		if(controls.containsKey(name)){
+			controls.put(name, (Control)new_object);
+		}
+		else if(widgets.containsKey(name)){
+			widgets.put(name, (Widget)new_object);
+		}
+		else if(variables.containsKey(name)){
+			variables.put(name, new_object);
+		}
+		else{
+			throw new NoSuchElementException(name);
+		}
+	}
+
+	private Object getObject(String name) {
+		if(controls.containsKey(name)){
+			return controls.get(name);
+		}
+		else if(widgets.containsKey(name)){
+			return widgets.get(name);
+		}
+		else if(variables.containsKey(name)){
+			return variables.get(name);
+		}
+		return null;
+	}
+
 	private void resolveNewVariable(Class<?> variable_class, String name, Object object) {
-		if(variable_class.isAssignableFrom(Composite.class)){
+		if(object == null && Widget.class.isAssignableFrom(variable_class)){
+			System.out.println("BADADADADADADADADADAD0 " + " --- " + name + " --- " +  variable_class + " --- " + object);
+			if(widgets.containsKey(name) || controls.containsKey(name)){
+				resolveNewVariableAssignment(variable_class, name, object);
+			}
+		}
+		else { 
+			resolveNewVariableAssignment(variable_class, name, object);
+		}
+	}
+
+	private void resolveNewVariableAssignment(Class<?> variable_class, String name, Object object) {
+		if(Composite.class.isAssignableFrom(variable_class)){
+			System.out.println("BADADADADADADADADADAD1 " + " --- " + name + " --- " +  variable_class + " --- " + object);
 			controls.put(name, (Control)object);
 			controls_classes.put(name, variable_class);
 		}
-		else if(variable_class.isAssignableFrom(Widget.class)){
+		else if(Widget.class.isAssignableFrom(variable_class)){
+			System.out.println("BADADADADADADADADADAD2 " + " --- " + name + " --- " +  variable_class + " --- " + object);
 			widgets.put(name, (Widget)object);
 			widgets_classes.put(name, variable_class);
 		}
 		else{
+			System.out.println("BADADADADADADADADADAD3 " + " --- " + name + " --- " +  variable_class + " --- " + object);
 			variables.put(name, object);
 			variables_classes.put(name, variable_class);
 		}
@@ -580,6 +644,7 @@ public class PreviewView extends ViewPart {
 		Class<?> [] class_args = new Class<?> [mi.arguments().size()];
 		Object object = null;
 		Class<?> methodClass = null;
+		System.out.println("GAGAGAG " + objectName);
 		if(objectName.matches(Regex.arrayAccess)){
 			ArrayAccessVisitor aac_visitor = new ArrayAccessVisitor();
 			mi.accept(aac_visitor);
@@ -611,19 +676,67 @@ public class PreviewView extends ViewPart {
 			Object o = mi.arguments().get(i);
 			class_args[i] = resolveClass(((Expression)o).resolveTypeBinding().getQualifiedName());
 		}
-		Class<?> [] class_args2 = class_args.clone();
-		for(int i = 0; i != class_args2.length; i++) {
-			if(equivalent_classes.containsKey(class_args2[i]))
-				class_args2[i] = equivalent_classes.get(class_args2[i]);
-		}
 
-		Method m = methodClass.getMethod(methodName, class_args2);
+		// PARA FAZER
+		Method m = findCompatibleMethod(methodName, methodClass, class_args);
 		Object[] objects = new Object[mi.arguments().size()];
 		for(int i = 0; i != class_args.length; i++){
 			Expression exp = (Expression)mi.arguments().get(i);
 			objects[i] = resolveType(class_args, exp, i); 
 		}
 		m.invoke(object, objects);
+	}
+
+	private Method findCompatibleMethod(String methodName, Class<?> methodClass,
+			Class<?>[] class_args) {
+		System.out.println(methodClass + " --- " + Arrays.toString(methodClass.getMethods()));
+		for(Method m : methodClass.getMethods()) {
+			if(m.getName().equals(methodName) && checkParams(m, class_args))
+				return m;
+		}
+		return null;
+	}
+
+	private boolean checkParams(Method m, Class<?>[] class_args) {
+		Class<?>[] params = m.getParameterTypes();
+		if(params.length != class_args.length)
+			return false;
+
+		for(int i = 0; i < params.length; i++)
+			if(!params[i].isAssignableFrom(class_args[i]))
+				return false;
+
+		return true;
+	}
+
+	private Constructor<?> findCompatibleConstructor(Class<?> constructorClass,
+			Class<?>... class_args) {
+		if(constructorClass.isPrimitive()){
+			constructorClass = primitive_classes.get(constructorClass);
+		}
+		Class<?>[] params_aux = class_args.clone();
+		for(int i = 0; i != params_aux.length; i++){
+			if(primitive_classes_inverse.containsKey(params_aux[i])){
+				params_aux[i] = primitive_classes_inverse.get(params_aux[i]);
+			}
+		}
+		for(Constructor<?> c : constructorClass.getConstructors()) {
+			if(checkParamsConstructor(c, params_aux))
+				return c;
+		}
+		return null;
+	}
+
+	private boolean checkParamsConstructor(Constructor<?> c, Class<?>[] class_args) {
+		Class<?>[] params = c.getParameterTypes();
+		if(params.length != class_args.length)
+			return false;
+
+		for(int i = 0; i < params.length; i++)
+			if(!params[i].isAssignableFrom(class_args[i]))
+				return false;
+
+		return true;
 	}
 
 	private Object getObjectMethod(MethodInvocation mi, String objectName, String methodName) throws NoSuchMethodException, SecurityException, ClassNotFoundException, InstantiationException, IllegalAccessException, InvocationTargetException, ArrayIndexOutOfBoundsException, NoSuchFieldException, IllegalArgumentException {
@@ -634,7 +747,6 @@ public class PreviewView extends ViewPart {
 			ArrayAccessVisitor aac_visitor = new ArrayAccessVisitor();
 			mi.accept(aac_visitor);
 			String aux_name = aac_visitor.getNode().getArray().toString();
-			String aux_index = aac_visitor.getNode().getIndex().toString();
 			Class<?>[] aux = new Class<?>[1];
 			aux[0] = Integer.class;
 			Object index = resolveType(aux, aac_visitor.getNode().getIndex(), 0);
@@ -657,22 +769,23 @@ public class PreviewView extends ViewPart {
 			methodClass = variables_classes.get(objectName);
 		}
 		else {
-			throw new NoSuchMethodException(methodName);
+			Class<?> staticClass = resolveClass(mi.resolveMethodBinding().getDeclaringClass().getQualifiedName());
+			methodClass = staticClass;
+			//			resolveStaticMethod();
 		}
 		for(int i = 0; i != mi.arguments().size(); i++){
 			Object o = mi.arguments().get(i);
 			class_args[i] = resolveClass(((Expression)o).resolveTypeBinding().getQualifiedName());
 		}
-		Class<?> [] class_args2 = class_args.clone();
-		for(int i = 0; i != class_args2.length; i++) {
-			if(equivalent_classes.containsKey(class_args2[i]))
-				class_args2[i] = equivalent_classes.get(class_args2[i]);
-		}
-		Method m = methodClass.getMethod(methodName, class_args2);
+
+		Method m = findCompatibleMethod(methodName, methodClass, class_args);
 		Object[] objects = new Object[mi.arguments().size()];
 		for(int i = 0; i != class_args.length; i++){
 			Expression exp = (Expression)mi.arguments().get(i);
 			objects[i] = resolveType(class_args, exp, i); 
+		}
+		if(m == null){
+			m = methodClass.getDeclaredMethod(methodName, class_args);
 		}
 		return m.invoke(object, objects);
 	}
@@ -694,7 +807,7 @@ public class PreviewView extends ViewPart {
 		if(SupportClasses.primitive_array_to_object.containsKey(variable_class))
 			aux_class = SupportClasses.primitive_array_to_object.get(variable_class);
 		else if(variable_class.getCanonicalName().contains("[]"))
-			aux_class = Class.forName(aux_name.replace("[]", ""));
+			aux_class = resolveClass(aux_name.replace("[]", ""));
 		else throw new ClassNotFoundException(variable_class.toString());
 		return Array.newInstance(aux_class, (int) length);
 	}
@@ -735,7 +848,7 @@ public class PreviewView extends ViewPart {
 			Expression argument_expression = (Expression)new_class.arguments().get(j);
 			objects1[j] = resolveType(class_object_args, argument_expression, j); 
 		}
-		return getConstructor(c, class_object_args).newInstance(objects1);
+		return findCompatibleConstructor(c, class_object_args).newInstance(objects1);
 	}
 
 	private Object resolveType(Class<?>[] class_object_args, Expression argument_expression, int j)
@@ -790,20 +903,38 @@ public class PreviewView extends ViewPart {
 									throw new IllegalArgumentException(argument_expression.toString());
 								return Array.get(variables.get(aux_name), (int) index);
 							}
-							else if(widgets.containsKey(objectName))
+							else if(widgets.containsKey(objectName)){
 								return widgets.get(objectName);
+							}
 							else if(controls.containsKey(objectName)){
 								return controls.get(objectName);
 							}
 							else if(variables.containsKey(objectName)){
 								return variables.get(objectName);
 							}
-							else {
-								Object aux = getConstructor(class_object_args[j], String.class).newInstance(argument_expression.toString().replaceAll("\"", ""));
-								if(aux == null)
-									throw new IllegalArgumentException(argument_expression.toString());
-								return aux;
-							}
+							else
+								if(Composite.class.isAssignableFrom(class_object_args[j])){
+									Class<?>[] params = new Class<?>[2];
+									params[0] = Composite.class;
+									params[1] = int.class;
+									Object[] objects = new Object[2];
+									objects[0] = composite;
+									objects[1] = SWT.NONE;
+									controls.put(argument_expression.toString(), (Control)findCompatibleConstructor(class_object_args[j], params).newInstance(objects));
+									controls_classes.put(argument_expression.toString(), class_object_args[j]);
+									((Composite)controls.get(argument_expression.toString())).setLayout(new GridLayout());
+									return controls.get(argument_expression.toString());
+									//									return composite;
+								}
+								else if(argument_expression.toString().equals("null"))
+									return null;
+								else {
+									System.out.println("OLAAAAAA " + class_object_args[j].toString() + " --- " + argument_expression.toString());
+									Object aux = findCompatibleConstructor(class_object_args[j], String.class).newInstance(argument_expression.toString().replaceAll("\"", ""));
+									if(aux == null)
+										throw new IllegalArgumentException(argument_expression.toString());
+									return aux;
+								}
 						}
 					}
 				}
@@ -882,49 +1013,24 @@ public class PreviewView extends ViewPart {
 		else return node.resolveConstantExpressionValue();
 	}
 
-
-
-
-	//	private void resolveNewDeclarations(Class<?>[] class_args,
-	//			Object[] objects, int i, Expression exp)
-	//					throws ClassNotFoundException, InstantiationException,
-	//					IllegalAccessException, InvocationTargetException,
-	//					NoSuchMethodException {
-	//		NewStatementVisitor visitor_aux = new NewStatementVisitor();
-	//		exp.accept(visitor_aux);
-	//
-	//		ClassInstanceCreation new_class = visitor_aux.getNew_argument_classes().get(0);
-	//		Class<?>[] class_object_args = new Class<?>[new_class.arguments().size()];
-	//		for(int j = 0; j != new_class.arguments().size(); j++){
-	//			Object o = new_class.arguments().get(j);
-	//			class_object_args[j] = resolveClass(((Expression)o).resolveTypeBinding().getQualifiedName());
+	//	private Constructor<?> getConstructor(Class <?> c, Class<?>... params) throws NoSuchMethodException, SecurityException{
+	//		if(c.isPrimitive()){
+	//			c = primitive_classes.get(c);
 	//		}
-	//		Object[] objects1 = new Object[new_class.arguments().size()];
-	//		for(int j = 0; j != class_object_args.length; j++){
-	//			Expression argument_expression = (Expression)new_class.arguments().get(j);
-	//			objects1[j] = resolveType(class_object_args, argument_expression, j); 
+	//		Class<?>[] params_aux = params.clone();
+	//		for(int i = 0; i != params_aux.length; i++){
+	//			if(primitive_classes_inverse.containsKey(params_aux[i])){
+	//				params_aux[i] = primitive_classes_inverse.get(params_aux[i]);
+	//			}
 	//		}
-	//		objects[i] = getConstructor(class_args[i], class_object_args).newInstance(objects1);
+	//		return c.getConstructor(params_aux);
 	//	}
-
-	private Constructor<?> getConstructor(Class <?> c, Class<?>... params) throws NoSuchMethodException, SecurityException{
-		if(c.isPrimitive()){
-			c = primitive_classes.get(c);
-		}
-		Class<?>[] params_aux = params.clone();
-		for(int i = 0; i != params_aux.length; i++){
-			if(primitive_classes_inverse.containsKey(params_aux[i])){
-				params_aux[i] = primitive_classes_inverse.get(params_aux[i]);
-			}
-		}
-		return c.getConstructor(params_aux);
-	}
 
 	private String getNameDeclaration(VariableDeclarationFragment vf) {
 		return vf.getName().toString();
 	}
 
-	private Class<?> resolveClass(String classpath){
+	private Class<?> resolveClass(String classpath) throws ClassNotFoundException{
 		for(Class<?> c : primitive_classes.keySet()){
 			if(c.getName().equals(classpath))
 				return c;
@@ -932,9 +1038,11 @@ public class PreviewView extends ViewPart {
 		try {
 			return Class.forName(classpath);
 		} catch (ClassNotFoundException e) {
-			if(devMode)
-				e.printStackTrace();
-			return null;
+			Class<?> clazz = ClassLoading.getInstance().getClass(classpath);
+			if(clazz == null){
+				throw new ClassNotFoundException(classpath);
+			}
+			else return clazz;
 		}
 	}
 

@@ -26,7 +26,7 @@ import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipselabs.guita.ipreviews.handler.VObtainerVisitor;
 import org.eclipselabs.guita.ipreviews.handler.VResolverVisitor;
-import org.eclipselabs.guita.ipreviews.handler.VResolverVisitor2;
+import org.eclipselabs.guita.ipreviews.handler.VResolverVisitor;
 import org.eclipselabs.guita.ipreviews.view.PreviewView;
 
 public class PreviewCommand extends AbstractHandler {
@@ -70,9 +70,9 @@ public class PreviewCommand extends AbstractHandler {
 		CompilationUnit parse = parse(unit);
 		////			ArrayInitVisitor a_visitor = new ArrayInitVisitor();
 		//			parse.accept(a_visitor);
-		VObtainerVisitor visitor = new VObtainerVisitor();
+		VObtainerVisitor visitor = new VObtainerVisitor(start, end);
 		parse.accept(visitor);
-		VResolverVisitor2 visitor2 = new VResolverVisitor2(visitor.getNodes(), start, end);
+		VResolverVisitor visitor2 = new VResolverVisitor(visitor.getNodes(), start, end);
 		parse.accept(visitor2);
 		for(int i = 0; i != visitor2.getSwt_nodes().size(); i++){
 			System.out.println("Variables " + (i+1) + ": " + visitor2.getSwt_nodes().get(i));
