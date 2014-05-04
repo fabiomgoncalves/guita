@@ -110,7 +110,11 @@ public class VResolverVisitor extends ASTVisitor{
 				if(node.toString().matches(Regex.methodArrayDeclarations)){
 					objectName = node.toString().substring(0,node.toString().indexOf("["));
 				}
-				else objectName = node.toString().replaceAll(" ", "").substring(0, node.toString().indexOf("."));
+				else {
+					if(node.toString().contains("."))
+						objectName = node.toString().replaceAll(" ", "").substring(0, node.toString().indexOf("."));
+					else objectName = node.toString();
+				}
 				if(nodes.containsKey(objectName)){
 					swt_nodes.add(node);
 					swt_nodes_classes.add(MethodInvocation.class);

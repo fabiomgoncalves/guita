@@ -14,6 +14,16 @@
             id="ipreview.GetInfo"
             name="Get Info">
       </command>
+      <command
+            defaultHandler="org.eclipselabs.guita.ipreviews.actions.DefaultLayoutChanger"
+            id="ipreview.layoutchanger"
+            name="Layout Changer">
+      </command>
+      <command
+            defaultHandler="org.eclipselabs.guita.ipreviews.actions.DefaultLayoutChanger"
+            id="ipreview.dropdown"
+            name="DropDownList">
+      </command>
    </extension>
    <extension
          point="org.eclipse.ui.menus">
@@ -34,9 +44,36 @@
             allPopups="false"
             locationURI="toolbar:guidesign.previewview">
          <command
+               commandId="ipreview.dropdown"
+               label="Layout"
+               style="pulldown"
+               tooltip="Choose your default layout.">
+         </command>
+         <command
                commandId="ipreviews.preview"
+               icon="icons/search.png"
                label="PREV"
-               style="push">
+               style="push"
+               tooltip="Preview the selected interface.">
+         </command>
+      </menuContribution>
+      <menuContribution
+            allPopups="false"
+            locationURI="menu:ipreview.dropdown">
+         <command
+               commandId="ipreview.layoutchanger"
+               label="FillLayout"
+               style="radio">
+         </command>
+         <command
+               commandId="ipreview.layoutchanger"
+               label="GridLayout"
+               style="radio">
+         </command>
+         <command
+               commandId="ipreview.layoutchanger"
+               label="RowLayout"
+               style="radio">
          </command>
       </menuContribution>
    </extension>
