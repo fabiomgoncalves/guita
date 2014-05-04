@@ -24,6 +24,7 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
+import org.eclipselabs.guita.ipreviews.handler.BlockVisitor;
 import org.eclipselabs.guita.ipreviews.handler.VObtainerVisitor;
 import org.eclipselabs.guita.ipreviews.handler.VResolverVisitor;
 import org.eclipselabs.guita.ipreviews.handler.VResolverVisitor;
@@ -45,15 +46,17 @@ public class PreviewCommand extends AbstractHandler {
 		IJavaElement e = JavaUI.getEditorInputJavaElement(input);
 
 		ISelection selection = editor.getSite().getSelectionProvider().getSelection();
+		System.out.println("SELECTION " + selection);
 
 		if(selection instanceof ITextSelection) {
 
 			ITextSelection textSelection = ((ITextSelection) selection);
 			System.out.println(textSelection.getStartLine() + " - " + textSelection.getEndLine());
+			System.out.println("AQUIIIII " + textSelection.getLength());
 			System.out.println(e);
 
 			try {
-				createAST((ICompilationUnit) e, textSelection.getStartLine()+1, textSelection.getEndLine()+1);
+				createAST((ICompilationUnit) e, textSelection.getStartLine()+1, textSelection.getEndLine()+1, textSelection.getLength() == 0);
 			} catch (JavaModelException e1) {
 				e1.printStackTrace();
 			}
@@ -64,12 +67,21 @@ public class PreviewCommand extends AbstractHandler {
 
 
 
-	private void createAST(ICompilationUnit unit, int start, int end)
+	private void createAST(ICompilationUnit unit, int start, int end, boolean isEmpty)
 			throws JavaModelException {
 		// Now create the AST for the ICompilationUnits
 		CompilationUnit parse = parse(unit);
 		////			ArrayInitVisitor a_visitor = new ArrayInitVisitor();
 		//			parse.accept(a_visitor);
+		if(start == end && isEmpty){
+			BlockVisitor visitor = new BlockVisitor(start);
+			parse.accept(visitor);
+			if(visitor.getNode() != null){
+				start = parse.getLineNumber(visitor.getNode().getStartPosition());
+				end = parse.getLineNumber(visitor.getNode().getStartPosition() + visitor.getNode().getLength());
+			}
+			else return;
+		}
 		VObtainerVisitor visitor = new VObtainerVisitor(start, end);
 		parse.accept(visitor);
 		VResolverVisitor visitor2 = new VResolverVisitor(visitor.getNodes(), start, end);

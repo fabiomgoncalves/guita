@@ -37,6 +37,7 @@ import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Item;
+import org.eclipse.swt.widgets.Layout;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Widget;
@@ -44,10 +45,12 @@ import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.handlers.IHandlerService;
 import org.eclipse.ui.part.ViewPart;
+import org.eclipselabs.guita.ipreviews.actions.DefaultLayoutChanger;
 import org.eclipselabs.guita.ipreviews.handler.ArrayAccessVisitor;
 import org.eclipselabs.guita.ipreviews.handler.ArrayInitVisitor;
 import org.eclipselabs.guita.ipreviews.handler.ConstantStatementVisitor;
 import org.eclipselabs.guita.ipreviews.handler.InfixVisitor;
+import org.eclipselabs.guita.ipreviews.handler.MenuLayoutVariables;
 import org.eclipselabs.guita.ipreviews.handler.MethodInvocationVisitor;
 import org.eclipselabs.guita.ipreviews.handler.NewStatementVisitor;
 import org.eclipselabs.guita.ipreviews.handler.VariableDeclarationStatementVisitor;
@@ -83,7 +86,7 @@ public class PreviewView extends ViewPart {
 	@Override
 	public void createPartControl(Composite parent) {
 		composite = new Composite(parent, SWT.NONE);
-		composite.setLayout(new GridLayout());
+		composite.setLayout(MenuLayoutVariables.getInstance().getLayout());
 
 		// andre
 		//		getSite().getWorkbenchWindow().getSelectionService().addSelectionListener(new ISelectionListener() {
@@ -226,6 +229,7 @@ public class PreviewView extends ViewPart {
 	private void cleanAllVariables() {
 		//		Composite parent = composite.getParent();
 		//		composite = new Composite(parent, SWT.NONE);
+		composite.setLayout(MenuLayoutVariables.getInstance().getLayout());
 		error = false;
 		error_string = error_string_initial;
 		controls.clear();
@@ -351,7 +355,7 @@ public class PreviewView extends ViewPart {
 								variable_class2 = Composite.class;
 							Constructor<?> constr2 = findCompatibleConstructor(variable_class2, Composite.class, int.class);
 							Composite aux_composite = (Composite)constr2.newInstance(composite, SWT.NONE);
-							((Composite)aux_composite).setLayout(new GridLayout());
+							((Composite)aux_composite).setLayout(MenuLayoutVariables.getInstance().getLayout());
 							controls.put(node.arguments().get(0).toString(), aux_composite);
 							controls_classes.put(node.arguments().get(0).toString(), variable_class2);
 
@@ -377,7 +381,7 @@ public class PreviewView extends ViewPart {
 						else{
 							Constructor<?> constr2 = findCompatibleConstructor(variable_class2, Composite.class, int.class);
 							Composite aux_composite = (Composite)constr2.newInstance(composite, SWT.NONE);
-							((Composite)aux_composite).setLayout(new GridLayout());
+							((Composite)aux_composite).setLayout(MenuLayoutVariables.getInstance().getLayout());
 							controls.put(node.arguments().get(0).toString(), aux_composite);
 							controls_classes.put(node.arguments().get(0).toString(), variable_class2);
 
@@ -935,7 +939,7 @@ public class PreviewView extends ViewPart {
 									objects[1] = SWT.NONE;
 									controls.put(argument_expression.toString(), (Control)findCompatibleConstructor(class_object_args[j], params).newInstance(objects));
 									controls_classes.put(argument_expression.toString(), class_object_args[j]);
-									((Composite)controls.get(argument_expression.toString())).setLayout(new GridLayout());
+									((Composite)controls.get(argument_expression.toString())).setLayout(MenuLayoutVariables.getInstance().getLayout());
 									return controls.get(argument_expression.toString());
 									//									return composite;
 								}
