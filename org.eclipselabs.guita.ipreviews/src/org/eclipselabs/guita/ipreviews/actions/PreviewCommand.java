@@ -73,18 +73,18 @@ public class PreviewCommand extends AbstractHandler {
 		CompilationUnit parse = parse(unit);
 		////			ArrayInitVisitor a_visitor = new ArrayInitVisitor();
 		//			parse.accept(a_visitor);
+		BlockVisitor block_visitor = new BlockVisitor(start);
+		parse.accept(block_visitor);
 		if(start == end && isEmpty){
-			BlockVisitor visitor = new BlockVisitor(start);
-			parse.accept(visitor);
-			if(visitor.getNode() != null){
-				start = parse.getLineNumber(visitor.getNode().getStartPosition());
-				end = parse.getLineNumber(visitor.getNode().getStartPosition() + visitor.getNode().getLength());
+			if(block_visitor.getNode() != null){
+				start = parse.getLineNumber(block_visitor.getNode().getStartPosition());
+				end = parse.getLineNumber(block_visitor.getNode().getStartPosition() + block_visitor.getNode().getLength());
 			}
 			else return;
 		}
-		VObtainerVisitor visitor = new VObtainerVisitor(start, end);
+		VObtainerVisitor visitor = new VObtainerVisitor(start, end, block_visitor.getNode());
 		parse.accept(visitor);
-		VResolverVisitor visitor2 = new VResolverVisitor(visitor.getNodes(), start, end);
+		VResolverVisitor visitor2 = new VResolverVisitor(visitor.getNodes(), start, end, block_visitor.getNode());
 		parse.accept(visitor2);
 		for(int i = 0; i != visitor2.getSwt_nodes().size(); i++){
 			System.out.println("Variables " + (i+1) + ": " + visitor2.getSwt_nodes().get(i));

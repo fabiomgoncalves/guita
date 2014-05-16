@@ -21,6 +21,7 @@ import org.eclipse.jdt.core.dom.ArrayCreation;
 import org.eclipse.jdt.core.dom.Assignment;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.Expression;
+import org.eclipse.jdt.core.dom.FieldAccess;
 import org.eclipse.jdt.core.dom.InfixExpression;
 import org.eclipse.jdt.core.dom.InfixExpression.Operator;
 import org.eclipse.jdt.core.dom.MethodInvocation;
@@ -31,18 +32,28 @@ import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.text.TextSelection;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.StyledText;
+import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Item;
 import org.eclipse.swt.widgets.Layout;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Widget;
+import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.ISelectionListener;
+import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.handlers.IHandlerService;
 import org.eclipse.ui.part.ViewPart;
 import org.eclipselabs.guita.ipreviews.actions.DefaultLayoutChanger;
@@ -62,7 +73,7 @@ public class PreviewView extends ViewPart {
 	private final Map<Class<?>, Class<?>> primitive_classes_inverse = SupportClasses.primitive_classes_inverse;
 	public final static boolean devMode = false;
 	private boolean error = false;
-	private final String error_string_initial = "Não foi possível tratar as seguintes instruções:";
+	private final String error_string_initial = "The following expression(s) could not be handled:";
 	private String error_string = error_string_initial;
 
 	private HashMap<String, Control> controls = new HashMap<String, Control>();
@@ -87,26 +98,25 @@ public class PreviewView extends ViewPart {
 	public void createPartControl(Composite parent) {
 		composite = new Composite(parent, SWT.NONE);
 		composite.setLayout(MenuLayoutVariables.getInstance().getLayout());
-
-		// andre
-		//		getSite().getWorkbenchWindow().getSelectionService().addSelectionListener(new ISelectionListener() {
-		//
-		//			@Override
-		//			public void selectionChanged(IWorkbenchPart part, ISelection selection) {
-		//				if(selection instanceof ITextSelection) {
-		//					ITextSelection textSelection = (TextSelection) selection;
-		//
-		//					if(textSelection.getEndLine() - textSelection.getStartLine() > 0) {
-		//						IHandlerService handlerService = (IHandlerService) getSite().getService(IHandlerService.class);
-		//						try {
-		//							handlerService.executeCommand("ipreviews.preview", null);
-		//						} catch (Exception ex) {
-		//							ex.printStackTrace();
+		//		 andre
+		//				getSite().getWorkbenchWindow().getSelectionService().addSelectionListener(new ISelectionListener() {
+		//		
+		//					@Override
+		//					public void selectionChanged(IWorkbenchPart part, ISelection selection) {
+		//						if(selection instanceof ITextSelection) {
+		//							ITextSelection textSelection = (TextSelection) selection;
+		//		
+		//							if(textSelection.getEndLine() - textSelection.getStartLine() > 0) {
+		//								IHandlerService handlerService = (IHandlerService) getSite().getService(IHandlerService.class);
+		//								try {
+		//									handlerService.executeCommand("ipreviews.preview", null);
+		//								} catch (Exception ex) {
+		//									ex.printStackTrace();
+		//								}
+		//							} 
 		//						}
-		//					} 
-		//				}
-		//			}
-		//		});
+		//					}
+		//				});
 	}
 
 
@@ -146,7 +156,9 @@ public class PreviewView extends ViewPart {
 						resolveDeclaration(node, variable_class);
 					}
 				} catch (Exception e) {
-					error_string += "\n--- " + node.toString();
+					if(node.toString().contains("{"))
+						error_string += "\n>> " + node.getName() + "(...)";
+					else error_string += "\n>> " + node.toString();
 					error = true;
 					if(devMode)
 						e.printStackTrace();
@@ -159,7 +171,9 @@ public class PreviewView extends ViewPart {
 					resolveMethod(node, objectName, node.getName().toString());
 				} catch (NoSuchMethodException e){
 					if(!shells.contains(objectName)){
-						error_string += "\n--- " + node.toString();
+						if(node.toString().contains("{"))
+							error_string += "\n>> " + node.getName() + "(...)";
+						else error_string += "\n>> " + node.toString();
 						error = true;
 						if(devMode)
 							e.printStackTrace();
@@ -167,7 +181,9 @@ public class PreviewView extends ViewPart {
 				}
 				catch (Exception e) {
 					// TODO Auto-generated catch block
-					error_string += "\n--- " + node.toString();
+					if(node.toString().contains("{"))
+						error_string += "\n>> " + node.getName() + "(...)";
+					else error_string += "\n>> " + node.toString();
 					error = true;
 					if(devMode)
 						e.printStackTrace();
@@ -184,7 +200,7 @@ public class PreviewView extends ViewPart {
 					else variable_class = resolveClass(node.resolveTypeBinding().getQualifiedName());
 					resolveAssignment(node, variable_class);
 				} catch (Exception e) {
-					error_string += "\n--- " + node.toString();
+					error_string += "\n>> " + node.toString();
 					error = true;
 					if(devMode)
 						e.printStackTrace();
@@ -223,6 +239,7 @@ public class PreviewView extends ViewPart {
 		System.out.println("COMPOSITES: " + controls);
 		System.out.println("WIDGETS: " + widgets);
 		System.out.println("WIDGETS_CLASSES: " + widgets_classes);
+		System.out.println("VARIABLES: " + variables);
 
 	}
 
@@ -331,14 +348,14 @@ public class PreviewView extends ViewPart {
 			VariableDeclarationStatementVisitor variable_visitor = new VariableDeclarationStatementVisitor();
 			vf.accept(variable_visitor);
 			ClassInstanceCreation node = variable_visitor.getNode();
-			if(node.arguments().size() == 1 && variable_class.equals(Shell.class)){
+			if(node != null && node.arguments().size() == 1 && variable_class.equals(Shell.class)){
 				controls.put(getNameDeclaration(vf), composite);
 				controls_classes.put(getNameDeclaration(vf), Composite.class);
 				shells.add(getNameDeclaration(vf));
 			}
 			else {
 				Object int_aux = null;
-				if(node != null && node.arguments().size() == 2){
+				if(node != null && node.arguments().size() == 2 && (((Expression)node.arguments().get(1)).resolveTypeBinding().getName().equals("Integer") || ((Expression)node.arguments().get(1)).resolveTypeBinding().getName().equals("int"))){
 					Class<?>[] aux_array = new Class<?>[1];
 					aux_array[0] = Integer.class;
 					int_aux = resolveType(aux_array, (Expression) node.arguments().get(1), 0);
@@ -435,32 +452,38 @@ public class PreviewView extends ViewPart {
 			VariableDeclarationStatementVisitor variable_visitor = new VariableDeclarationStatementVisitor();
 			node.accept(variable_visitor);
 			ClassInstanceCreation c_node = variable_visitor.getNode();
-			Class<?> [] class_args = new Class<?> [c_node.arguments().size()];
-			for(int i = 0; i != c_node.arguments().size(); i++){
-				Object o = c_node.arguments().get(i);
-				class_args[i] = resolveClass(((Expression)o).resolveTypeBinding().getQualifiedName());
-			}
-
-			Object[] objects = new Object[c_node.arguments().size()];
-			for(int i = 0; i != class_args.length; i++){
-				Expression exp = (Expression)c_node.arguments().get(i);
-				objects[i] = resolveType(class_args, exp, i); 
-			}
-			Object variable;
-			if(class_args.length == 0){
-				variable = variable_class.newInstance();
+			if(c_node.arguments().size() == 1 && variable_class.equals(Shell.class)){
+				newComposite(name);
+				shells.add(name);
 			}
 			else {
-				Constructor<?> constr = findCompatibleConstructor(variable_class, class_args);
-				variable = constr.newInstance(objects);
+				Class<?> [] class_args = new Class<?> [c_node.arguments().size()];
+				for(int i = 0; i != c_node.arguments().size(); i++){
+					Object o = c_node.arguments().get(i);
+					class_args[i] = resolveClass(((Expression)o).resolveTypeBinding().getQualifiedName());
+				}
+
+				Object[] objects = new Object[c_node.arguments().size()];
+				for(int i = 0; i != class_args.length; i++){
+					Expression exp = (Expression)c_node.arguments().get(i);
+					objects[i] = resolveType(class_args, exp, i); 
+				}
+				Object variable;
+				if(class_args.length == 0){
+					variable = variable_class.newInstance();
+				}
+				else {
+					Constructor<?> constr = findCompatibleConstructor(variable_class, class_args);
+					variable = constr.newInstance(objects);
+				}
+				if(object == null){
+					resolveAssignmentNull(name, variable);
+				}
+				else if(index != -1){
+					Array.set(getObject(name), index, variable_class.cast(variable));
+				}
+				else setObject(name, variable);
 			}
-			if(object == null){
-				resolveAssignmentNull(name, variable);
-			}
-			else if(index != -1){
-				Array.set(getObject(name), index, variable_class.cast(variable));
-			}
-			else setObject(name, variable);
 		}
 		else if(expression.matches(Regex.methodDeclarations) || expression.matches(Regex.methodArrayDeclarations)){
 			MethodInvocationVisitor method_visitor = new MethodInvocationVisitor();
@@ -602,9 +625,21 @@ public class PreviewView extends ViewPart {
 		return null;
 	}
 
+	private Composite newComposite(String name) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
+		Class<?>[] params = new Class<?>[2];
+		params[0] = Composite.class;
+		params[1] = int.class;
+		Object[] objects = new Object[2];
+		objects[0] = composite;
+		objects[1] = SWT.NONE;
+		controls.put(name, (Control)findCompatibleConstructor(Composite.class, params).newInstance(objects));
+		controls_classes.put(name, Composite.class);
+		((Composite)controls.get(name)).setLayout(MenuLayoutVariables.getInstance().getLayout());
+		return (Composite) controls.get(name);
+	}
+
 	private void resolveNewVariable(Class<?> variable_class, String name, Object object) {
 		if(object == null && Widget.class.isAssignableFrom(variable_class)){
-			System.out.println("BADADADADADADADADADAD0 " + " --- " + name + " --- " +  variable_class + " --- " + object);
 			if(widgets.containsKey(name) || controls.containsKey(name)){
 				resolveNewVariableAssignment(variable_class, name, object);
 			}
@@ -616,17 +651,14 @@ public class PreviewView extends ViewPart {
 
 	private void resolveNewVariableAssignment(Class<?> variable_class, String name, Object object) {
 		if(Composite.class.isAssignableFrom(variable_class)){
-			System.out.println("BADADADADADADADADADAD1 " + " --- " + name + " --- " +  variable_class + " --- " + object);
 			controls.put(name, (Control)object);
 			controls_classes.put(name, variable_class);
 		}
 		else if(Widget.class.isAssignableFrom(variable_class)){
-			System.out.println("BADADADADADADADADADAD2 " + " --- " + name + " --- " +  variable_class + " --- " + object);
 			widgets.put(name, (Widget)object);
 			widgets_classes.put(name, variable_class);
 		}
 		else{
-			System.out.println("BADADADADADADADADADAD3 " + " --- " + name + " --- " +  variable_class + " --- " + object);
 			variables.put(name, object);
 			variables_classes.put(name, variable_class);
 		}
@@ -803,7 +835,10 @@ public class PreviewView extends ViewPart {
 			return m.invoke(object, objects);
 		}
 		catch(Error | Exception e){
-			throw new NoSuchMethodException(methodName);
+			if(resolveClass(mi.resolveMethodBinding().getReturnType().getQualifiedName()).equals(String.class)){
+				return findCompatibleConstructor(String.class, String.class).newInstance(mi.toString());
+			}
+			else throw new NoSuchMethodException(methodName);
 		}
 	}
 
@@ -877,6 +912,7 @@ public class PreviewView extends ViewPart {
 		}
 		else {
 			if(argument_expression.toString().matches(Regex.constantDeclarations) || argument_expression.toString().matches(Regex.constantArrayDeclarations)){
+				System.out.println("EADADADADAAAAAAAAAAAAAAAAAAAAAA " + argument_expression.toString());
 				ConstantStatementVisitor constant_visitor = new ConstantStatementVisitor();
 				argument_expression.accept(constant_visitor);
 				return getConstantObject(constant_visitor.getQualifiedName());
@@ -937,8 +973,16 @@ public class PreviewView extends ViewPart {
 									Object[] objects = new Object[2];
 									objects[0] = composite;
 									objects[1] = SWT.NONE;
-									controls.put(argument_expression.toString(), (Control)findCompatibleConstructor(class_object_args[j], params).newInstance(objects));
-									controls_classes.put(argument_expression.toString(), class_object_args[j]);
+									if(class_object_args[j].equals(Shell.class)){
+										class_object_args[j] = Composite.class;
+										controls.put(argument_expression.toString(), (Control)findCompatibleConstructor(Composite.class, params).newInstance(objects));
+										controls_classes.put(argument_expression.toString(), Composite.class);
+										shells.add(argument_expression.toString());
+									}
+									else {
+										controls.put(argument_expression.toString(), (Control)findCompatibleConstructor(class_object_args[j], params).newInstance(objects));
+										controls_classes.put(argument_expression.toString(), class_object_args[j]);
+									}
 									((Composite)controls.get(argument_expression.toString())).setLayout(MenuLayoutVariables.getInstance().getLayout());
 									return controls.get(argument_expression.toString());
 									//									return composite;
@@ -1061,6 +1105,12 @@ public class PreviewView extends ViewPart {
 			}
 			else return clazz;
 		}
+	}
+
+	@Override
+	public void dispose() {
+
+		super.dispose();
 	}
 
 }

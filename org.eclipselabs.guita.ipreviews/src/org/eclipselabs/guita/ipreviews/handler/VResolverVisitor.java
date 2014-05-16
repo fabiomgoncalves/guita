@@ -29,13 +29,14 @@ public class VResolverVisitor extends ASTVisitor{
 	private int firstLine;
 	private int lastLine;
 
-	public VResolverVisitor(Map<String, ASTNode> nodes, int firstLine, int lastLine){
+	public VResolverVisitor(Map<String, ASTNode> nodes, int firstLine, int lastLine, Block block_to_visit){
 		this.nodes = nodes;
 		swt_nodes = new ArrayList<ASTNode>();
 		swt_nodes_classes = new ArrayList<Class<?>>();
 
 		this.firstLine = firstLine;
 		this.lastLine = lastLine;
+		this.block_to_visit = block_to_visit;
 	}
 
 	private boolean withinSelection(ASTNode node) {
@@ -65,95 +66,72 @@ public class VResolverVisitor extends ASTVisitor{
 		if(!withinSelection(node))
 			return false;
 
-		createBlockToVisit(node);
+		if(!ifBlockToVisit(node))
+			return false;
 
-		if(ifBlockToVisit(node)){
-			String objectName;
-			if(node.getLeftHandSide().toString().matches(Regex.arrayAccess)){
-				objectName = node.toString().substring(0,node.toString().indexOf("["));
-			}
-			else objectName = node.toString().replaceAll(" ", "").substring(0, node.toString().indexOf("="));
-			if(nodes.containsKey(objectName)){
-				swt_nodes.add(node);
-				swt_nodes_classes.add(Assignment.class);
-			}
-			return super.visit(node);
+		String objectName;
+		if(node.getLeftHandSide().toString().matches(Regex.arrayAccess)){
+			objectName = node.toString().substring(0,node.toString().indexOf("["));
 		}
-		else return false;
+		else objectName = node.toString().replaceAll(" ", "").substring(0, node.toString().indexOf("="));
+		if(nodes.containsKey(objectName)){
+			swt_nodes.add(node);
+			swt_nodes_classes.add(Assignment.class);
+		}
+		return super.visit(node);
 	}
 
 	@Override
 	public boolean visit(VariableDeclarationStatement node) {
 		if(!withinSelection(node))
+
 			return false;
-		createBlockToVisit(node);
-		if(ifBlockToVisit(node)){
-			String objectName = ((VariableDeclarationFragment)node.fragments().get(0)).getName().toString();
-			if(nodes.containsKey(objectName)){
-				swt_nodes.add((VariableDeclarationFragment)node.fragments().get(0));
-				swt_nodes_classes.add(VariableDeclarationFragment.class);
-			}
-			return super.visit(node);
+		if(!ifBlockToVisit(node))
+			return false;
+
+		String objectName = ((VariableDeclarationFragment)node.fragments().get(0)).getName().toString();
+		if(nodes.containsKey(objectName)){
+			swt_nodes.add((VariableDeclarationFragment)node.fragments().get(0));
+			swt_nodes_classes.add(VariableDeclarationFragment.class);
 		}
-		else return false;
+		return super.visit(node);
 	}
 
 	@Override
 	public boolean visit(MethodInvocation node) {
 		if(!withinSelection(node))
 			return false;
-		createBlockToVisit(node);
 
-		if(ifBlockToVisit(node)){
-			if(node.getParent().getClass().equals(ExpressionStatement.class)){
-				String objectName;
-				if(node.toString().matches(Regex.methodArrayDeclarations)){
-					objectName = node.toString().substring(0,node.toString().indexOf("["));
-				}
-				else {
-					if(node.toString().contains("."))
-						objectName = node.toString().replaceAll(" ", "").substring(0, node.toString().indexOf("."));
-					else objectName = node.toString();
-				}
-				if(nodes.containsKey(objectName)){
-					swt_nodes.add(node);
-					swt_nodes_classes.add(MethodInvocation.class);
-				}
+		if(!ifBlockToVisit(node))
+			return false;
+
+		if(node.getParent().getClass().equals(ExpressionStatement.class)){
+			String objectName;
+			if(node.toString().matches(Regex.methodArrayDeclarations)){
+				objectName = node.toString().substring(0,node.toString().indexOf("["));
 			}
-			return super.visit(node);
-
+			else {
+				if(node.toString().contains("."))
+					objectName = node.toString().replaceAll(" ", "").substring(0, node.toString().indexOf("."));
+				else objectName = node.toString();
+			}
+			if(nodes.containsKey(objectName)){
+				swt_nodes.add(node);
+				swt_nodes_classes.add(MethodInvocation.class);
+			}
 		}
-		else return false;
+		return super.visit(node);
 	}
 
 	private boolean ifBlockToVisit(ASTNode node) {
-		boolean stop = false;
-		ASTNode test = node.getParent();
-		while(!stop){
-			if(test == null)
-				stop = true;
-			else if(test.getParent() == null){
-				return block_to_visit.equals(test);
-			}
-			else test = test.getParent();
+		ASTNode aux_node = node.getParent();
+		while(aux_node.getParent() != null && aux_node.toString().equals(node.toString()+";\n")){
+			aux_node = aux_node.getParent();
 		}
-		return false;
-	}
-
-	private void createBlockToVisit(ASTNode node) {
-		if(block_to_visit == null){
-			boolean stop = false;
-			ASTNode test = node.getParent();
-			while(!stop){
-				if(test == null)
-					stop = true;
-				else if(test.getParent() == null){
-					block_to_visit = test;
-					stop = true;
-				}
-				else test = test.getParent();
-			}
-		}
+		System.out.println("JOOOOOOOOOOOOOOOOOOOOOOOOOKE " + node + aux_node + aux_node.equals(block_to_visit));
+		if(aux_node.equals(block_to_visit))
+			return true;
+		else return false;
 	}
 
 	public List<ASTNode> getSwt_nodes() {

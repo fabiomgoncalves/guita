@@ -22,7 +22,7 @@ public class Regextest {
 		System.out.println(teste4.matches(Regex.newArguments));
 		
 		System.out.println("Constant Declarations");
-		String teste5 = "SWT.NONE";
+		String teste5 = "SWT.NONE[teste]";
 		String teste6 = "new FillLayout(aaaa, new blablabla())";
 		String teste7 = "widget.getOla()";
 		String teste8 = "aaaa";
@@ -44,6 +44,14 @@ public class Regextest {
 		System.out.println(teste11.matches(Regex.operatorsDeclarations));
 		System.out.println(teste12.matches(Regex.operatorsDeclarations));
 		System.out.println(teste13.matches(Regex.operatorsDeclarations));
+		
+		System.out.println("Method Declarations");
+		String teste14 = "this.ola.getString(\"adeus\")";
+		String teste15 = "2 | SWT.NONE | teste.getInt(teste)";
+		String teste16 = "teste.getInt(int)";
+		System.out.println(teste14.matches(Regex.methodDeclarations));
+		System.out.println(teste15.matches(Regex.methodDeclarations));
+		System.out.println(teste16.matches(Regex.methodDeclarations));
 	}
 
 }
