@@ -23,7 +23,6 @@ public class BlockVisitor extends ASTVisitor{
 
 	@Override
 	public boolean visit(Block node) {
-		System.out.println("KKKKKKKKKKKKKKKKKKKKKADADAD");
 		if(withinSelection(node))
 			this.node = node;
 		return super.visit(node);
