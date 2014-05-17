@@ -61,7 +61,7 @@ import org.eclipselabs.guita.ipreviews.handler.ArrayAccessVisitor;
 import org.eclipselabs.guita.ipreviews.handler.ArrayInitVisitor;
 import org.eclipselabs.guita.ipreviews.handler.ConstantStatementVisitor;
 import org.eclipselabs.guita.ipreviews.handler.InfixVisitor;
-import org.eclipselabs.guita.ipreviews.handler.MenuLayoutVariables;
+import org.eclipselabs.guita.ipreviews.handler.ApplicationVariables;
 import org.eclipselabs.guita.ipreviews.handler.MethodInvocationVisitor;
 import org.eclipselabs.guita.ipreviews.handler.NewStatementVisitor;
 import org.eclipselabs.guita.ipreviews.handler.VariableDeclarationStatementVisitor;
@@ -74,7 +74,7 @@ public class PreviewView extends ViewPart {
 	public final static boolean devMode = false;
 	private boolean error = false;
 	private final String error_string_initial = "The following expression(s) could not be handled:";
-	private String error_string = error_string_initial;
+	private StringBuilder error_string = new StringBuilder(error_string_initial);
 
 	private HashMap<String, Control> controls = new HashMap<String, Control>();
 	private HashMap<String, Class<?>> controls_classes = new HashMap<String, Class<?>>();
@@ -91,13 +91,13 @@ public class PreviewView extends ViewPart {
 	private Composite composite;
 
 	public PreviewView(){
-
+		ApplicationVariables.getInstance().resetVariables(true);
 	}
 
 	@Override
 	public void createPartControl(Composite parent) {
 		composite = new Composite(parent, SWT.NONE);
-		composite.setLayout(MenuLayoutVariables.getInstance().getLayout());
+		composite.setLayout(ApplicationVariables.getInstance().getLayout());
 		//		 andre
 		//				getSite().getWorkbenchWindow().getSelectionService().addSelectionListener(new ISelectionListener() {
 		//		
@@ -157,8 +157,8 @@ public class PreviewView extends ViewPart {
 					}
 				} catch (Exception e) {
 					if(node.toString().contains("{"))
-						error_string += "\n>> " + node.getName() + "(...)";
-					else error_string += "\n>> " + node.toString();
+						error_string.append("\n>> " + node.getName() + "(...)");
+					else error_string.append("\n>> " + node.toString());
 					error = true;
 					if(devMode)
 						e.printStackTrace();
@@ -172,8 +172,8 @@ public class PreviewView extends ViewPart {
 				} catch (NoSuchMethodException e){
 					if(!shells.contains(objectName)){
 						if(node.toString().contains("{"))
-							error_string += "\n>> " + node.getName() + "(...)";
-						else error_string += "\n>> " + node.toString();
+							error_string.append("\n>> " + node.getName() + "(...)");
+						else error_string.append("\n>> " + node.toString());
 						error = true;
 						if(devMode)
 							e.printStackTrace();
@@ -182,8 +182,8 @@ public class PreviewView extends ViewPart {
 				catch (Exception e) {
 					// TODO Auto-generated catch block
 					if(node.toString().contains("{"))
-						error_string += "\n>> " + node.getName() + "(...)";
-					else error_string += "\n>> " + node.toString();
+						error_string.append("\n>> " + node.getName() + "(...)");
+					else error_string.append("\n>> " + node.toString());
 					error = true;
 					if(devMode)
 						e.printStackTrace();
@@ -200,7 +200,7 @@ public class PreviewView extends ViewPart {
 					else variable_class = resolveClass(node.resolveTypeBinding().getQualifiedName());
 					resolveAssignment(node, variable_class);
 				} catch (Exception e) {
-					error_string += "\n>> " + node.toString();
+					error_string.append("\n>> " + node.toString());
 					error = true;
 					if(devMode)
 						e.printStackTrace();
@@ -208,12 +208,12 @@ public class PreviewView extends ViewPart {
 			}
 		}
 
-		if(error){
+		if(error && ApplicationVariables.getInstance().getDebug()){
 			MessageBox messageBox = new MessageBox(composite.getShell(), SWT.OK);
-			messageBox.setMessage(error_string);
+			messageBox.setMessage(error_string.toString());
 			messageBox.open();
 			error = false;
-			error_string = "";
+			error_string = new StringBuilder(error_string_initial);
 		}
 
 		//		resolveDeclarations(declarations);
@@ -246,15 +246,17 @@ public class PreviewView extends ViewPart {
 	private void cleanAllVariables() {
 		//		Composite parent = composite.getParent();
 		//		composite = new Composite(parent, SWT.NONE);
-		composite.setLayout(MenuLayoutVariables.getInstance().getLayout());
 		error = false;
-		error_string = error_string_initial;
+		error_string = new StringBuilder(error_string_initial);
 		controls.clear();
 		controls_classes.clear();
 		widgets.clear();
 		widgets_classes.clear();
 		variables.clear();
 		variables_classes.clear();
+		
+		ApplicationVariables.getInstance().resetVariables(false);
+		composite.setLayout(ApplicationVariables.getInstance().getLayout());
 	}
 
 	private void resolveDeclaration(VariableDeclarationFragment node, Class<?> variable_class) throws ClassNotFoundException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ArrayIndexOutOfBoundsException, NoSuchFieldException, SecurityException, IllegalArgumentException {
@@ -372,7 +374,7 @@ public class PreviewView extends ViewPart {
 								variable_class2 = Composite.class;
 							Constructor<?> constr2 = findCompatibleConstructor(variable_class2, Composite.class, int.class);
 							Composite aux_composite = (Composite)constr2.newInstance(composite, SWT.NONE);
-							((Composite)aux_composite).setLayout(MenuLayoutVariables.getInstance().getLayout());
+							((Composite)aux_composite).setLayout(ApplicationVariables.getInstance().getLayout());
 							controls.put(node.arguments().get(0).toString(), aux_composite);
 							controls_classes.put(node.arguments().get(0).toString(), variable_class2);
 
@@ -398,7 +400,7 @@ public class PreviewView extends ViewPart {
 						else{
 							Constructor<?> constr2 = findCompatibleConstructor(variable_class2, Composite.class, int.class);
 							Composite aux_composite = (Composite)constr2.newInstance(composite, SWT.NONE);
-							((Composite)aux_composite).setLayout(MenuLayoutVariables.getInstance().getLayout());
+							((Composite)aux_composite).setLayout(ApplicationVariables.getInstance().getLayout());
 							controls.put(node.arguments().get(0).toString(), aux_composite);
 							controls_classes.put(node.arguments().get(0).toString(), variable_class2);
 
@@ -634,7 +636,7 @@ public class PreviewView extends ViewPart {
 		objects[1] = SWT.NONE;
 		controls.put(name, (Control)findCompatibleConstructor(Composite.class, params).newInstance(objects));
 		controls_classes.put(name, Composite.class);
-		((Composite)controls.get(name)).setLayout(MenuLayoutVariables.getInstance().getLayout());
+		((Composite)controls.get(name)).setLayout(ApplicationVariables.getInstance().getLayout());
 		return (Composite) controls.get(name);
 	}
 
@@ -836,7 +838,10 @@ public class PreviewView extends ViewPart {
 		}
 		catch(Error | Exception e){
 			if(resolveClass(mi.resolveMethodBinding().getReturnType().getQualifiedName()).equals(String.class)){
-				return findCompatibleConstructor(String.class, String.class).newInstance(mi.toString());
+				if(class_args.length == 1 && class_args[0].equals(String.class)){
+					return findCompatibleConstructor(String.class, String.class).newInstance(mi.arguments().get(0).toString().replaceAll("\"", ""));
+				}
+				else return findCompatibleConstructor(String.class, String.class).newInstance(mi.toString());
 			}
 			else throw new NoSuchMethodException(methodName);
 		}
@@ -983,7 +988,7 @@ public class PreviewView extends ViewPart {
 										controls.put(argument_expression.toString(), (Control)findCompatibleConstructor(class_object_args[j], params).newInstance(objects));
 										controls_classes.put(argument_expression.toString(), class_object_args[j]);
 									}
-									((Composite)controls.get(argument_expression.toString())).setLayout(MenuLayoutVariables.getInstance().getLayout());
+									((Composite)controls.get(argument_expression.toString())).setLayout(ApplicationVariables.getInstance().getLayout());
 									return controls.get(argument_expression.toString());
 									//									return composite;
 								}

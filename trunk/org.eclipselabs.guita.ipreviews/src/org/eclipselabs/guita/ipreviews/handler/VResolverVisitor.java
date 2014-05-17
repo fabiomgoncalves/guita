@@ -14,6 +14,7 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
+import org.eclipse.jdt.core.dom.TryStatement;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipselabs.guita.ipreviews.regex.Regex;
@@ -25,11 +26,12 @@ public class VResolverVisitor extends ASTVisitor{
 	private List<ASTNode> swt_nodes;
 	private List<Class<?>> swt_nodes_classes;
 	private ASTNode block_to_visit;
+	private List<TryStatement> try_list;
 
 	private int firstLine;
 	private int lastLine;
 
-	public VResolverVisitor(Map<String, ASTNode> nodes, int firstLine, int lastLine, Block block_to_visit){
+	public VResolverVisitor(Map<String, ASTNode> nodes, int firstLine, int lastLine, Block block_to_visit, List<TryStatement> try_list){
 		this.nodes = nodes;
 		swt_nodes = new ArrayList<ASTNode>();
 		swt_nodes_classes = new ArrayList<Class<?>>();
@@ -37,6 +39,7 @@ public class VResolverVisitor extends ASTVisitor{
 		this.firstLine = firstLine;
 		this.lastLine = lastLine;
 		this.block_to_visit = block_to_visit;
+		this.try_list = try_list;
 	}
 
 	private boolean withinSelection(ASTNode node) {
@@ -128,7 +131,10 @@ public class VResolverVisitor extends ASTVisitor{
 		while(aux_node.getParent() != null && aux_node.toString().equals(node.toString()+";\n")){
 			aux_node = aux_node.getParent();
 		}
-		System.out.println("JOOOOOOOOOOOOOOOOOOOOOOOOOKE " + node + aux_node + aux_node.equals(block_to_visit));
+		for(TryStatement ts : try_list){
+			if(ts.getBody().equals(aux_node))
+				return true;
+		}
 		if(aux_node.equals(block_to_visit))
 			return true;
 		else return false;
