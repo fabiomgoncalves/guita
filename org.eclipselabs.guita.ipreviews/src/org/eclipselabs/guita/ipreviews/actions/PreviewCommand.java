@@ -84,7 +84,7 @@ public class PreviewCommand extends AbstractHandler {
 		}
 		VObtainerVisitor visitor = new VObtainerVisitor(start, end, block_visitor.getNode());
 		parse.accept(visitor);
-		VResolverVisitor visitor2 = new VResolverVisitor(visitor.getNodes(), start, end, block_visitor.getNode());
+		VResolverVisitor visitor2 = new VResolverVisitor(visitor.getNodes(), start, end, block_visitor.getNode(), visitor.getTry_list());
 		parse.accept(visitor2);
 		for(int i = 0; i != visitor2.getSwt_nodes().size(); i++){
 			System.out.println("Variables " + (i+1) + ": " + visitor2.getSwt_nodes().get(i));

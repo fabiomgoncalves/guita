@@ -39,6 +39,7 @@ public class VObtainerVisitor extends ASTVisitor {
 	Map<String, ASTNode> variables = new HashMap<String, ASTNode>();
 	Map<String, List<ASTNode>> variables_methods = new HashMap<String, List<ASTNode>>();
 	Map<String, List<ASTNode>> variables_assigns = new HashMap<String, List<ASTNode>>();
+	List<TryStatement> try_list = new ArrayList<TryStatement>();
 
 	Map<String, Class<?>> primitive_classes = new SupportClasses().primitive_classes_string;
 
@@ -63,11 +64,19 @@ public class VObtainerVisitor extends ASTVisitor {
 		return start >= firstLine && end <= lastLine;
 	}
 	
-//	@Override
-//	public boolean visit(TryStatement node) {
-//		System.out.println("TRYYYYYYYYYYYYYYYYYYYYYYYYYYY " + node.getBody());
-//		return super.visit(node);
-//	}
+	@Override
+	public boolean visit(TryStatement node) {
+		
+		if(!withinSelection(node))
+			return false;
+
+		if(!ifBlockToVisit(node))
+			return false;
+		
+		System.out.println("TRYYYYYYYYYYYYYYYYYYYYYYYYYYY " + node.getBody());
+		try_list.add(node);
+		return super.visit(node);
+	}
 
 	@Override
 	public boolean visit(FieldDeclaration node) {
@@ -252,6 +261,12 @@ public class VObtainerVisitor extends ASTVisitor {
 		ASTNode aux_node = node.getParent();
 		while(aux_node.getParent() != null && aux_node.toString().equals(node.toString()+";\n")){
 			aux_node = aux_node.getParent();
+		}
+		System.out.println("JOOOOOOOOOOOOOOOOOOOOOOOOOKE " + node + aux_node + aux_node.equals(block_to_visit));
+		for(TryStatement ts : try_list){
+			System.out.println("HEEEEEEEEEEEEEYYYYYYYY " + node + ts.getBody() + ts.getBody().equals(aux_node));
+			if(ts.getBody().equals(aux_node))
+				return true;
 		}
 		if(aux_node.equals(block_to_visit))
 			return true;
@@ -491,6 +506,10 @@ public class VObtainerVisitor extends ASTVisitor {
 			}
 			else return clazz;
 		}
+	}
+	
+	public List<TryStatement> getTry_list() {
+		return try_list;
 	}
 
 }

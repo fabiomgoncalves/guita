@@ -9,7 +9,7 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Layout;
 import org.eclipse.swt.widgets.MenuItem;
-import org.eclipselabs.guita.ipreviews.handler.MenuLayoutVariables;
+import org.eclipselabs.guita.ipreviews.handler.ApplicationVariables;
 
 public class DefaultLayoutChanger extends AbstractHandler{
 
@@ -18,7 +18,7 @@ public class DefaultLayoutChanger extends AbstractHandler{
 		System.out.println(((Event)event.getTrigger()).widget);
 		if(((Event)event.getTrigger()).widget instanceof MenuItem){
 			MenuItem item = (MenuItem) ((Event)event.getTrigger()).widget;
-			MenuLayoutVariables aux = MenuLayoutVariables.getInstance();
+			ApplicationVariables aux = ApplicationVariables.getInstance();
 			switch(item.getText()){
 				case "RowLayout":
 					aux.setLayout(new RowLayout());

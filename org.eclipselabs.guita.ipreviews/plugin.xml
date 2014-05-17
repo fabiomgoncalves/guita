@@ -24,6 +24,11 @@
             id="ipreview.dropdown"
             name="DropDownList">
       </command>
+      <command
+            defaultHandler="org.eclipselabs.guita.ipreviews.actions.ToggleDebug"
+            id="ipreviews.toggledebug"
+            name="Toggle Debug">
+      </command>
    </extension>
    <extension
          point="org.eclipse.ui.menus">
@@ -43,6 +48,12 @@
       <menuContribution
             allPopups="false"
             locationURI="toolbar:guidesign.previewview">
+         <command
+               commandId="ipreviews.toggledebug"
+               label="Debug"
+               style="toggle"
+               tooltip="Toggle the debug mode on or off.">
+         </command>
          <command
                commandId="ipreview.dropdown"
                label="Layout"
