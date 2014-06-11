@@ -10,11 +10,6 @@
             name="Preview">
       </command>
       <command
-            defaultHandler="org.eclipselabs.guita.ipreviews.handler.GetInfo"
-            id="ipreview.GetInfo"
-            name="Get Info">
-      </command>
-      <command
             defaultHandler="org.eclipselabs.guita.ipreviews.actions.DefaultLayoutChanger"
             id="ipreview.layoutchanger"
             name="Layout Changer">
@@ -32,19 +27,6 @@
    </extension>
    <extension
          point="org.eclipse.ui.menus">
-      <menuContribution
-            allPopups="false"
-            locationURI="menu:org.eclipse.ui.main.menu">
-         <menu
-               id="testeMenu"
-               label="Teste">
-            <command
-                  commandId="ipreview.GetInfo"
-                  label="GetInfo"
-                  style="push">
-            </command>
-         </menu>
-      </menuContribution>
       <menuContribution
             allPopups="false"
             locationURI="toolbar:guidesign.previewview">
