@@ -25,6 +25,7 @@ import org.eclipse.jdt.core.dom.TryStatement;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.InfixExpression.Operator;
+import org.eclipse.swt.custom.ControlEditor;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
@@ -73,13 +74,14 @@ public class VObtainerVisitor extends ASTVisitor {
 		if(!ifBlockToVisit(node))
 			return false;
 		
-		System.out.println("TRYYYYYYYYYYYYYYYYYYYYYYYYYYY " + node.getBody());
 		try_list.add(node);
 		return super.visit(node);
 	}
 
 	@Override
 	public boolean visit(FieldDeclaration node) {
+		if(node.getParent().getParent() != null)
+			return false;
 		VariableDeclarationFragment vf = (VariableDeclarationFragment)node.fragments().get(0);
 		String name = ((VariableDeclarationFragment)node.fragments().get(0)).getName().toString();
 		ITypeBinding binding = vf.resolveBinding().getType();
@@ -146,7 +148,7 @@ public class VObtainerVisitor extends ASTVisitor {
 				variables_methods.remove(name);
 				variables_assigns.remove(name);
 			}
-			if(Control.class.isAssignableFrom(variable_class) || Control[].class.isAssignableFrom(variable_class)|| Widget.class.isAssignableFrom(variable_class) || Widget[].class.isAssignableFrom(variable_class)){
+			if(ControlEditor.class.isAssignableFrom(variable_class) || Control.class.isAssignableFrom(variable_class) || Control[].class.isAssignableFrom(variable_class)|| Widget.class.isAssignableFrom(variable_class) || Widget[].class.isAssignableFrom(variable_class)){
 				nodes.put(name, vf);
 				variables.remove(name);
 				if(node.toString().contains("=")){
@@ -182,6 +184,9 @@ public class VObtainerVisitor extends ASTVisitor {
 			arrayAccess = true;
 		}
 		else objectName = node.getLeftHandSide().toString();
+		if(objectName.matches(Regex.constantDeclarations)){
+			objectName = objectName.toString().substring(0, objectName.toString().indexOf("."));
+		}
 		if(variables.containsKey(objectName)){
 			variables_assigns.get(objectName).add(node);
 		}
@@ -211,7 +216,7 @@ public class VObtainerVisitor extends ASTVisitor {
 						variables_methods.remove(objectName);
 						variables_assigns.remove(objectName);
 					}
-					if(Control.class.isAssignableFrom(variable_class) || Control[].class.isAssignableFrom(variable_class)|| Widget.class.isAssignableFrom(variable_class) || Widget[].class.isAssignableFrom(variable_class)){
+					if(ControlEditor.class.isAssignableFrom(variable_class) || Control.class.isAssignableFrom(variable_class) || Control[].class.isAssignableFrom(variable_class)|| Widget.class.isAssignableFrom(variable_class) || Widget[].class.isAssignableFrom(variable_class)){
 						nodes.put(objectName, node);
 						variables.remove(objectName);
 						if(node.toString().contains("=")){
@@ -262,9 +267,7 @@ public class VObtainerVisitor extends ASTVisitor {
 		while(aux_node.getParent() != null && aux_node.toString().equals(node.toString()+";\n")){
 			aux_node = aux_node.getParent();
 		}
-		System.out.println("JOOOOOOOOOOOOOOOOOOOOOOOOOKE " + node + aux_node + aux_node.equals(block_to_visit));
 		for(TryStatement ts : try_list){
-			System.out.println("HEEEEEEEEEEEEEYYYYYYYY " + node + ts.getBody() + ts.getBody().equals(aux_node));
 			if(ts.getBody().equals(aux_node))
 				return true;
 		}
@@ -354,7 +357,12 @@ public class VObtainerVisitor extends ASTVisitor {
 
 	}
 
-	private void analyseStringConstant(ASTNode an) {
+	private void analyseStringConstant(ASTNode ast_node) {
+		ASTNode an = ast_node;
+		if(an instanceof Assignment){
+			Assignment assign = (Assignment)an;
+			an = assign.getRightHandSide();
+		}
 		ArrayAccessVisitor a_visitor = new ArrayAccessVisitor();
 		an.accept(a_visitor);
 		String objectName;
@@ -500,11 +508,11 @@ public class VObtainerVisitor extends ASTVisitor {
 		try {
 			return Class.forName(classpath);
 		} catch (ClassNotFoundException e) {
-			Class<?> clazz = ClassLoading.getInstance().getClass(classpath);
-			if(clazz == null){
+//			Class<?> clazz = ClassLoading.getInstance().getClass(classpath);
+//			if(clazz == null){
 				throw new ClassNotFoundException(classpath);
-			}
-			else return clazz;
+//			}
+//			else return clazz;
 		}
 	}
 	

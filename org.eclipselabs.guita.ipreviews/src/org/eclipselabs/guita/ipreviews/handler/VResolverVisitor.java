@@ -56,6 +56,8 @@ public class VResolverVisitor extends ASTVisitor{
 
 	@Override
 	public boolean visit(FieldDeclaration node) {
+		if(node.getParent().getParent() != null)
+			return false;
 		String objectName = ((VariableDeclarationFragment)node.fragments().get(0)).getName().toString();
 		if(nodes.containsKey(objectName)){
 			swt_nodes.add((VariableDeclarationFragment)node.fragments().get(0));
@@ -73,7 +75,10 @@ public class VResolverVisitor extends ASTVisitor{
 			return false;
 
 		String objectName;
-		if(node.getLeftHandSide().toString().matches(Regex.arrayAccess)){
+		if(node.getLeftHandSide().toString().matches(Regex.constantDeclarations)){
+			objectName = node.getLeftHandSide().toString().substring(0, node.getLeftHandSide().toString().indexOf("."));
+		}
+		else if(node.getLeftHandSide().toString().matches(Regex.arrayAccess)){
 			objectName = node.toString().substring(0,node.toString().indexOf("["));
 		}
 		else objectName = node.toString().replaceAll(" ", "").substring(0, node.toString().indexOf("="));
