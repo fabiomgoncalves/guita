@@ -10,32 +10,38 @@ import java.util.Map.Entry;
 import pt.iscte.dcti.umlviewer.network.external.ClassDataTransferObject;
 
 public class ClassesToBytes {
-	
-	public static Map<String, ClassDataTransferObject> getClassBytes(Map<Class<?>, Collection<String>> fragment_classes) {
+
+	public static Map<String, ClassDataTransferObject> getClassBytes(Map<Class<?>, Collection<String>> fragmentClasses) {
 		Map<String, ClassDataTransferObject> data = new HashMap<String, ClassDataTransferObject>();
-		for(Entry<Class<?>, Collection<String>> entry: fragment_classes.entrySet()) {
+
+		for(Entry<Class<?>, Collection<String>> entry: fragmentClasses.entrySet()) {
 			try {
-				byte[] class_bytes = getClassBytes(entry.getKey());
-				ClassDataTransferObject aux = new ClassDataTransferObject(class_bytes, entry.getValue());
-				data.put(entry.getKey().getName(), aux);
+				byte[] classBytes = getClassBytes(entry.getKey());
+				ClassDataTransferObject classDTO = new ClassDataTransferObject(classBytes, entry.getValue());
+
+				data.put(entry.getKey().getName(), classDTO);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
+
 		return data;
 	}
-	
+
 	private static byte[] getClassBytes(Class<?> clazz) throws IOException {
 		String name = clazz.getName().replace('.', '/') + ".class";
+
 		InputStream iStream = clazz.getClassLoader().getResourceAsStream(name);
 		try {
 			byte[] class_bytes = new byte[iStream.available()];			
 			iStream.read(class_bytes);
+
 			return class_bytes;
 		}
-		finally
-		{
-			iStream.close();
+		finally {
+			if(iStream != null) {
+				iStream.close();
+			}
 		}
 	}
 

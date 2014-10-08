@@ -26,7 +26,7 @@ public class CompartmentFigure extends Figure {
 		setLayoutManager(layout);
 		setBorder(new CompartmentFigureBorder());
 	}
-	
+
 	public void mymethod() {
 		layout();
 	}
@@ -40,4 +40,5 @@ public class CompartmentFigure extends Figure {
 			graphics.drawLine(getPaintRectangle(figure, insets).getTopLeft(), tempRect.getTopRight());
 		}
 	}
+
 }

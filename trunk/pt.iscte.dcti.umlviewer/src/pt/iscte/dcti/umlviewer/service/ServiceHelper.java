@@ -7,4 +7,5 @@ public class ServiceHelper {
 	public static Service getService() {
 		return UMLViewer.getInstance();
 	}
+
 }
