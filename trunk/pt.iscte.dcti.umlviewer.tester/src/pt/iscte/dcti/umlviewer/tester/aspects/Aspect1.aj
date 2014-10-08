@@ -1,6 +1,7 @@
 package pt.iscte.dcti.umlviewer.tester.aspects;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.lang.reflect.Field;
@@ -14,14 +15,15 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
+
 import org.aspectj.lang.reflect.MethodSignature;
 
-import pt.iscte.dcti.umlviewer.network.external.ClassDataTransferObject;
-import pt.iscte.dcti.umlviewer.tester.util.ClassesToBytes;
+import pt.iscte.dcti.umlviewer.common.ClassDataTransferObject;
 
 public aspect Aspect1 {
 
-	private static final int DEFAULT_PORT = 8080;
+	private static final int DEFAULT_PORT = 8081;
 
 	private Set<Class<?>> appClasses;
 	private boolean recording;
@@ -149,6 +151,7 @@ public aspect Aspect1 {
 					Socket socket = serverSocket.accept();
 
 					new RequestHandler(socket).start();
+					System.out.println("NEWRECORD");
 				}
 			}
 			catch(IOException e) { e.printStackTrace(); }
@@ -216,7 +219,7 @@ public aspect Aspect1 {
 				else if(status.intValue() == 1 && request.intValue() == 0) {
 					endRecord();
 
-					Map<String, ClassDataTransferObject> data = ClassesToBytes.getClassBytes(getFragmentClasses());
+					Map<String, ClassDataTransferObject> data = getClassBytes(getFragmentClasses());
 					outputStream.writeObject(data);
 				}
 				else if(request.intValue() == -1) {
@@ -231,5 +234,40 @@ public aspect Aspect1 {
 		}
 
 	}
+	
+	public static Map<String, ClassDataTransferObject> getClassBytes(Map<Class<?>, Collection<String>> fragmentClasses) {
+		Map<String, ClassDataTransferObject> data = new HashMap<String, ClassDataTransferObject>();
+
+		for(Entry<Class<?>, Collection<String>> entry: fragmentClasses.entrySet()) {
+			try {
+				byte[] classBytes = getClassBytes(entry.getKey());
+				ClassDataTransferObject classDTO = new ClassDataTransferObject(classBytes, entry.getValue());
+
+				data.put(entry.getKey().getName(), classDTO);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		return data;
+	}
+
+	private static byte[] getClassBytes(Class<?> clazz) throws IOException {
+		String name = clazz.getName().replace('.', '/') + ".class";
+
+		InputStream iStream = clazz.getClassLoader().getResourceAsStream(name);
+		try {
+			byte[] class_bytes = new byte[iStream.available()];			
+			iStream.read(class_bytes);
+
+			return class_bytes;
+		}
+		finally {
+			if(iStream != null) {
+				iStream.close();
+			}
+		}
+	}
+
 
 }

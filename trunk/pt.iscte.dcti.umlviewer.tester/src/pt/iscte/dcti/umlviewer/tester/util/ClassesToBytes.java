@@ -7,7 +7,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import pt.iscte.dcti.umlviewer.network.external.ClassDataTransferObject;
+import pt.iscte.dcti.umlviewer.common.ClassDataTransferObject;
+
 
 public class ClassesToBytes {
 
