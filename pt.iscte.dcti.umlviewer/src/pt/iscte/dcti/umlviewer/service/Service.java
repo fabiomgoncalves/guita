@@ -10,4 +10,11 @@ public interface Service {
 
 	public void clear();
 
+
+	// TODO
+	//	public void showClasses(Iterable<Class<?>> classes);
+
+	public void addClickHandler(ClickHandler handler);
+
+	public void removeClickHandler(ClickHandler handler);
 }

@@ -16,6 +16,8 @@ import org.eclipse.draw2d.ConnectionEndpointLocator;
 import org.eclipse.draw2d.Graphics;
 import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.Label;
+import org.eclipse.draw2d.MouseEvent;
+import org.eclipse.draw2d.MouseListener;
 import org.eclipse.draw2d.PolygonDecoration;
 import org.eclipse.draw2d.PolylineConnection;
 import org.eclipse.draw2d.PolylineDecoration;
@@ -31,36 +33,38 @@ import org.eclipse.zest.core.widgets.IContainer;
 import org.eclipse.zest.core.widgets.ZestStyles;
 import org.eclipse.zest.layouts.LayoutStyles;
 import org.eclipse.zest.layouts.algorithms.SpringLayoutAlgorithm;
+
+import pt.iscte.dcti.umlviewer.service.ClickHandler;
 import pt.iscte.dcti.umlviewer.service.Service;
 
 public class UMLViewer extends ViewPart implements Service {
 
 	//---------------------------------------------
-	//Notas de dissertação:
+	//Notas de dissertaï¿½ï¿½o:
 	//Ideia da proxy (em alternativa aos aspectos).
 	//Justificar o uso dos aspectos.
-	//FALAR PROF: Limitação quando se trata de DAO e Entity em projetos WEB. Seria necessário melhorar o protótipo.
-	//DAO é usada para acesso aos dados, e é nela que são chamados os métodos.
-	//Entity a.k.a. Model são as data transfer objects, e apenas servem para passar os dados entre as camadas.
-	//O ideal seria combinar os métodos invocados na DAO com as relações que as Entidades têm entre si.
-	//Exemplos: Solution e Portal. No Solution seria possível, mas no Portal não.
+	//FALAR PROF: Limitaï¿½ï¿½o quando se trata de DAO e Entity em projetos WEB. Seria necessï¿½rio melhorar o protï¿½tipo.
+	//DAO ï¿½ usada para acesso aos dados, e ï¿½ nela que sï¿½o chamados os mï¿½todos.
+	//Entity a.k.a. Model sï¿½o as data transfer objects, e apenas servem para passar os dados entre as camadas.
+	//O ideal seria combinar os mï¿½todos invocados na DAO com as relaï¿½ï¿½es que as Entidades tï¿½m entre si.
+	//Exemplos: Solution e Portal. No Solution seria possï¿½vel, mas no Portal nï¿½o.
 	//---------------------------------------------
 
 	//---------------------------------------------
-	//Referências:
+	//Referï¿½ncias:
 	//GREPCODE
 	//http://www.ibm.com/developerworks/rational/library/content/RationalEdge/sep04/bell/
-	//http://help.eclipse.org/juno/index.jsp --> API do ZEST apenas disponível a partir do kepler
+	//http://help.eclipse.org/juno/index.jsp --> API do ZEST apenas disponï¿½vel a partir do kepler
 	//http://www.eclipse.org/articles/Article-GEF-Draw2d/GEF-Draw2d.html
 	//http://git.eclipse.org/c/gef/org.eclipse.gef.git/tree/org.eclipse.zest.tests/src/org/eclipse/zest/tests/swt
 	//http://www.vogella.com/tutorials/EclipseZest/article.html
 	//---------------------------------------------
 
 	//---------------------------------------------
-	//Notas da aplicação:
-	//BUG: Duas ligações distintas mas para a mesma classe ficam sobrepostas. (Curve?)
-	//BUG: Não desenha correctamente uma ligação para si mesmo (node). (VER GraphSnippet10, GraphSnippet11, 12, e 13) (DESATIVADO)
-	//BUG: Se mover uma classe, esta não irá adicionar novos métodos.
+	//Notas da aplicaï¿½ï¿½o:
+	//BUG: Duas ligaï¿½ï¿½es distintas mas para a mesma classe ficam sobrepostas. (Curve?)
+	//BUG: Nï¿½o desenha correctamente uma ligaï¿½ï¿½o para si mesmo (node). (VER GraphSnippet10, GraphSnippet11, 12, e 13) (DESATIVADO)
+	//BUG: Se mover uma classe, esta nï¿½o irï¿½ adicionar novos mï¿½todos.
 	//---------------------------------------------
 
 	//------------------------------------------------------
@@ -143,7 +147,7 @@ public class UMLViewer extends ViewPart implements Service {
 	}
 
 	private void createNode(Class<?> clazz) {
-		UMLClassFigure figure = new UMLClassFigure(clazz);
+		UMLClassFigure figure = new UMLClassFigure(clazz, listeners);
 		UMLNode node = new UMLNode(graph, SWT.NONE, figure);
 		nodesMapper.put(clazz, node);
 
@@ -418,5 +422,19 @@ public class UMLViewer extends ViewPart implements Service {
 	}
 	//######################################################
 	//######################################################
+
+
+	private HashSet<ClickHandler> listeners = new HashSet<ClickHandler>();
+
+	public void addClickHandler(ClickHandler handler) {
+		listeners.add(handler);
+	}
+
+	public void removeClickHandler(ClickHandler handler) {
+		listeners.remove(handler);
+	}
+
+
+
 
 }

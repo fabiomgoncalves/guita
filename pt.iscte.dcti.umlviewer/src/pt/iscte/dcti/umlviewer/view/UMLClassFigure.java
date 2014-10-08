@@ -10,19 +10,31 @@
 //MODIFIED
 package pt.iscte.dcti.umlviewer.view;
 
+import java.awt.Graphics;
+import java.awt.Insets;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+
+import javax.swing.border.Border;
+
 import org.eclipse.draw2d.ColorConstants;
 import org.eclipse.draw2d.Figure;
+import org.eclipse.draw2d.FigureListener;
+import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.Label;
 import org.eclipse.draw2d.LineBorder;
+import org.eclipse.draw2d.MarginBorder;
+import org.eclipse.draw2d.MouseEvent;
+import org.eclipse.draw2d.MouseListener;
 import org.eclipse.draw2d.ToolbarLayout;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
+
+import pt.iscte.dcti.umlviewer.service.ClickHandler;
 
 public class UMLClassFigure extends Figure {
 
@@ -42,14 +54,16 @@ public class UMLClassFigure extends Figure {
 	private Class<?> clazz;
 	private Set<Method> methods;
 
-	protected UMLClassFigure(Class<?> clazz) {
+	private Iterable<ClickHandler> listeners;
+
+	protected UMLClassFigure(Class<?> clazz, Iterable<ClickHandler> listeners) {
 		ToolbarLayout layout = new ToolbarLayout();
 		setLayoutManager(layout);
 
 		setBorder(new LineBorder(ColorConstants.black, 1));
 		setBackgroundColor(CLASS_COLOR);
 		setOpaque(true);
-
+		
 		addNameLabel(clazz);
 
 		methodsCompartment = new CompartmentFigure();
@@ -58,6 +72,7 @@ public class UMLClassFigure extends Figure {
 		setSize();
 
 		this.clazz = clazz;
+		this.listeners = listeners;
 		methods = new HashSet<Method>();
 	}
 
@@ -82,7 +97,7 @@ public class UMLClassFigure extends Figure {
 	//					NAME SECTION
 	//------------------------------------------------------
 	//------------------------------------------------------
-	private void addNameLabel(Class<?> clazz) {
+	private void addNameLabel(final Class<?> clazz) {
 		Font font = null;
 
 		if(Modifier.isInterface(clazz.getModifiers())) { //Interface
@@ -103,7 +118,6 @@ public class UMLClassFigure extends Figure {
 		}
 		else { //Class
 			font = CLASS_FONT;
-
 			if(SHOW_REPORTS) {
 				System.out.println(clazz.getSimpleName() + " IS CLASS");
 			}
@@ -111,7 +125,22 @@ public class UMLClassFigure extends Figure {
 
 		Label nameLabel = createLabel(clazz.getSimpleName(), font);
 		Label toolTipLabel = createToolTipLabel(clazz.getCanonicalName());
+		nameLabel.setBorder(new MarginBorder(3,10,3,10));
 		nameLabel.setToolTip(toolTipLabel);
+		nameLabel.addMouseListener(new MouseListener() {
+
+			@Override
+			public void mouseReleased(MouseEvent me) { }
+
+			@Override
+			public void mousePressed(MouseEvent me) { }
+
+			@Override
+			public void mouseDoubleClicked(MouseEvent me) {
+				for(ClickHandler h : listeners)
+					h.classClicked(clazz);
+			}
+		});
 		add(nameLabel);
 	}
 	//######################################################
@@ -139,7 +168,7 @@ public class UMLClassFigure extends Figure {
 		//setSize();
 	}
 
-	private void addMethodLabel(Method method) {
+	private void addMethodLabel(final Method method) {
 		String aux = method.getName() + "()";
 
 		if(Modifier.isProtected(method.getModifiers())) { //Protected
@@ -162,12 +191,26 @@ public class UMLClassFigure extends Figure {
 		}
 
 		Label methodLabel = createLabel(aux, font);
-
+		methodLabel.setBorder(new MarginBorder(3));
+		
 		String methodDesc = getMethodDescription(method);
 		Label toolTipLabel = createToolTipLabel(methodDesc);
 
 		methodLabel.setToolTip(toolTipLabel);
+		methodLabel.addMouseListener(new MouseListener() {
 
+			@Override
+			public void mouseReleased(MouseEvent me) { }
+
+			@Override
+			public void mousePressed(MouseEvent me) { }
+
+			@Override
+			public void mouseDoubleClicked(MouseEvent me) {
+				for(ClickHandler h : listeners)
+					h.methodClicked(method);
+			}
+		});
 		getMethodsCompartment().add(methodLabel);
 	}
 
