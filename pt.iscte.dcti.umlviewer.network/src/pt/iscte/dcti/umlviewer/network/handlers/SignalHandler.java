@@ -3,12 +3,13 @@ package pt.iscte.dcti.umlviewer.network.handlers;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
@@ -20,20 +21,18 @@ import pt.iscte.dcti.umlviewer.service.Service;
 import pt.iscte.dcti.umlviewer.service.ServiceHelper;
 
 public class SignalHandler extends AbstractHandler {
-	
-	//this Implementing Runnable?
-	
-	private static final boolean SHOW_REPORTS = true;
+
+	private static final boolean SHOW_REPORTS = false;
 
 	private static final int DEFAULT_PORT = 8080;
 
 	private Service service;
-	
-	private ByteClassLoader class_loader;
+	private ByteClassLoader classLoader;
 
 	public SignalHandler() {
 		service = ServiceHelper.getService();
-		class_loader = new ByteClassLoader(this.getClass().getClassLoader());
+		classLoader = new ByteClassLoader(this.getClass().getClassLoader());
+
 		if(SHOW_REPORTS) {
 			System.out.println("SIGNAL READY");
 		}
@@ -43,7 +42,9 @@ public class SignalHandler extends AbstractHandler {
 		if(SHOW_REPORTS) {
 			System.out.println("SIGNAL PRESSED");
 		}
-		new RecordAgent().start(); //Execute wraping on a thread?
+
+		new RecordAgent().start();
+
 		return null;
 	}
 
@@ -51,8 +52,8 @@ public class SignalHandler extends AbstractHandler {
 
 		private InetAddress addr;
 		private Socket socket;
-		private ObjectOutputStream output_stream;
-		private ObjectInputStream input_stream;
+		private ObjectOutputStream outputStream;
+		private ObjectInputStream inputStream;
 
 		private Map<String, ClassDataTransferObject> data = null;
 
@@ -61,21 +62,21 @@ public class SignalHandler extends AbstractHandler {
 			try {
 				addr = InetAddress.getByName(null);
 				socket = new Socket(addr, DEFAULT_PORT);
-				output_stream = new ObjectOutputStream(socket.getOutputStream());
-				input_stream = new ObjectInputStream(socket.getInputStream());
+				outputStream = new ObjectOutputStream(socket.getOutputStream());
+				inputStream = new ObjectInputStream(socket.getInputStream());
 				handleConnection();
 			}
 			catch (UnknownHostException e) { e.printStackTrace(); } 
 			catch (IOException e) { e.printStackTrace(); } 
 			finally {
-				if(input_stream != null) {
+				if(inputStream != null) {
 					try {
-						input_stream.close();
+						inputStream.close();
 					} catch (IOException e) { e.printStackTrace(); }
 				}
-				if(output_stream != null) {
+				if(outputStream != null) {
 					try {
-						output_stream.close();
+						outputStream.close();
 					} catch (IOException e) { e.printStackTrace(); }
 				}
 				if(socket != null) {
@@ -84,35 +85,40 @@ public class SignalHandler extends AbstractHandler {
 					} catch (IOException e) { e.printStackTrace(); }
 				}
 			}
+
 			if (data != null) {
-				Map<Class<?>, Collection<String>> fragment_classes = loadClassesFromData();
-				service.showFragment(fragment_classes);
+				Map<Class<?>, Collection<Method>> fragmentClasses = loadClassesFromData();
+				service.showFragment(fragmentClasses);
 			}
 		}
 
 		private void handleConnection() {
-			try {			
-				Integer status = (Integer)input_stream.readObject();
+			try {
 				//the first message sent by aspect is the current status on recording.
 				//both this class and aspect need to synchronize their status.
+				Integer status = (Integer)inputStream.readObject();
+
 				if(status.intValue() == 1) {
-					output_stream.writeObject(new Integer(0));
-					data = (Map<String, ClassDataTransferObject>)input_stream.readObject(); //#1
+					outputStream.writeObject(new Integer(0));
+					data = (Map<String, ClassDataTransferObject>)inputStream.readObject(); //#1
+
 					if(SHOW_REPORTS) {
 						System.out.println("STOPPED RECORDING");
 					}
 				}
 				else if(status.intValue() == 0) {
-					output_stream.writeObject(new Integer(1));
-					status = (Integer)input_stream.readObject(); //The report, is recording or not.
+					outputStream.writeObject(new Integer(1));
+					status = (Integer)inputStream.readObject(); //The report, is recording or not.
+
 					if(SHOW_REPORTS) {
 						String aux = (status.intValue() == 1) ? "STARTED RECORDING" : "RECORDING NOT STARTED";
 						System.out.println(aux);
 					}
 				}
 				else {
-					output_stream.writeObject(new Integer(-1)); //end session
-					input_stream.readObject(); //consume ack
+					outputStream.writeObject(new Integer(-1)); //end session
+					inputStream.readObject(); //consume ack
+
 					if(SHOW_REPORTS) {
 						System.out.println("ASPECT ENDED SESSION");
 					}
@@ -124,34 +130,52 @@ public class SignalHandler extends AbstractHandler {
 			catch (IOException e) { e.printStackTrace(); } 
 		}
 
-		//#1 - CONTROLAR: aspecto pode enviar sinal de terminar sessão em vez do fragmento.
+		private Map<Class<?>, Collection<Method>> loadClassesFromData() {
+			Map<Class<?>, Collection<Method>> fragmentClasses = new HashMap<Class<?>, Collection<Method>>();
 
-		private Map<Class<?>, Collection<String>> loadClassesFromData() {
-			Map<Class<?>, Collection<String>> fragment_classes = new HashMap<Class<?>, Collection<String>>();
-			class_loader.setData(data);
-			for(String class_name : class_loader.getAvailableClasses()) {
-				Class<?> clazz = null;
+			classLoader.setData(data);
+
+			Class<?> clazz = null;
+			Collection<Method> methods = null;
+
+			for(String className: classLoader.getAvailableClasses()) {
 				try {
 					if(SHOW_REPORTS) {
-						System.out.println("LOADING CLASS " + class_name);
+						System.out.println("LOADING CLASS " + className);
 					}
 
-					clazz = class_loader.loadClass(class_name); //#2
-					Collection<String> class_methods = class_loader.getClassMethods(class_name);
-					fragment_classes.put(clazz, class_methods);
+					clazz = classLoader.loadClass(className);
+
+					//workaround begin
+					Collection<String> classMethods = classLoader.getClassMethods(className);
+					if(classMethods != null && !classMethods.isEmpty()) {
+
+						methods = new LinkedList<Method>();
+
+						for(String methodName: classMethods) {
+
+							for(Method aux: clazz.getMethods()) {
+								if(aux.getName().equals(methodName) && !methods.contains(aux)) {
+									methods.add(aux);
+								}
+							}
+
+						}
+					}
+					//workaround end
+
+					fragmentClasses.put(clazz, methods);
 
 					if(SHOW_REPORTS) {
-						System.out.println("LOADED SUCCESSFULLY " + clazz.getName());
+						System.out.println("LOADED CLASS " + clazz.getName());
 					}	
 				} catch (ClassNotFoundException e) {
 					e.printStackTrace();
 				}
 			}
-			return fragment_classes;
+
+			return fragmentClasses;
 		}
-		
-		//#2 - loadClass() poderá devolver null e causar lançamento de 
-		//IllegalArgumentException quando faz put()?
 
 	}
 

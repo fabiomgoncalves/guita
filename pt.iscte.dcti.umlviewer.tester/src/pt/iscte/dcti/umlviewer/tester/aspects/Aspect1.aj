@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Collection;
@@ -18,20 +20,18 @@ import pt.iscte.dcti.umlviewer.network.external.ClassDataTransferObject;
 import pt.iscte.dcti.umlviewer.tester.util.ClassesToBytes;
 
 public aspect Aspect1 {
-	
-	//Atenção, o aspecto deve saber quando a aplicação foi fechada, para fechar o servidor também.
 
 	private static final int DEFAULT_PORT = 8080;
 
-	private Set<Class<?>> app_classes;
-
+	private Set<Class<?>> appClasses;
 	private boolean recording;
-	private Map<Class<?>, Collection<String>> fragment_classes;
+	private Map<Class<?>, Collection<String>> fragmentClasses;
 
 	public Aspect1() {
-		app_classes = new HashSet<Class<?>>();
+		appClasses = new HashSet<Class<?>>();
 		recording = false;
-		fragment_classes = null;
+		fragmentClasses = null;
+
 		new Server().start();
 	}
 
@@ -40,7 +40,7 @@ public aspect Aspect1 {
 	}
 
 	private void startRecord() {
-		fragment_classes = new HashMap<Class<?>, Collection<String>>();
+		fragmentClasses = new HashMap<Class<?>, Collection<String>>();
 		recording = true;
 	}
 
@@ -49,52 +49,113 @@ public aspect Aspect1 {
 	}
 
 	private Map<Class<?>, Collection<String>> getFragmentClasses() {
-		return fragment_classes;
+		return fragmentClasses;
 	}
 
 	after() : staticinitialization(pt.iscte.dcti.umlviewer.tester.model..*) {
-		app_classes.add(thisJoinPoint.getSignature().getDeclaringType());
+		appClasses.add(thisJoinPoint.getSignature().getDeclaringType());
 	}
 
 	after(Object o): execution(* pt.iscte.dcti.umlviewer.tester.model.*.* (..)) && target(o) {
 		if(recording) {
 			MethodSignature sig = (MethodSignature) thisJoinPoint.getSignature();
 			Class<?> clazz = sig.getDeclaringType();
-			if(fragment_classes.get(clazz) == null) { //#1
-				fragment_classes.put(clazz, new LinkedList<String>());
+
+			if(fragmentClasses.get(clazz) == null) {
+				fragmentClasses.put(clazz, new LinkedList<String>());
 			}
-			fragment_classes.get(clazz).add(sig.getMethod().getName()); //#2
-			//#3
-			for(Field f: clazz.getDeclaredFields()) {
-				if(app_classes.contains(f.getType()) && !fragment_classes.containsKey(f.getType())) { //#4
-					fragment_classes.put(f.getType(), null);
+
+			fragmentClasses.get(clazz).add(sig.getMethod().getName());
+
+			//Class Inheritance
+			Class<?> superClass = clazz.getSuperclass();
+			if(superClass != null && appClasses.contains(superClass) && !fragmentClasses.containsKey(superClass)) {
+				fragmentClasses.put(superClass, null);
+			}
+
+			Class<?>[] interfaces = clazz.getInterfaces();
+			for(Class<?> aux: interfaces) {
+				if(appClasses.contains(aux) && !fragmentClasses.containsKey(aux)) {
+					fragmentClasses.put(aux, null);
 				}
+			}
+
+			//Class Fields
+			for(Field field: clazz.getDeclaredFields()) {
+				if(field.isSynthetic()) continue;
+
+				Class<?> fieldType = field.getType();
+
+				if(Collection.class.isAssignableFrom(fieldType)) {
+					Type genericFieldType = field.getGenericType();
+
+					if(!ParameterizedType.class.isAssignableFrom(genericFieldType.getClass())) continue;
+
+					Type aux = ((ParameterizedType)genericFieldType).getActualTypeArguments()[0];
+
+					if(!Class.class.isAssignableFrom(aux.getClass())) continue;
+
+					Class<?> actualFieldType = (Class<?>)aux;
+
+					if(actualFieldType.isArray()) continue;
+
+					if(appClasses.contains(actualFieldType) && !fragmentClasses.containsKey(actualFieldType)) {
+						fragmentClasses.put(actualFieldType, null);
+					}
+				}
+
+				else if(fieldType.isArray()) {
+					Class<?> componentFieldType = fieldType.getComponentType();
+
+					if(componentFieldType.isArray()) continue;
+
+					if(appClasses.contains(componentFieldType) && !fragmentClasses.containsKey(componentFieldType)) {
+						fragmentClasses.put(componentFieldType, null);
+					}
+				}
+
+				else {
+					if(appClasses.contains(fieldType) && !fragmentClasses.containsKey(fieldType)) {
+						fragmentClasses.put(fieldType, null);
+					}
+				}
+			}
+
+			//Method Parameters
+			Class<?>[] parameterTypes = sig.getMethod().getParameterTypes();
+			for(Class<?> parameterType: parameterTypes) {
+				if(appClasses.contains(parameterType) && !fragmentClasses.containsKey(parameterType)) {
+					fragmentClasses.put(parameterType, null);
+				}
+			}
+
+			//Method Return Type
+			Class<?> returnType = sig.getMethod().getReturnType();
+			if(appClasses.contains(returnType) && !fragmentClasses.containsKey(returnType)) {
+				fragmentClasses.put(returnType, null);
 			}
 		}
 	}
-	
-	//#1 - !containsKey || (containsKey && value == null)
-	//#2 - Em vez de guardar o nome do método, guardar o próprio método em si? Ou guardar uma String "completa"?
-	//#3 - EM FALTA: Processar extends/implements e dependencias em métodos (return type e parametros de entrada)
-	//#4 - EM FALTA: Colecções e Arrays de arrays. Atenção a colecções de colecções, e arrays de arrays.
 
 	private class Server extends Thread {
 
-		private ServerSocket server_socket;
+		private ServerSocket serverSocket;
 
 		public void run() {
 			try {
-				server_socket = new ServerSocket(DEFAULT_PORT);
+				serverSocket = new ServerSocket(DEFAULT_PORT);
+
 				while(true) {
-					Socket socket = server_socket.accept();
+					Socket socket = serverSocket.accept();
+
 					new RequestHandler(socket).start();
 				}
-			} 
+			}
 			catch(IOException e) { e.printStackTrace(); }
 			finally {
-				if(server_socket != null) {
+				if(serverSocket != null) {
 					try {
-						server_socket.close();
+						serverSocket.close();
 					} catch(IOException e) { e.printStackTrace(); }
 				}
 			}
@@ -105,8 +166,8 @@ public aspect Aspect1 {
 	private class RequestHandler extends Thread {
 
 		private Socket socket;
-		private ObjectInputStream input_stream;
-		private ObjectOutputStream output_stream;
+		private ObjectInputStream inputStream;
+		private ObjectOutputStream outputStream;
 
 		private RequestHandler(Socket socket) {
 			this.socket = socket;
@@ -114,21 +175,22 @@ public aspect Aspect1 {
 
 		public void run() {
 			try {
-				input_stream = new ObjectInputStream(socket.getInputStream());
-				output_stream = new ObjectOutputStream(socket.getOutputStream());
+				inputStream = new ObjectInputStream(socket.getInputStream());
+				outputStream = new ObjectOutputStream(socket.getOutputStream());
+
 				handleRequest();
 			}
 			catch (ClassNotFoundException e) { e.printStackTrace(); }
 			catch (IOException e) { e.printStackTrace(); }
 			finally {
-				if(output_stream != null) {
+				if(outputStream != null) {
 					try {
-						output_stream.close();
+						outputStream.close();
 					} catch (IOException e) { e.printStackTrace(); }
 				}
-				if(input_stream != null) {
+				if(inputStream != null) {
 					try {
-						input_stream.close();
+						inputStream.close();
 					} catch (IOException e) { e.printStackTrace(); }
 				}
 				if(socket != null) {
@@ -142,25 +204,28 @@ public aspect Aspect1 {
 		private void handleRequest() throws IOException, ClassNotFoundException {
 			synchronized(Aspect1.this) {
 				Integer status = getCurrentStatus();
-				output_stream.writeObject(status);
-				Integer request = (Integer)input_stream.readObject();
+				outputStream.writeObject(status);
+
+				Integer request = (Integer)inputStream.readObject();
 				if(status.intValue() == 0 && request.intValue() == 1) {
 					startRecord();
+
 					status = getCurrentStatus();
-					output_stream.writeObject(status);
+					outputStream.writeObject(status);
 				}
 				else if(status.intValue() == 1 && request.intValue() == 0) {
 					endRecord();
+
 					Map<String, ClassDataTransferObject> data = ClassesToBytes.getClassBytes(getFragmentClasses());
-					output_stream.writeObject(data);
+					outputStream.writeObject(data);
 				}
 				else if(request.intValue() == -1) {
 					//END SESSION REQUEST
-					output_stream.writeObject(new Integer(-1));
+					outputStream.writeObject(new Integer(-1));
 				}
 				else {
 					//OUT_OF_SYNC -> Ignore request
-					output_stream.writeObject(new Integer(-1));
+					outputStream.writeObject(new Integer(-1));
 				}
 			}
 		}

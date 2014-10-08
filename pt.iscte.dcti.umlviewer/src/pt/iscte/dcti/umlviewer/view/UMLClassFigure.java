@@ -10,7 +10,11 @@
 //MODIFIED
 package pt.iscte.dcti.umlviewer.view;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import org.eclipse.draw2d.ColorConstants;
 import org.eclipse.draw2d.Figure;
 import org.eclipse.draw2d.Label;
@@ -19,68 +23,194 @@ import org.eclipse.draw2d.ToolbarLayout;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
-import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.widgets.Display;
 
 public class UMLClassFigure extends Figure {
 
-	//TORNAR BUILDER!?
-	//Dar entrada das imagens no build.properties!!!
-	//Possivelmente, mudar as imagens para outra pasta. Tirá-las do source.
+	private static final boolean SHOW_REPORTS = false;
 
 	private static final Color CLASS_COLOR = new Color(null, 255, 255, 206);
 	private static final Font CLASS_FONT = new Font(null, "Arial", 12, SWT.BOLD);
-	private static final Image CLASS_IMG = new Image(Display.getDefault(), UMLClassFigure.class.getResourceAsStream("images/class_obj.gif"));
-	private static final Image PUBLIC_IMG = new Image(Display.getDefault(), UMLClassFigure.class.getResourceAsStream("images/methpub_obj.gif"));
-	private static final Image PRIVATE_IMG = new Image(Display.getDefault(), UMLClassFigure.class.getResourceAsStream("images/field_private_obj.gif"));
+	private static final Font ABSTRACT_CLASS_FONT = new Font(null, "Arial", 12, SWT.BOLD | SWT.ITALIC);
+	private static final Font INTERFACE_DESC_FONT = new Font(null, "Arial", 12, SWT.NONE);
+	private static final Font METHOD_FONT = new Font(null, "Arial", 10, SWT.NONE);
+	private static final Font ABSTRACT_METHOD_FONT = new Font(null, "Arial", 10, SWT.ITALIC);
+	private static final Color TOOLTIP_COLOR = new Color(null, 255, 255, 206);
+	private static final Font TOOLTIP_FONT = new Font(null, "Arial", 11, SWT.NONE);
 
-	//private CompartmentFigure attributeFigure = new CompartmentFigure();
-	private CompartmentFigure methodFigure = new CompartmentFigure();
+	private CompartmentFigure methodsCompartment;
 
-	protected UMLClassFigure(String class_name) {
+	private Class<?> clazz;
+	private Set<Method> methods;
+
+	protected UMLClassFigure(Class<?> clazz) {
 		ToolbarLayout layout = new ToolbarLayout();
 		setLayoutManager(layout);
+
 		setBorder(new LineBorder(ColorConstants.black, 1));
 		setBackgroundColor(CLASS_COLOR);
 		setOpaque(true);
 
-		Label name_label = new Label(class_name, CLASS_IMG);
-		name_label.setFont(CLASS_FONT);
+		addNameLabel(clazz);
 
-		add(name_label);
-		
-		//add(attributeFigure);
-		
-		add(methodFigure);
-
-		/*Label attribute1 = new Label("attribute", PRIVATE_IMG);
-		getAttributesCompartment().add(attribute1);*/
+		methodsCompartment = new CompartmentFigure();
+		add(methodsCompartment);
 
 		setSize();
+
+		this.clazz = clazz;
+		methods = new HashSet<Method>();
 	}
-	
+
 	private void setSize() {
 		setSize(-1, -1);
 	}
 
-	public void addMethods(Collection<String> class_methods) {
-		for(String str: class_methods) {
-			String aux = str + "()";
-			Label method = new Label(aux, PUBLIC_IMG); //#1
-			System.out.println("ADDING METHOD: " + aux);
-			getMethodsCompartment().add(method);
-			System.out.println("METHOD ADDED: " + aux);
-		}
-		setSize();
-	}
-	
-	//#1 - EM FALTA: Identificar visibilidade do método (public, private, protected)
-
-	/*private CompartmentFigure getAttributesCompartment() {
-		return attributeFigure;
-	}*/
-
 	private CompartmentFigure getMethodsCompartment() {
-		return methodFigure;
+		return this.methodsCompartment;
 	}
+
+	public Class<?> getClazz() {
+		return this.clazz;
+	}
+
+	public Set<Method> getMethods() {
+		return this.methods;
+	}
+
+	//------------------------------------------------------
+	//------------------------------------------------------
+	//					NAME SECTION
+	//------------------------------------------------------
+	//------------------------------------------------------
+	private void addNameLabel(Class<?> clazz) {
+		Font font = null;
+
+		if(Modifier.isInterface(clazz.getModifiers())) { //Interface
+			Label interfaceLabel = createLabel("<<interface>>", INTERFACE_DESC_FONT);
+			add(interfaceLabel);
+			font = CLASS_FONT;
+
+			if(SHOW_REPORTS) {
+				System.out.println(clazz.getSimpleName() + " IS INTERFACE");
+			}
+		}
+		else if (Modifier.isAbstract(clazz.getModifiers())) { //Abstract
+			font = ABSTRACT_CLASS_FONT;
+
+			if(SHOW_REPORTS) {
+				System.out.println(clazz.getSimpleName() + " IS ABSTRACT");
+			}
+		}
+		else { //Class
+			font = CLASS_FONT;
+
+			if(SHOW_REPORTS) {
+				System.out.println(clazz.getSimpleName() + " IS CLASS");
+			}
+		}
+
+		Label nameLabel = createLabel(clazz.getSimpleName(), font);
+		Label toolTipLabel = createToolTipLabel(clazz.getCanonicalName());
+		nameLabel.setToolTip(toolTipLabel);
+		add(nameLabel);
+	}
+	//######################################################
+	//######################################################
+
+	//------------------------------------------------------
+	//------------------------------------------------------
+	//					METHODS SECTION
+	//------------------------------------------------------
+	//------------------------------------------------------
+	public void addMethods(Collection<Method> methodsToAdd) {
+		for(Method method: methodsToAdd) {
+
+			if(methods.contains(method)) continue;
+
+			addMethodLabel(method);
+			methods.add(method);
+
+			if(SHOW_REPORTS) {
+				System.out.println("METHOD " + method.getName() + " ADDED TO " + clazz.getSimpleName());
+			}
+		}
+
+		//getMethodsCompartment().mymethod();
+		//setSize();
+	}
+
+	private void addMethodLabel(Method method) {
+		String aux = method.getName() + "()";
+
+		if(Modifier.isProtected(method.getModifiers())) { //Protected
+			aux = "# " + aux;
+		}
+		else if(Modifier.isPrivate(method.getModifiers())) { //Private
+			aux = "- " + aux;
+		}
+		else { //Public
+			aux = "+ " + aux;
+		}
+
+		Font font = null;
+
+		if(Modifier.isAbstract(method.getModifiers())) { //Abstract
+			font = ABSTRACT_METHOD_FONT;
+		}
+		else { //Method
+			font = METHOD_FONT;
+		}
+
+		Label methodLabel = createLabel(aux, font);
+
+		String methodDesc = getMethodDescription(method);
+		Label toolTipLabel = createToolTipLabel(methodDesc);
+
+		methodLabel.setToolTip(toolTipLabel);
+
+		getMethodsCompartment().add(methodLabel);
+	}
+
+	private String getMethodDescription(Method method) {
+		StringBuilder builder = new StringBuilder();
+
+		builder.append(method.getName()).append("(");
+
+		if(method.getParameterTypes().length > 0) {
+
+			for(Class<?> parameterType: method.getParameterTypes()) {
+				builder.append(parameterType.getCanonicalName()).append(", ");
+			}
+
+			builder.delete((builder.length()-2), builder.length());
+		}
+
+		builder.append(") : ");
+		builder.append(method.getReturnType().getCanonicalName());
+
+		return builder.toString();
+	}
+	//######################################################
+	//######################################################
+
+	//------------------------------------------------------
+	//------------------------------------------------------
+	//					COMMON METHODS
+	//------------------------------------------------------
+	//------------------------------------------------------
+	private Label createLabel(String text, Font font) {
+		Label label = new Label(text);
+		label.setFont(font);
+		return label;
+	}
+
+	private Label createToolTipLabel(String text) {
+		Label toolTipLabel = createLabel(text, TOOLTIP_FONT);
+		toolTipLabel.setBackgroundColor(TOOLTIP_COLOR);
+		toolTipLabel.setOpaque(true);
+		return toolTipLabel;
+	}
+	//######################################################
+	//######################################################
+
 }
