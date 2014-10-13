@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+   <extension
+         point="org.eclipse.ui.popupMenus">
+      <objectContribution
+            objectClass="org.eclipse.jdt.core.IJavaElement"
+            id="pt.iscte.dcti.umlstrip.contribution1">
+         <action
+               class="pt.iscte.dcti.umlstrip.popup.actions.ViewInClassDiagram"
+               enablesFor="+"
+               icon="icons/class.png"
+               id="pt.iscte.dcti.umlstrip.newAction2"
+               label="View in diagram"
+               menubarPath="additions">
+         </action>
+      </objectContribution>
+   </extension>
+
+</plugin>
