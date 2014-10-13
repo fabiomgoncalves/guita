@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+   <extension
+         point="org.eclipse.ui.views">
+      <view
+            allowMultiple="false"
+            category="org.eclipse.ui"
+            class="org.eclipselabs.jmodeldiagram.view.JModelViewer"
+            icon="icons/class.png"
+            id="org.eclipselabs.jmodeldiagram.view"
+            name="Class Diagram">
+      </view>
+   </extension>
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            allPopups="false"
+            locationURI="toolbar:org.eclipselabs.jmodeldiagram.view">
+         <command
+               commandId="org.eclipselabs.jmodeldiagram.view.clear"
+               icon="icons/delete.gif"
+               label="Clear all"
+               style="push"
+               tooltip="Clear all">
+         </command>
+      </menuContribution>
+   </extension>
+   <extension
+         point="org.eclipse.ui.commands">
+      <command
+            defaultHandler="org.eclipselabs.jmodeldiagram.view.ClearContentHandler"
+            id="org.eclipselabs.jmodeldiagram.view.clear"
+            name="Clear Content">
+      </command>
+   </extension>
+
+</plugin>
