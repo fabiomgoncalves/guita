@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: JModelDiagram class model
+Bundle-SymbolicName: org.eclipselabs.jmodeldiagram.model
+Export-Package: org.eclipselabs.jmodeldiagram.model,
+ org.eclipselabs.jmodeldiagram.model.reflection
+Bundle-Version: 0.1
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
