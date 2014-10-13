@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Aspects
+Bundle-SymbolicName: pt.iscte.dcti.rtdmodel.aspects
+Bundle-Version: 1.0.0.qualifier
+Export-Package: pt.iscte.dcti.rtdmodel.aspects
+Require-Bundle: org.eclipselabs.jmodeldiagram.model;bundle-version="0.1.0"
