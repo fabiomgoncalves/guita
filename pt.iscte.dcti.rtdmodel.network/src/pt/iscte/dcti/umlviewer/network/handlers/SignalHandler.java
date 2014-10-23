@@ -18,12 +18,12 @@ import org.eclipse.core.commands.ExecutionException;
 import org.eclipselabs.jmodeldiagram.model.JModel;
 import org.eclipselabs.jmodeldiagram.view.JModelViewer;
 
+import pt.iscte.dcti.rtdmodel.network.Activator;
 import pt.iscte.dcti.umlviewer.service.Service;
 import pt.iscte.dcti.umlviewer.service.ServiceHelper;
 
 public class SignalHandler extends AbstractHandler {
 
-	private static final int DEFAULT_PORT = 8081;
 
 	private JModelViewer viewer;
 
@@ -43,15 +43,13 @@ public class SignalHandler extends AbstractHandler {
 		private ObjectOutputStream outputStream;
 		private ObjectInputStream inputStream;
 
-//		private Map<String, ClassDataTransferObject> data = null;
-
 		private JModel fragment;
 		
 		public void run() {
 			//spamming the "option click" will trigger various threads.
 			try {
 				addr = InetAddress.getByName(null);
-				socket = new Socket(addr, DEFAULT_PORT);
+				socket = new Socket(addr, Activator.getInstance().getSocketPort());
 				outputStream = new ObjectOutputStream(socket.getOutputStream());
 				inputStream = new ObjectInputStream(socket.getInputStream());
 				handleConnection();
@@ -76,10 +74,6 @@ public class SignalHandler extends AbstractHandler {
 				}
 			}
 
-//			if (data != null) {
-//				Map<Class<?>, Collection<Method>> fragmentClasses = loadClassesFromData();
-//				service.showFragment(fragmentClasses);
-//			}
 			if(fragment != null) {
 				viewer.displayModel(fragment, true);
 			}
@@ -96,7 +90,7 @@ public class SignalHandler extends AbstractHandler {
 					outputStream.writeObject(new Integer(0));
 //					data = (Map<String, ClassDataTransferObject>)inputStream.readObject(); //#1
 					fragment = (JModel) inputStream.readObject();
-
+					System.out.println("RECEIVED\n" + fragment);
 				}
 				else if(status.intValue() == 0) {
 					outputStream.writeObject(new Integer(1));

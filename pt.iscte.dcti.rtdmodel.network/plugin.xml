@@ -8,6 +8,11 @@
             id="pt.iscte.dcti.umlviewer.network.commands.SignalCommand"
             name="Signal">
       </command>
+      <command
+            defaultHandler="pt.iscte.dcti.umlviewer.network.commands.SetPort"
+            id="pt.iscte.dcti.umlviewer.network.commands.SetPort"
+            name="Set port">
+      </command>
    </extension>
    <extension
          point="org.eclipse.ui.menus">
@@ -16,12 +21,22 @@
             locationURI="toolbar:org.eclipselabs.jmodeldiagram.view">
          <command
                commandId="pt.iscte.dcti.umlviewer.network.commands.SignalCommand"
-               icon="icons/record_icon.jpg"
+               icon="icons/capture.png"
                label="Signal UI"
                style="toggle"
                tooltip="Toggle to start/stop recording">
          </command>
       </menuContribution>
+         <menuContribution
+               allPopups="false"
+               locationURI="menu:org.eclipselabs.jmodeldiagram.view">
+            <command
+                  commandId="pt.iscte.dcti.umlviewer.network.commands.SetPort"
+                  icon="icons/socket.gif"
+                  label="Set socket port"
+                  style="push">
+            </command>
+         </menuContribution>
    </extension>
 
 </plugin>
