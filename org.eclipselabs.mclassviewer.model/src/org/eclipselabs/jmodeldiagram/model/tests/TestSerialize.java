@@ -23,6 +23,11 @@ public class TestSerialize {
 		
 		JInterface i = new JInterface("I");
 		new JOperation(i, "op2");
+		new JOperation(i, "op3");
+		model.addType(i);
+		
+		System.out.println(model);
+		
 		
 		try {
 			ObjectOutputStream oos = new ObjectOutputStream(System.out);

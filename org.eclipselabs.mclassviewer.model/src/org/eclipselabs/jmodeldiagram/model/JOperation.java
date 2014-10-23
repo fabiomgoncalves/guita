@@ -1,11 +1,13 @@
 package org.eclipselabs.jmodeldiagram.model;
 
-import java.util.List;
+import static org.eclipselabs.jmodeldiagram.model.Util.checkNotNull;
 
-import static org.eclipselabs.jmodeldiagram.model.Util.*;
+import java.util.List;
 
 
 public class JOperation extends NamedElement {
+
+	private static final long serialVersionUID = 1L;
 
 	private JType owner;
 	private Visibility visibility;
@@ -40,6 +42,15 @@ public class JOperation extends NamedElement {
 		return isStatic;
 	}
 	
+	JOperation copyTo(JType type) {
+		JOperation op = new JOperation(type, getName());
+		op.visibility = visibility;
+		op.isAbstract = isAbstract;
+		op.isStatic = isStatic;
+//		op.params = ne
+		op.returnType = returnType;
+		return op;
+	}
 	// TODO
 	@Override
 	boolean equalsInternal(Object obj) {
@@ -49,6 +60,11 @@ public class JOperation extends NamedElement {
 	@Override
 	int hashCodeInternal() {
 		return super.hashCodeInternal();
+	}
+	
+	@Override
+	public String toString() {
+		return visibility.symbol() + " " + getName() + "(...)";
 	}
 }
 

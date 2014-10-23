@@ -30,4 +30,6 @@ public final class JInterface extends JType {
 		addStereotypeInternal(stereotype);
 		return this;
 	}
+	
+	
 }

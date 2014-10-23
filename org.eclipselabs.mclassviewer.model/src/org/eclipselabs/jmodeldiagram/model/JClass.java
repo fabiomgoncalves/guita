@@ -9,6 +9,9 @@ import java.util.List;
 import java.util.Set;
 
 public final class JClass extends JType {
+	
+	private static final long serialVersionUID = 1L;
+	
 	private boolean isAbstract;
 	private JClass superclass;
 	private Set<JInterface> supertypes;
@@ -49,7 +52,7 @@ public final class JClass extends JType {
 		return this;
 	}
 	
-	public void addField(JField field) {
+	void addField(JField field) {
 		checkNotNull(field);
 		if(fields.isEmpty())
 			fields = new ArrayList<JField>(5);
@@ -97,6 +100,13 @@ public final class JClass extends JType {
 
 	public Iterable<Association> getAssociations() {
 		return Collections.unmodifiableSet(associations);
+	}
+
+	@Override
+	void internalMerge(JType type) {
+		JClass ctype = (JClass) type;
+		// merge fields
+		
 	}
 
 	

@@ -1,14 +1,13 @@
 package org.eclipselabs.jmodeldiagram.model;
 
-import java.io.Serializable;
+import static org.eclipselabs.jmodeldiagram.model.Util.checkNotNull;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import static org.eclipselabs.jmodeldiagram.model.Util.*;
-
-public  class JType extends StereotypedElement implements Iterable<JOperation> {
+public  abstract class JType extends StereotypedElement implements Iterable<JOperation> {
 	private static final long serialVersionUID = 1L;
 
 	private final String qualifiedName;
@@ -30,7 +29,7 @@ public  class JType extends StereotypedElement implements Iterable<JOperation> {
 	}
 	
 	public String getName() {
-		int i = qualifiedName.indexOf('.'); 
+		int i = qualifiedName.lastIndexOf('.'); 
 		if(i == -1)
 			return qualifiedName;
 		else
@@ -81,10 +80,32 @@ public  class JType extends StereotypedElement implements Iterable<JOperation> {
 		return getClass().equals(JClass.class);
 	}
 	
+	public void merge(JType type) {
+		checkNotNull(type);
+		if(isClass() && !type.isClass())
+			throw new IllegalArgumentException("incompatible merge");
+		
+		if(!type.equals(type))
+			throw new IllegalArgumentException("incompatible merge - types must be the same");
+		
+		for(JOperation o : type.operations)
+			o.copyTo(this);
+		
+		internalMerge(type);
+	}
 	
+	void internalMerge(JType type) {
+		
+	}
+
 	@Override
 	public Iterator<JOperation> iterator() {
 		return Collections.unmodifiableList(operations).iterator();
+	}
+	
+	@Override
+	public String toString() {
+		return qualifiedName + " " + (isClass() ? "[class]" : "[interface]");
 	}
 	
 }
