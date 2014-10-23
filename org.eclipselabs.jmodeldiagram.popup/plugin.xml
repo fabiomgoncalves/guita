@@ -8,7 +8,7 @@
             objectClass="org.eclipse.jdt.core.IJavaElement"
             id="pt.iscte.dcti.umlstrip.contribution1">
          <action
-               class="pt.iscte.dcti.umlstrip.popup.actions.ViewInClassDiagram"
+               class="pt.iscte.dcti.umlstrip.popup.actions.ViewInClassDiagram2"
                enablesFor="+"
                icon="icons/class.png"
                id="pt.iscte.dcti.umlstrip.newAction2"

@@ -14,6 +14,8 @@ import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.Signature;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -39,16 +41,17 @@ public class ViewInClassDiagram2 implements IObjectActionDelegate {
 	private IStructuredSelection selection;
 	private ClickHandler handler;
 
-	/**
-	 * @see IObjectActionDelegate#setActivePart(IAction, IWorkbenchPart)
-	 */
 	public void setActivePart(IAction action, IWorkbenchPart targetPart) {
-		shell = targetPart.getSite().getShell();
+
 	}
 
-	/**
-	 * @see IActionDelegate#run(IAction)
-	 */
+	public void selectionChanged(IAction action, ISelection selection) {
+		if(selection instanceof IStructuredSelection)
+			this.selection = (IStructuredSelection) selection;
+		else
+			this.selection = null;
+	}
+	
 	public void run(IAction action) {
 		if(selection == null || selection.isEmpty())
 			return;
@@ -75,7 +78,7 @@ public class ViewInClassDiagram2 implements IObjectActionDelegate {
 			
 			for(IType t : classes)
 				if(!t.isInterface())
-					handleAssociations(t, model);
+					;//handleAssociations(t, model);
 			
 			ServiceHelper.getService().displayModel(model, false);
 
@@ -128,8 +131,10 @@ public class ViewInClassDiagram2 implements IObjectActionDelegate {
 
 		IType t = unit.findPrimaryType();
 		
+		JType owner = null;
 		if(t.isInterface()) {
-			JInterface ji = new JInterface(t.getElementName());
+			JInterface ji = new JInterface(t.getFullyQualifiedName());
+			owner = ji;
 			model.addType(ji);
 			
 			for(String interfaceName : t.getSuperInterfaceNames()) {
@@ -138,9 +143,11 @@ public class ViewInClassDiagram2 implements IObjectActionDelegate {
 			}
 		}
 		else {
-			JClass jc = new JClass(t.getElementName());
+			JClass jc = new JClass(t.getFullyQualifiedName());
+			owner = jc;
 			model.addType(jc);
-			if(!t.getSuperclassName().equals("Object")) {
+			String superName = t.getSuperclassName();
+			if(superName != null && !"Object".equals(superName)) {
 				JClass superclass = new JClass(t.getSuperclassName());
 				model.addType(superclass);
 				jc.setSuperclass(superclass);
@@ -150,67 +157,78 @@ public class ViewInClassDiagram2 implements IObjectActionDelegate {
 				jc.addInterface(si);
 			}
 		}
+		for(IMethod m : t.getMethods()) {
+		
+			new JOperation(owner, m.getElementName());
+		}
+		
 		return t;
 	}
-
-	private void handleAssociations(IType t, JModel model) {
-		 JClass jc = (JClass) model.getType(t.getFullyQualifiedName());
-		 
-		 
-		for(IField field : t.getFields()) {
-
-			if(field.isSynthetic()) continue;
-
-			Class<?> fieldType = field.getType();
-			
-			if(Collection.class.isAssignableFrom(fieldType)) { //Collection field
-//				Type genericFieldType = field.getGenericType();
-//
-//				if(!ParameterizedType.class.isAssignableFrom(genericFieldType.getClass())) continue; //If the collection does not have a parametrized type
-//
-//				Type aux = ((ParameterizedType)genericFieldType).getActualTypeArguments()[0];
-
-				if(!Class.class.isAssignableFrom(aux.getClass())) continue; //If the parametrized type is not a class type, i.e., Collection<Collection<Type>>
-
-				Class<?> actualFieldType = (Class<?>)aux;
-
-				if(actualFieldType.isArray()) continue; //If the parametrized type is an array
-
-				new Association(jc, model.getType(actualFieldType.getName()), false);
 	
-//				if(set.contains(actualFieldType)) {
-					//createMultipleConnection(clazz, actualFieldType, field);
-//				}
+	private void handleAssociations(IType t, JModel model) {
+		
+		
+		try {
+			for(IMethod m : t.getMethods()) {
+//			m.get
+//			IMethodBinding  method=m.resolveMethodBinding();
 			}
-			else if(fieldType.isArray()) { //Array field
-				Class<?> componentFieldType = fieldType.getComponentType();
-
-				if(componentFieldType.isArray()) continue; //If the component type of the array is another array
-
-//				if(set.contains(componentFieldType)) {
-					//createMultipleConnection(clazz, componentFieldType, field);
-//				}
-				new Association(jc, model.getType(componentFieldType.getName()), false);
-			}
-			else if(model.getType(fieldType.getName()) != null) { //Class field
-//				if(set.contains(fieldType)) {
-					//createSimpleConnection(clazz, fieldType, field);
-//				}
-				new Association(jc, model.getType(fieldType.getName()), true);
-			}
-
+		} catch (JavaModelException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
+	
+//	private void handleAssociations(IType t, JModel model) {
+//		 JClass jc = (JClass) model.getType(t.getFullyQualifiedName());
+//		 
+//		
+//		for(IField field : t.getFields()) {
+//
+//
+//			System.out.println(field);
+//			
+//			
+//			if(Collection.class.isAssignableFrom(fieldType)) { //Collection field
+////				Type genericFieldType = field.getGenericType();
+////
+////				if(!ParameterizedType.class.isAssignableFrom(genericFieldType.getClass())) continue; //If the collection does not have a parametrized type
+////
+////				Type aux = ((ParameterizedType)genericFieldType).getActualTypeArguments()[0];
+//
+//				if(!Class.class.isAssignableFrom(aux.getClass())) continue; //If the parametrized type is not a class type, i.e., Collection<Collection<Type>>
+//
+//				Class<?> actualFieldType = (Class<?>)aux;
+//
+//				if(actualFieldType.isArray()) continue; //If the parametrized type is an array
+//
+//				new Association(jc, model.getType(actualFieldType.getName()), false);
+//	
+////				if(set.contains(actualFieldType)) {
+//					//createMultipleConnection(clazz, actualFieldType, field);
+////				}
+//			}
+//			else if(fieldType.isArray()) { //Array field
+//				Class<?> componentFieldType = fieldType.getComponentType();
+//
+//				if(componentFieldType.isArray()) continue; //If the component type of the array is another array
+//
+////				if(set.contains(componentFieldType)) {
+//					//createMultipleConnection(clazz, componentFieldType, field);
+////				}
+//				new Association(jc, model.getType(componentFieldType.getName()), false);
+//			}
+//			else if(model.getType(fieldType.getName()) != null) { //Class field
+////				if(set.contains(fieldType)) {
+//					//createSimpleConnection(clazz, fieldType, field);
+////				}
+//				new Association(jc, model.getType(fieldType.getName()), true);
+//			}
+//
+//		}
+//	}
 
 
-	/**
-	 * @see IActionDelegate#selectionChanged(IAction, ISelection)
-	 */
-	public void selectionChanged(IAction action, ISelection selection) {
-		if(selection instanceof IStructuredSelection)
-			this.selection = (IStructuredSelection) selection;
-		else
-			this.selection = null;
-	}
+
 
 }
