@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -14,14 +15,14 @@ import java.util.Set;
 public class JModel implements Iterable<JType>, Serializable {
 	private static final long serialVersionUID = 1L;
 	
-	// TODO
-	//private final Set<JPackage> packages;
+	private final Set<JPackage> packages;
 	
 	private final Map<String, JType> types;
 	private String description;
 	
 	public JModel() {
 		types = new HashMap<String, JType>();
+		packages = new HashSet<JPackage>();
 	}
 	
 	public JModel(String description) {
@@ -37,6 +38,10 @@ public class JModel implements Iterable<JType>, Serializable {
 	@Override
 	public Iterator<JType> iterator() {
 		return Collections.unmodifiableCollection(types.values()).iterator();
+	}
+	
+	public Iterator<JPackage> getPackages() {
+		return Collections.unmodifiableSet(packages).iterator();
 	}
 	
 	public Iterator<JClass> classes() {
