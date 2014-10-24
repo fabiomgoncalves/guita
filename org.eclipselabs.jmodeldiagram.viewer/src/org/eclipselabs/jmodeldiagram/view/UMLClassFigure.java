@@ -10,10 +10,9 @@
 //MODIFIED
 package org.eclipselabs.jmodeldiagram.view;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.draw2d.ColorConstants;
@@ -21,22 +20,16 @@ import org.eclipse.draw2d.Figure;
 import org.eclipse.draw2d.Label;
 import org.eclipse.draw2d.LineBorder;
 import org.eclipse.draw2d.MarginBorder;
-import org.eclipse.draw2d.MouseEvent;
-import org.eclipse.draw2d.MouseListener;
 import org.eclipse.draw2d.ToolbarLayout;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
+import org.eclipselabs.jmodeldiagram.DiagramListener;
 import org.eclipselabs.jmodeldiagram.model.JClass;
 import org.eclipselabs.jmodeldiagram.model.JOperation;
 import org.eclipselabs.jmodeldiagram.model.JType;
-import org.eclipselabs.jmodeldiagram.model.Visibility;
-
-import pt.iscte.dcti.umlviewer.service.ClickHandler;
 
 public class UMLClassFigure extends Figure {
-
-	private static final boolean SHOW_REPORTS = false;
 
 	private static final Color CLASS_COLOR = new Color(null, 255, 255, 255);
 	private static final Font CLASS_FONT = new Font(null, "Arial", 12, SWT.BOLD);
@@ -51,10 +44,11 @@ public class UMLClassFigure extends Figure {
 
 	private JType type;
 	private Set<JOperation> operations;
+	
+	private Map<Label, JOperation> operationLabels;
+	
 
-	private Iterable<ClickHandler> listeners;
-
-	protected UMLClassFigure(JType type, Iterable<ClickHandler> listeners) {
+	protected UMLClassFigure(JType type) {
 		ToolbarLayout layout = new ToolbarLayout();
 		setLayoutManager(layout);
 
@@ -70,10 +64,23 @@ public class UMLClassFigure extends Figure {
 		setSize();
 
 		this.type = type;
-		this.listeners = listeners;
 		operations = new HashSet<JOperation>();
+		operationLabels = new HashMap<Label, JOperation>();
 	}
 
+	public JType getJType() {
+		return type;
+	}
+
+	
+	public void select() {
+		setBackgroundColor(TOOLTIP_COLOR);
+	}
+	
+	public void unselect() {
+		setBackgroundColor(CLASS_COLOR);
+	}
+	
 	private void setSize() {
 		setSize(-1, -1);
 	}
@@ -82,10 +89,14 @@ public class UMLClassFigure extends Figure {
 		return this.methodsCompartment;
 	}
 
-	public JType getType() {
+	JType getType() {
 		return type;
 	}
 
+	JOperation getOperation(Label label) {
+		return operationLabels.get(label);
+	}
+	
 	public Set<JOperation> getMethods() {
 		return operations;
 	}
@@ -115,30 +126,10 @@ public class UMLClassFigure extends Figure {
 		nameLabel.setBorder(new MarginBorder(3,10,3,10));
 		nameLabel.setToolTip(toolTipLabel);
 		nameLabel.setBackgroundColor(new Color(null, 255, 0, 0));
-		nameLabel.addMouseListener(new MouseListener() {
-
-			@Override
-			public void mouseReleased(MouseEvent me) { }
-
-			@Override
-			public void mousePressed(MouseEvent me) { }
-
-			@Override
-			public void mouseDoubleClicked(MouseEvent me) {
-				for(ClickHandler h : listeners)
-					h.classClicked(type);
-			}
-		});
 		add(nameLabel);
 	}
-	//######################################################
-	//######################################################
-
-	//------------------------------------------------------
-	//------------------------------------------------------
-	//					METHODS SECTION
-	//------------------------------------------------------
-	//------------------------------------------------------
+	
+	
 	public void addOperations(Iterable<JOperation> operations) {
 		for(JOperation o: operations) {
 			if(!this.operations.contains(o)) {
@@ -148,18 +139,9 @@ public class UMLClassFigure extends Figure {
 		}
 	}
 
-	private static String visibilitySymbol(Visibility v) {
-		switch(v) {
-		case PUBLIC: return "+";
-		case PROTECTED: return "#";
-		case PACKAGE: return "~";
-		case PRIVATE: return "-";
-		}
-		return null;
-	}
 	
 	private void addMethodLabel(final JOperation operation) {
-		String text = visibilitySymbol(operation.getVisibility()) + " " + operation.getName() + "()";
+		String text = operation.getVisibility().symbol() + " " + operation.getName() + "()";
 
 		Font font = null;
 
@@ -172,25 +154,26 @@ public class UMLClassFigure extends Figure {
 
 		Label methodLabel = createLabel(text, font);
 		methodLabel.setBorder(new MarginBorder(3));
-
+		operationLabels.put(methodLabel, operation);
+		
 		String methodDesc = getMethodDescription(operation);
 		Label toolTipLabel = createToolTipLabel(methodDesc);
 
 		methodLabel.setToolTip(toolTipLabel);
-		methodLabel.addMouseListener(new MouseListener() {
-
-			@Override
-			public void mouseReleased(MouseEvent me) { }
-
-			@Override
-			public void mousePressed(MouseEvent me) { }
-
-			@Override
-			public void mouseDoubleClicked(MouseEvent me) {
-				for(ClickHandler h : listeners)
-					h.methodClicked(operation);
-			}
-		});
+//		methodLabel.addMouseListener(new MouseListener() {
+//
+//			@Override
+//			public void mouseReleased(MouseEvent me) { }
+//
+//			@Override
+//			public void mousePressed(MouseEvent me) { }
+//
+//			@Override
+//			public void mouseDoubleClicked(MouseEvent me) {
+//				for(DiagramListener h : listeners)
+//					h.operationEvent(operation, Event.DOUBLE_CLICK);
+//			}
+//		});
 		getMethodsCompartment().add(methodLabel);
 	}
 
@@ -236,4 +219,5 @@ public class UMLClassFigure extends Figure {
 	//######################################################
 	//######################################################
 
+	
 }

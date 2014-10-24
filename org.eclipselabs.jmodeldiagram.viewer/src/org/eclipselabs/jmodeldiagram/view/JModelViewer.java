@@ -1,8 +1,5 @@
 package org.eclipselabs.jmodeldiagram.view;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,16 +8,16 @@ import java.util.Set;
 
 import org.eclipse.draw2d.ColorConstants;
 import org.eclipse.draw2d.ConnectionEndpointLocator;
-import org.eclipse.draw2d.ConnectionRouter;
 import org.eclipse.draw2d.Graphics;
 import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.Label;
-import org.eclipse.draw2d.ManhattanConnectionRouter;
 import org.eclipse.draw2d.PolygonDecoration;
 import org.eclipse.draw2d.PolylineConnection;
 import org.eclipse.draw2d.PolylineDecoration;
 import org.eclipse.draw2d.geometry.PointList;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
@@ -29,7 +26,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.ui.part.ViewPart;
-import org.eclipse.zest.core.viewers.IConnectionStyleProvider;
 import org.eclipse.zest.core.widgets.Graph;
 import org.eclipse.zest.core.widgets.GraphConnection;
 import org.eclipse.zest.core.widgets.GraphNode;
@@ -43,13 +39,14 @@ import org.eclipse.zest.layouts.algorithms.RadialLayoutAlgorithm;
 import org.eclipse.zest.layouts.algorithms.SpringLayoutAlgorithm;
 import org.eclipse.zest.layouts.algorithms.TreeLayoutAlgorithm;
 import org.eclipse.zest.layouts.algorithms.VerticalLayoutAlgorithm;
+import org.eclipselabs.jmodeldiagram.DiagramListener;
+import org.eclipselabs.jmodeldiagram.DiagramListener.Event;
 import org.eclipselabs.jmodeldiagram.model.Association;
 import org.eclipselabs.jmodeldiagram.model.JClass;
 import org.eclipselabs.jmodeldiagram.model.JInterface;
 import org.eclipselabs.jmodeldiagram.model.JModel;
+import org.eclipselabs.jmodeldiagram.model.JOperation;
 import org.eclipselabs.jmodeldiagram.model.JType;
-
-import pt.iscte.dcti.umlviewer.service.ClickHandler;
 
 public class JModelViewer extends ViewPart {
 
@@ -66,6 +63,16 @@ public class JModelViewer extends ViewPart {
 
 	private Map<JType, UMLNode> nodesMapper;
 
+
+	private HashSet<DiagramListener> listeners = new HashSet<DiagramListener>();
+
+	public void addClickHandler(DiagramListener handler) {
+		listeners.add(handler);
+	}
+
+	public void removeClickHandler(DiagramListener handler) {
+		listeners.remove(handler);
+	}
 	
 	public JModelViewer() {
 		instance = this;
@@ -79,6 +86,51 @@ public class JModelViewer extends ViewPart {
 		graph = new Graph(composite, SWT.NONE);
 		graph.setBackground(new Color(null, 250,250,250));
 		createPopupMenu();
+
+//		graph.addSelectionListener(new SelectionAdapter() {
+//			@Override
+//			public void widgetSelected(SelectionEvent e) {
+//				System.out.println("selected " + e);
+//			}
+//		});
+		
+		graph.addMouseListener(new MouseListener() {
+			
+			@Override
+			public void mouseUp(MouseEvent e) {
+				
+			}
+			
+			@Override
+			public void mouseDown(MouseEvent e) {
+				handleEvent(e, Event.SELECT);
+			}
+			
+			@Override
+			public void mouseDoubleClick(MouseEvent e) {
+				handleEvent(e, Event.DOUBLE_CLICK);
+			}
+
+			private void handleEvent(MouseEvent e, Event event) {
+				IFigure fig = graph.getFigureAt(e.x, e.y);
+				if(fig instanceof UMLClassFigure) {
+					UMLClassFigure classFig = (UMLClassFigure) fig;
+					IFigure underFig = classFig.findFigureAt(e.x, e.y);
+					if(underFig instanceof Label) {
+						JOperation op = classFig.getOperation((Label) underFig);
+						if(op != null) {
+							for(DiagramListener l : listeners)
+								l.operationEvent(op, event);
+						}
+						else {
+							JType type = classFig.getJType();
+							for(DiagramListener l : listeners)
+								l.classEvent(type, event);
+						}
+					}
+				}
+			}
+		});
 	}
 
 	private void createPopupMenu() {
@@ -121,7 +173,7 @@ public class JModelViewer extends ViewPart {
 		}
 
 		setConnections(nodesMapper.keySet(), newTypes);
-		
+
 		layoutMode.layout(graph);
 	}
 
@@ -129,7 +181,7 @@ public class JModelViewer extends ViewPart {
 
 
 	private UMLNode createNode(JType type) {
-		UMLClassFigure figure = new UMLClassFigure(type, listeners);
+		UMLClassFigure figure = new UMLClassFigure(type);
 		UMLNode node = new UMLNode(graph, SWT.NONE, figure);
 		nodesMapper.put(type, node);
 		return node;
@@ -154,9 +206,9 @@ public class JModelViewer extends ViewPart {
 			else
 				setInheritanceConnectionsInterface((JInterface) neww, nodesMapper.keySet());
 		}
-		
-		
-		
+
+
+
 	}
 
 	private void setInheritanceConnectionsClass(JClass jc, Collection<JType> set) {
@@ -176,7 +228,7 @@ public class JModelViewer extends ViewPart {
 				createExtendsConnection(ji, i);
 		}
 	}
-	
+
 	private void setAssociations(JClass jc, Collection<JType> set) {
 		for(Association a : jc.getAssociations()) {
 			if(a.isUnary())
@@ -229,49 +281,7 @@ public class JModelViewer extends ViewPart {
 		connectionFigure.setLineStyle(Graphics.LINE_DASH);
 	}
 
-	/*
-	private void setAssociationConnections(JClass jc, Set<JType> set) {
-		for(Field field: clazz.getDeclaredFields()) {
-
-			if(field.isSynthetic()) continue;
-
-			Class<?> fieldType = field.getType();
-
-			if(Collection.class.isAssignableFrom(fieldType)) { //Collection field
-				Type genericFieldType = field.getGenericType();
-
-				if(!ParameterizedType.class.isAssignableFrom(genericFieldType.getClass())) continue; //If the collection does not have a parametrized type
-
-				Type aux = ((ParameterizedType)genericFieldType).getActualTypeArguments()[0];
-
-				if(!Class.class.isAssignableFrom(aux.getClass())) continue; //If the parametrized type is not a class type, i.e., Collection<Collection<Type>>
-
-				Class<?> actualFieldType = (Class<?>)aux;
-
-				if(actualFieldType.isArray()) continue; //If the parametrized type is an array
-
-				if(set.contains(actualFieldType)) {
-					createMultipleConnection(clazz, actualFieldType, field);
-				}
-			}
-			else if(fieldType.isArray()) { //Array field
-				Class<?> componentFieldType = fieldType.getComponentType();
-
-				if(componentFieldType.isArray()) continue; //If the component type of the array is another array
-
-				if(set.contains(componentFieldType)) {
-					createMultipleConnection(clazz, componentFieldType, field);
-				}
-			}
-			else { //Class field
-				if(set.contains(fieldType)) {
-					createSimpleConnection(clazz, fieldType, field);
-				}
-			}
-
-		}
-	}
-	*/
+	
 
 	private void createSimpleConnection(JClass source, JType target, String name) {
 		GraphConnection connection = new GraphConnection(graph, ZestStyles.NONE, nodesMapper.get(source), nodesMapper.get(target));
@@ -376,41 +386,41 @@ public class JModelViewer extends ViewPart {
 
 	}
 
-	class UMLNode extends GraphNode {
+	private class UMLNode extends GraphNode {
 
-		IFigure customFigure = null;
+		private UMLClassFigure figure;
 
-		public UMLNode(IContainer graphModel, int style, IFigure figure) {
+		public UMLNode(IContainer graphModel, int style, UMLClassFigure figure) {
 			super(graphModel, style, figure);
+			this.figure = figure;
 		}
 
 		protected IFigure createFigureForModel() {
 			return (IFigure) this.getData();
 		}
+		@Override
+		public void highlight() {
+			figure.select();
+		}
+
+
+		@Override
+		public void unhighlight() {
+			figure.unselect();
+		}
 
 	}
-	//######################################################
-	//######################################################
-
-
-	private HashSet<ClickHandler> listeners = new HashSet<ClickHandler>();
-
-	public void addClickHandler(ClickHandler handler) {
-		listeners.add(handler);
-	}
-
-	public void removeClickHandler(ClickHandler handler) {
-		listeners.remove(handler);
-	}
-
 
 	
-	
-	
-	
-	
-	
-	
+
+
+
+
+
+
+
+
+
 	private enum LayoutMode {
 		Spring {
 			@Override
@@ -484,5 +494,5 @@ public class JModelViewer extends ViewPart {
 
 
 
-	
+
 }
