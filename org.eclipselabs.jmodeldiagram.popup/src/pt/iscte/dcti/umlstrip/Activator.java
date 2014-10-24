@@ -1,19 +1,13 @@
 package pt.iscte.dcti.umlstrip;
 
-import java.lang.reflect.Method;
-
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.ISelectionListener;
-import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
-
-import pt.iscte.dcti.umlviewer.service.ClickHandler;
-import pt.iscte.dcti.umlviewer.service.ServiceHelper;
 
 /**
  * The activator class controls the plug-in life cycle

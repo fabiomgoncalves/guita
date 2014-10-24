@@ -30,6 +30,8 @@ import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.texteditor.ITextEditor;
+import org.eclipselabs.jmodeldiagram.DiagramListener;
+import org.eclipselabs.jmodeldiagram.JModelDiagram;
 import org.eclipselabs.jmodeldiagram.model.Association;
 import org.eclipselabs.jmodeldiagram.model.JClass;
 import org.eclipselabs.jmodeldiagram.model.JInterface;
@@ -38,14 +40,11 @@ import org.eclipselabs.jmodeldiagram.model.JOperation;
 import org.eclipselabs.jmodeldiagram.model.JType;
 import org.eclipselabs.jmodeldiagram.model.reflection.JModelReflection;
 
-import pt.iscte.dcti.umlviewer.service.ClickHandler;
-import pt.iscte.dcti.umlviewer.service.ServiceHelper;
-
 public class ViewInClassDiagram implements IObjectActionDelegate {
 
 	private Shell shell;
 	private IStructuredSelection selection;
-	private ClickHandler handler;
+	private DiagramListener handler;
 
 	/**
 	 * @see IObjectActionDelegate#setActivePart(IAction, IWorkbenchPart)
@@ -88,14 +87,14 @@ public class ViewInClassDiagram implements IObjectActionDelegate {
 				if(!c.isInterface())
 					handleAssociations(c, model);
 			
-			ServiceHelper.getService().displayModel(model, false);
+			JModelDiagram.display(model);
 
 			if(handler != null)
-				ServiceHelper.getService().removeClickHandler(handler);
+				JModelDiagram.removeListener(handler);
 
-			handler = new ClickHandler() {
+			handler = new DiagramListener.Adapter() {
 				@Override
-				public void methodClicked(JOperation op) {
+				public void operationEvent(JOperation op, Event event) {
 					IType t = null;
 					try {
 						t = proj.findType(op.getOwner().getQualifiedName());
@@ -113,7 +112,7 @@ public class ViewInClassDiagram implements IObjectActionDelegate {
 				}
 
 				@Override
-				public void classClicked(JType type) {
+				public void classEvent(JType type, Event event) {
 					IType t = null;
 					try {
 						t = proj.findType(type.getQualifiedName());
@@ -126,7 +125,7 @@ public class ViewInClassDiagram implements IObjectActionDelegate {
 					} 
 				}
 			};
-			ServiceHelper.getService().addClickHandler(handler);
+			JModelDiagram.removeListener(handler);
 
 		} catch (Exception e) {
 			e.printStackTrace();
