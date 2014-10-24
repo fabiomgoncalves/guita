@@ -3,39 +3,28 @@ package pt.iscte.dcti.umlviewer.network.handlers;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.lang.reflect.Method;
+import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
 
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.swt.widgets.Display;
+import org.eclipselabs.jmodeldiagram.JModelDiagram;
 import org.eclipselabs.jmodeldiagram.model.JModel;
-import org.eclipselabs.jmodeldiagram.view.JModelViewer;
 
 import pt.iscte.dcti.rtdmodel.network.Activator;
-import pt.iscte.dcti.umlviewer.service.Service;
-import pt.iscte.dcti.umlviewer.service.ServiceHelper;
 
 public class SignalHandler extends AbstractHandler {
-
-
-	private JModelViewer viewer;
-
-	public SignalHandler() {
-		viewer = JModelViewer.getInstance();
-	}
 
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 		new RecordAgent().start();
 		return null;
 	}
-
+ 
 	private class RecordAgent extends Thread {
 
 		private InetAddress addr;
@@ -44,15 +33,25 @@ public class SignalHandler extends AbstractHandler {
 		private ObjectInputStream inputStream;
 
 		private JModel fragment;
-		
+
 		public void run() {
-			//spamming the "option click" will trigger various threads.
+			final int port = Activator.getInstance().getSocketPort(); 
 			try {
 				addr = InetAddress.getByName(null);
-				socket = new Socket(addr, Activator.getInstance().getSocketPort());
+				socket = new Socket(addr, port);
 				outputStream = new ObjectOutputStream(socket.getOutputStream());
 				inputStream = new ObjectInputStream(socket.getInputStream());
 				handleConnection();
+			}
+			catch(ConnectException e) {
+				Display.getDefault().asyncExec(new Runnable() {
+					public void run() {
+						MessageDialog.openError(Display.getDefault().getActiveShell(), "Connection Error", 
+								"Connection refused on port " + port);
+						
+					}
+				});
+
 			}
 			catch (UnknownHostException e) { e.printStackTrace(); } 
 			catch (IOException e) { e.printStackTrace(); } 
@@ -75,9 +74,9 @@ public class SignalHandler extends AbstractHandler {
 			}
 
 			if(fragment != null) {
-				viewer.displayModel(fragment, true);
+				JModelDiagram.displayIncremental(fragment);
 			}
-			
+
 		}
 
 		private void handleConnection() {
@@ -88,7 +87,7 @@ public class SignalHandler extends AbstractHandler {
 
 				if(status.intValue() == 1) {
 					outputStream.writeObject(new Integer(0));
-//					data = (Map<String, ClassDataTransferObject>)inputStream.readObject(); //#1
+					//					data = (Map<String, ClassDataTransferObject>)inputStream.readObject(); //#1
 					fragment = (JModel) inputStream.readObject();
 					System.out.println("RECEIVED\n" + fragment);
 				}
